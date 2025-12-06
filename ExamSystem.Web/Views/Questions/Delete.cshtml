@@ -1,0 +1,38 @@
+﻿@model ExamSystem.Core.Entities.Question
+
+@{
+    ViewData["Title"] = "Xóa câu hỏi";
+}
+
+<div class="container mt-5">
+    <div class="card border-danger shadow">
+        <div class="card-header bg-danger text-white">
+            <h4 class="m-0"><i class="fa fa-exclamation-triangle"></i> Xác nhận xóa câu hỏi</h4>
+        </div>
+        <div class="card-body">
+            <h5 class="card-title text-danger">Bạn có chắc chắn muốn xóa câu hỏi này không?</h5>
+            <p class="text-muted">Hành động này không thể hoàn tác.</p>
+
+            <div class="alert alert-secondary">
+                <strong>ID:</strong> @Model.Id <br />
+                <strong>Loại:</strong> @Model.Type <br />
+                <strong>Nội dung:</strong> @Model.Content
+                @if (!string.IsNullOrEmpty(Model.PassageText))
+                {
+                    <br />
+                    <strong>Lưu ý:</strong>
+
+                    <span class="text-danger fw-bold">Đây là câu hỏi thuộc bài đọc. Việc xóa này chỉ xóa câu hỏi con, không ảnh hưởng các câu khác trong bài.</span>
+                }
+            </div>
+
+            <form asp-action="Delete">
+                <input type="hidden" asp-for="Id" />
+                <button type="submit" class="btn btn-danger btn-lg">
+                    <i class="fa fa-trash"></i> Xác nhận Xóa
+                </button>
+                <a asp-action="Index" class="btn btn-secondary btn-lg">Hủy bỏ</a>
+            </form>
+        </div>
+    </div>
+</div>

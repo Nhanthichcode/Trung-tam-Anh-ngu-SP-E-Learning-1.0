@@ -1,0 +1,40 @@
+﻿@model IEnumerable<ExamSystem.Core.Entities.Exam>
+
+@{
+    ViewData["Title"] = "Danh sách kỳ thi";
+}
+
+<div class="text-center py-4">
+    <h1 class="display-5">Các kỳ thi đang mở</h1>
+    <p class="text-muted">Chọn một đề thi để bắt đầu làm bài.</p>
+</div>
+
+<div class="row">
+    @foreach (var item in Model)
+    {
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm border-primary">
+                <div class="card-body">
+                    <h4 class="card-title text-primary">@item.Title</h4>
+                    <p class="card-text">@item.Description</p>
+                    <ul class="list-unstyled">
+                        <li><i class="fa fa-clock-o"></i> Thời gian: <strong>@item.DurationMinutes phút</strong></li>
+                        <li><i class="fa fa-calendar"></i> Ngày mở: @item.StartDate.ToString("dd/MM/yyyy")</li>
+                    </ul>
+                </div>
+                <div class="card-footer bg-white border-top-0 text-center">
+                    <a asp-action="TakeExam" asp-route-id="@item.Id" class="btn btn-primary btn-lg w-100">
+                        Vào thi ngay
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="col-12 text-center">
+            <div class="alert alert-warning">Hiện tại chưa có đề thi nào được mở.</div>
+        </div>
+    }
+</div>

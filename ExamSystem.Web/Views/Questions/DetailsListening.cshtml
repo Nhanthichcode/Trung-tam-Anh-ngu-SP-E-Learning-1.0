@@ -1,0 +1,104 @@
+﻿@model IEnumerable<ExamSystem.Core.Entities.Question>
+
+@{
+    ViewData["Title"] = "Chi tiết bài nghe";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="text-info"><i class="fa fa-headphones"></i> Chi tiết bài nghe</h3>
+        <div>
+            <a asp-action="EditListening" asp-route-id="@Model.FirstOrDefault()?.Id" class="btn btn-warning shadow-sm">
+                <i class="fa fa-pencil"></i> Sửa bài này
+            </a>
+            <a asp-action="Index" class="btn btn-secondary shadow-sm">
+                <i class="fa fa-arrow-left"></i> Quay lại
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-5 mb-4">
+            <div class="card border-info shadow-sm h-100">
+                <div class="card-header bg-info text-white fw-bold">
+                    <i class="fa fa-play-circle"></i> File Audio & Transcript
+                </div>
+                <div class="card-body bg-light text-center">
+                    <h5 class="card-title text-dark">@ViewBag.Title</h5>
+                    <span class="badge bg-secondary mb-3">Level @ViewBag.Level</span>
+
+                    @if (ViewBag.AudioUrl != null)
+                    {
+                        <div class="p-3 border bg-white rounded mb-3">
+                            <audio controls src="@ViewBag.AudioUrl" class="w-100"></audio>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-danger">Audio file not found.</div>
+                    }
+
+                    @if (ViewBag.Transcript != null)
+                    {
+                        <div class="text-start mt-3">
+                            <label class="fw-bold text-muted small text-uppercase">Transcript:</label>
+                            <div class="p-2 border rounded bg-white" style="max-height: 300px; overflow-y: auto; white-space: pre-wrap;">@ViewBag.Transcript</div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <h5 class="text-secondary mb-3">Danh sách câu hỏi (@Model.Count() câu)</h5>
+
+            @foreach (var item in Model.Select((value, i) => new { i, value }))
+            {
+                var q = item.value;
+                <div class="card mb-3 border-0 shadow-sm">
+                    <div class="card-header bg-white border-bottom fw-bold text-info">
+                        Câu hỏi @(item.i + 1)
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text fw-bold">@q.Content</p>
+
+                        @if (q.Answers != null && q.Answers.Any())
+                        {
+                            <ul class="list-group list-group-flush mb-3">
+                                @foreach (var ans in q.Answers)
+                                {
+                                    <li class="list-group-item @(ans.IsCorrect ? "list-group-item-success" : "")">
+                                        @ans.Content
+                                        @if (ans.IsCorrect)
+                                        {
+                                            <i class="fa fa-check float-end"></i>
+                                        }
+                                    </li>
+                                }
+                            </ul>
+
+                            var correctAns = q.Answers.FirstOrDefault(a => a.IsCorrect);
+                            if (correctAns != null)
+                            {
+                                <div class="text-success fw-bold small">
+                                    <i class="fa fa-check-circle"></i> Đáp án đúng: @correctAns.Content
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="alert alert-warning small">Chưa có dữ liệu đáp án (Cần cập nhật lại).</div>
+                        }
+
+                        @if (!string.IsNullOrEmpty(q.Explaination))
+                        {
+                            <div class="alert alert-info p-2 small mt-2 mb-0">
+                                <strong><i class="fa fa-info-circle"></i> Giải thích:</strong> @q.Explaination
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>

@@ -1,0 +1,81 @@
+﻿@model IEnumerable<ExamSystem.Core.Entities.Exam>
+
+@{
+    ViewData["Title"] = "Quản lý Đề thi";
+}
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="text-primary"><i class="fa fa-graduation-cap"></i> Quản lý Đề thi</h2>
+        <a asp-action="Create" class="btn btn-success shadow-sm">
+            <i class="fa fa-plus-circle"></i> Tạo đề thi mới
+        </a>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light text-secondary">
+                    <tr>
+                        <th>@Html.DisplayNameFor(model => model.Title)</th>
+                        <th>@Html.DisplayNameFor(model => model.DurationMinutes)</th>
+                        <th>Thời gian</th>
+                        <th>@Html.DisplayNameFor(model => model.IsActive)</th>
+                        <th class="text-center" style="min-width: 250px;">Cấu hình Đề thi</th>
+                        <th class="text-center">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="fw-bold text-primary">
+                                @Html.DisplayFor(modelItem => item.Title)
+                                <div class="small text-muted fw-normal">@item.Description</div>
+                            </td>
+                            <td>
+                                <span class="badge bg-info text-dark">@item.DurationMinutes phút</span>
+                            </td>
+                            <td class="small">
+                                <div>Bắt đầu: @item.StartDate.ToString("dd/MM/yyyy HH:mm")</div>
+                                <div>Kết thúc: @item.EndDate?.ToString("dd/MM/yyyy HH:mm")</div>
+                            </td>
+                            <td>
+                                @if (item.IsActive)
+                                {
+                                    <span class="badge bg-success">Đang mở</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Đóng</span>
+                                }
+                            </td>
+
+                            <td class="text-center">
+                                <div class="d-flex justify-content-center gap-2">
+                                    <a asp-action="AddQuestions" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary" title="Giảng viên tự chọn câu hỏi">
+                                        <i class="fa fa-list-check"></i> Chọn thủ công
+                                    </a>
+
+                                    <form asp-action="AutoGenerate" asp-route-id="@item.Id" method="post" onsubmit="return confirm('Hệ thống sẽ tự động lấy ngẫu nhiên:\n- 1 Bài Đọc\n- 1 Bài Nghe\n- 1 Câu Nói\n- 1 Câu Viết\n\nBạn có chắc chắn muốn tạo không?');">
+                                        <button type="submit" class="btn btn-sm btn-outline-success" title="Random 1 Đọc/Nghe/Nói/Viết">
+                                            <i class="fa fa-magic"></i> Tạo tự động
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm">
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-light border" title="Sửa thông tin"><i class="fa fa-pencil text-warning"></i></a>
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-light border" title="Xem chi tiết"><i class="fa fa-eye text-info"></i></a>
+                                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-light border" title="Xóa đề"><i class="fa fa-trash text-danger"></i></a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

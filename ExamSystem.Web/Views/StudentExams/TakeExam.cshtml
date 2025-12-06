@@ -1,0 +1,182 @@
+﻿@model List<ExamSystem.Core.Entities.Question>
+@using ExamSystem.Core.Enums
+
+@{
+    ViewData["Title"] = "Làm bài thi";
+
+    // 1. Tách nhóm để hiển thị đẹp
+    var readingGroups = Model.Where(x => x.Type == QuestionType.ReadingPassage)
+        .GroupBy(x => x.ReadingPassageId.HasValue ? "ID_" + x.ReadingPassageId : x.PassageText)
+        .ToList();
+
+    var listeningGroups = Model.Where(x => x.Type == QuestionType.Listening && x.ListeningResourceId.HasValue)
+        .GroupBy(x => x.ListeningResourceId)
+        .ToList();
+
+    var normalQuestions = Model.Where(x =>
+        x.Type != QuestionType.ReadingPassage &&
+        !(x.Type == QuestionType.Listening && x.ListeningResourceId.HasValue)
+    ).ToList();
+
+    int questionCounter = 0; // Đếm số câu tổng thể
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="text-primary">@ViewBag.ExamTitle</h3>
+        <div class="text-danger fw-bold h4" id="timer">@ViewBag.Duration:00</div>
+    </div>
+
+    <form asp-action="SubmitExam" method="post" id="examForm">
+        <input type="hidden" name="examId" value="@ViewBag.ExamId" />
+
+        @foreach (var group in listeningGroups)
+        {
+            var resource = group.First().ListeningResource;
+            <div class="card mb-4 border-info">
+                <div class="card-header bg-info text-white fw-bold">
+                    <i class="fa fa-headphones"></i> Phần Nghe: @(resource?.Title ?? "Bài nghe")
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        @if (resource != null)
+                        {
+                            <audio controls src="@resource.AudioUrl" class="w-100"></audio>
+                        }
+                    </div>
+                    @foreach (var q in group)
+                    {
+                        questionCounter++;
+                       { await RenderQuestion(q, questionCounter); }
+                    }
+                </div>
+            </div>
+        }
+
+        @foreach (var group in readingGroups)
+        {
+            var first = group.First();
+            var passageText = first.ReadingPassage?.Content ?? first.PassageText;
+
+            <div class="card mb-4 border-warning">
+                <div class="card-header bg-warning text-dark fw-bold">
+                    <i class="fa fa-book"></i> Phần Đọc
+                </div>
+                <div class="card-body">
+                    <div class="p-3 bg-light border rounded mb-3" style="max-height: 300px; overflow-y: auto; white-space: pre-wrap;">@passageText</div>
+
+                    @foreach (var q in group)
+                    {
+                        questionCounter++;
+                       { await RenderQuestion(q, questionCounter); }
+                    }
+                </div>
+            </div>
+        }
+
+        @foreach (var q in normalQuestions)
+        {
+            questionCounter++;
+            <div class="card mb-3 border-secondary">
+                <div class="card-body">
+                    @if (q.Type == QuestionType.Listening || q.Type == QuestionType.Speaking)
+                    {
+                        var media = q.ListeningResource?.AudioUrl ?? q.MediaUrl;
+                        if (!string.IsNullOrEmpty(media))
+                        {
+                            <div class="mb-2">
+                                @if (media.EndsWith("mp3"))
+                                {
+                                    <audio controls src="@media"></audio>
+                                }
+                                else
+                                {
+
+                                    <img src="@media" class="img-fluid" style="max-height:200px" />
+                                }
+                            </div>
+                        }
+                    }
+                    @{
+                        await RenderQuestion(q, questionCounter);
+                    }
+                </div>
+            </div>
+        }
+
+        <div class="text-center mt-5 mb-5">
+            <button type="submit" class="btn btn-success btn-lg px-5 shadow" onclick="return confirm('Nộp bài ngay?')">
+                <i class="fa fa-check-circle"></i> NỘP BÀI
+            </button>
+        </div>
+    </form>
+</div>
+
+@functions {
+    public async Task RenderQuestion(ExamSystem.Core.Entities.Question q, int index)
+    {
+        <div class="mb-3">
+            <p class="fw-bold mb-2">
+                <span class="badge bg-primary me-2">Câu @index</span> @q.Content
+            </p>
+
+            @if (q.Type == ExamSystem.Core.Enums.QuestionType.Writing)
+            {
+                <textarea name="userAnswers[@q.Id]" class="form-control" rows="5" placeholder="Nhập bài viết của bạn..."></textarea>
+            }
+            else if (q.Answers != null && q.Answers.Any())
+            {
+                // Dùng bảng Answers mới
+                <div class="row g-2">
+                    @foreach (var ans in q.Answers)
+                    {
+                        <div class="col-md-6">
+                            <div class="form-check p-2 border rounded bg-light">
+                                <input class="form-check-input ms-1" type="radio" name="userAnswers[@q.Id]" value="@ans.Content" id="ans_@ans.Id">
+                                <label class="form-check-label ms-2 w-100" style="cursor:pointer" for="ans_@ans.Id">
+                                    @ans.Content
+                                </label>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                // Fallback cũ (OptionA...)
+                <div class="row g-2">
+                    @{
+                        var opts = new[] { q.OptionA, q.OptionB, q.OptionC, q.OptionD };
+                        var labels = new[] { "A", "B", "C", "D" };
+                    }
+                    @for (int i = 0; i < 4; i++)
+                    {
+                        if (!string.IsNullOrEmpty(opts[i]))
+                        {
+                            <div class="col-md-6">
+                                <div class="form-check p-2 border rounded bg-light">
+                                    <input class="form-check-input ms-1" type="radio" name="userAnswers[@q.Id]" value="@opts[i]" id="opt_@q.Id@i">
+                                    <label class="form-check-label ms-2 w-100" for="opt_@q.Id@i">@labels[i]. @opts[i]</label>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            }
+        </div>
+        <hr class="text-muted opacity-25" />
+    }
+}
+
+<script>
+    // Timer đơn giản
+    var duration = @ViewBag.Duration;
+    var timer = duration * 60;
+    setInterval(function () {
+        var m = Math.floor(timer / 60);
+        var s = timer % 60;
+        document.getElementById('timer').innerText = m + ":" + (s < 10 ? "0" : "") + s;
+        if (timer <= 0) document.getElementById('examForm').submit();
+        timer--;
+    }, 1000);
+</script>
