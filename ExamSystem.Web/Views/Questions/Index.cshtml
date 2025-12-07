@@ -2,194 +2,314 @@
 @using ExamSystem.Core.Enums
 
 @{
-    ViewData["Title"] = "Quản lý câu hỏi";
-
-    // Lọc và gom nhóm an toàn (giữ nguyên logic)
-    var readingQuestions = Model.Where(x => x.Type == QuestionType.ReadingPassage);
-    var readingGroups = readingQuestions
-        .GroupBy(x => x.ReadingPassageId.HasValue ? "ID_" + x.ReadingPassageId : ("No_Content_" + x.Id))
-        .ToList();
-    var normalQuestions = Model.Where(x => x.Type != QuestionType.ReadingPassage).ToList();
-
-    // Lấy dữ liệu từ ViewBag (cần được Controller cung cấp)
-    var allTopics = ViewData["Topics"] as SelectList;
-
-    // Lấy giá trị lọc hiện tại
+    ViewData["Title"] = "Ngân hàng Câu hỏi";
+    
+    // Lấy giá trị lọc hiện tại (dùng để giữ trạng thái dropdown)
+    var currentFilter = ViewData["CurrentFilter"] as string;
     var currentType = ViewData["CurrentType"];
     var currentLevel = ViewData["CurrentLevel"];
-    var currentTopic = ViewData["CurrentTopic"];
+    var currentTopicId = ViewData["CurrentTopicId"];
+    
+    // Ép kiểu dữ liệu từ ViewBag
+    var allLevels = ViewData["Levels"] as SelectList;
+    var allTopics = ViewData["Topics"] as SelectList;
+
+    // PHÂN LOẠI CÂU HỎI TRONG VIEW:
+    var readingQuestions = Model.Where(q => q.Type == QuestionType.ReadingPassage).ToList();
+    var listeningQuestions = Model.Where(q => q.Type == QuestionType.Listening).ToList();
+    var speakingQuestions = Model.Where(q => q.Type == QuestionType.Speaking).ToList();
+    var writingQuestions = Model.Where(q => q.Type == QuestionType.Writing).ToList();
+    var generalQuestions = Model.Where(q => q.Type == QuestionType.General || q.Type == QuestionType.MultipleChoice).ToList();
 }
 
-<div class="container-fluid mt-3">
+<div class="container-fluid mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="text-primary m-0">Ngân hàng câu hỏi</h2>
-        <a asp-action="Create" class="btn btn-success shadow-sm"><i class="fa fa-plus-circle"></i> Tạo mới</a>
+        <h2 class="text-primary"><i class="fa fa-university"></i> Ngân hàng Câu hỏi</h2>
+        <a asp-action="Create" class="btn btn-success shadow-sm">
+            <i class="fa fa-plus-circle"></i> Tạo mới
+        </a>
     </div>
 
-    @* === FORM LỌC & TÌM KIẾM === *@
+    @* === FORM LỌC & TÌM KIẾM (CHUNG CHO TẤT CẢ TABS) === *@
     <form asp-action="Index" method="get" class="mb-4 p-3 bg-light rounded shadow-sm">
         <div class="row g-3 align-items-end">
-            <div class="col-md-4">
-                <label class="form-label fw-bold">Tìm kiếm (Nội dung)</label>
-                <input type="text" name="searchString" value="@ViewData["CurrentFilter"]" class="form-control" placeholder="Nhập từ khóa..." />
+            
+            <div class="col-md-3">
+                <label class="form-label fw-bold small">Tìm kiếm (Nội dung)</label>
+                <input type="text" name="searchString" value="@currentFilter" class="form-control form-control-sm" placeholder="Nhập từ khóa..." />
             </div>
-
+            
             <div class="col-md-2">
-                <label class="form-label fw-bold">Loại câu hỏi</label>
-                <select name="filterType" class="form-select" asp-items="Html.GetEnumSelectList<QuestionType>()">
+                <label class="form-label fw-bold small">Loại câu hỏi</label>
+                <select name="filterType" class="form-control form-control-sm" asp-items="ViewBag.QuestionTypes">
                     <option value="">-- Tất cả --</option>
                 </select>
             </div>
-
+            
             <div class="col-md-2">
-                <label class="form-label fw-bold">Độ khó</label>
-                <select name="filterLevel" class="form-select" asp-items="@ViewData["Levels"] as SelectList">
+                <label class="form-label fw-bold small">Độ khó</label>
+                <select name="filterLevel" class="form-control form-control-sm" asp-items="ViewData["Levels"] as SelectList">
                     <option value="">-- Tất cả --</option>
                 </select>
             </div>
-
-            <div class="col-md-2">
-                <label class="form-label fw-bold">Chủ đề (Topic)</label>
-                <select name="filterTopicId" class="form-select" asp-items="allTopics">
+            
+            <div class="col-md-3">
+                <label class="form-label fw-bold small">Chủ đề (Topic)</label>
+                <select name="filterTopicId" class="form-control form-control-sm" asp-items="ViewData["Topics"] as SelectList">
                     <option value="">-- Tất cả --</option>
                 </select>
             </div>
-
+            
             <div class="col-md-2">
-                <button type="submit" class="btn btn-primary w-100"><i class="fa fa-filter"></i> Lọc</button>
+                <button type="submit" class="btn btn-primary w-100 btn-sm"><i class="fa fa-filter"></i> Lọc</button>
             </div>
         </div>
     </form>
     @* === KẾT THÚC FORM LỌC === *@
 
-    <div class="table-responsive shadow-sm bg-white rounded">
-        <table class="table table-hover align-middle mb-0">
-            <thead class="bg-primary text-white">
-                <tr>
-                    <th style="width: 5%">ID</th>
-                    <th style="width: 50%">Nội dung</th>
-                    <th style="width: 15%">Loại</th>
-                    <th style="width: 15%">Info</th>
-                    <th style="width: 15%" class="text-center">Thao tác</th>
-                </tr>
-            </thead>
-            <tbody>
+    <ul class="nav nav-tabs" id="questionBankTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active fw-bold text-warning" id="reading-tab" data-bs-toggle="tab" data-bs-target="#reading" type="button" role="tab">
+                <i class="fa fa-book"></i> ĐỌC (@readingQuestions.Count())
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-bold text-info" id="listening-tab" data-bs-toggle="tab" data-bs-target="#listening" type="button" role="tab">
+                <i class="fa fa-headphones"></i> NGHE (@listeningQuestions.Count())
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-bold text-danger" id="speaking-tab" data-bs-toggle="tab" data-bs-target="#speaking" type="button" role="tab">
+                <i class="fa fa-microphone"></i> NÓI (@speakingQuestions.Count())
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-bold text-success" id="writing-tab" data-bs-toggle="tab" data-bs-target="#writing" type="button" role="tab">
+                <i class="fa fa-pencil"></i> VIẾT (@writingQuestions.Count())
+            </button>
+        </li>
+         <li class="nav-item" role="presentation">
+            <button class="nav-link fw-bold text-secondary" id="general-tab" data-bs-toggle="tab" data-bs-target="#general" type="button" role="tab">
+                <i class="fa fa-question-circle"></i> Trắc nghiệm (@generalQuestions.Count())
+            </button>
+        </li>
+    </ul>
 
-                @if (!Model.Any())
-                {
-                    <tr><td colspan="5" class="text-center py-4 text-muted">Chưa có dữ liệu.</td></tr>
-                }
+    <div class="tab-content border border-top-0 p-4 bg-white shadow-sm rounded-bottom" id="myTabContent">
+        
+        @* === TAB 1: READING (ĐỌC) === *@
+        <div class="tab-pane fade show active" id="reading" role="tabpanel">
+            @RenderTabContent(readingQuestions, QuestionType.ReadingPassage)
+        </div>
+        
+        @* === TAB 2: LISTENING (NGHE) === *@
+        <div class="tab-pane fade" id="listening" role="tabpanel">
+            @RenderTabContent(listeningQuestions, QuestionType.Listening)
+        </div>
+        
+        @* === TAB 3: SPEAKING (NÓI) === *@
+        <div class="tab-pane fade" id="speaking" role="tabpanel">
+            @RenderTabContent(speakingQuestions, QuestionType.Speaking)
+        </div>
+        
+        @* === TAB 4: WRITING (VIẾT) === *@
+        <div class="tab-pane fade" id="writing" role="tabpanel">
+            @RenderTabContent(writingQuestions, QuestionType.Writing)
+        </div>
 
-                @* --- PHẦN BÀI ĐỌC (Reading Groups) --- *@
-                @foreach (var group in readingGroups)
-                {
-                    var firstItem = group.FirstOrDefault();
-                    if (firstItem == null) { continue; }
+        @* === TAB 5: GENERAL (TRẮC NGHIỆM ĐƠN LẺ) === *@
+        <div class="tab-pane fade" id="general" role="tabpanel">
+            @RenderTabContent(generalQuestions, QuestionType.General)
+        </div>
 
-                    var collapseId = "collapse_" + firstItem.Id;
-                    string rawPassage = firstItem.ReadingPassage?.Content ?? "(Nội dung bài đọc trống)";
-                    string displayPassage = rawPassage.Length > 80 ? rawPassage.Substring(0, 80) + "..." : rawPassage;
-
-                    <tr class="table-warning border-bottom border-warning">
-                        <td><span class="badge bg-dark">#G</span></td>
-                        <td>
-                            <a class="text-decoration-none text-dark fw-bold d-block" data-bs-toggle="collapse" href="#@collapseId" role="button">
-                                <i class="fa fa-book text-success me-2"></i>
-                                BÀI ĐỌC (Gồm @group.Count() câu)
-                                <i class="fa fa-chevron-down float-end text-muted small mt-1"></i>
-                            </a>
-                            <div class="text-muted small text-truncate fst-italic">@displayPassage</div>
-
-                            <div class="collapse mt-2" id="@collapseId">
-                                <div class="card card-body bg-light border p-2">
-                                    <ul class="list-group list-group-flush">
-                                        @foreach (var subItem in group)
-                                        {
-                                            <li class="list-group-item bg-transparent d-flex justify-content-between ps-0">
-                                                <span><i class="fa fa-question-circle text-info"></i> @subItem.Content</span>
-                                                <span class="badge bg-white text-secondary border">ID: @subItem.Id</span>
-                                            </li>
-                                        }
-                                    </ul>
-                                </div>
-                            </div>
-                        </td>
-                        <td><span class="badge bg-success rounded-pill">Reading</span></td>
-                        <td><span class="badge bg-light text-dark border">Level @firstItem.Level</span></td>
-                        <td class="text-center">
-                            <div class="btn-group shadow-sm bg-white rounded">
-                                <a asp-action="EditReading" asp-route-id="@firstItem.Id" class="btn btn-sm btn-outline-warning"><i class="fa fa-pencil"></i></a>
-                                <a asp-action="DetailsReading" asp-route-id="@firstItem.Id" class="btn btn-sm btn-outline-info"><i class="fa fa-eye"></i></a>
-                                <a asp-action="Delete" asp-route-id="@firstItem.Id" class="btn btn-sm btn-outline-danger"><i class="fa fa-trash"></i></a>
-                            </div>
-                        </td>
-                    </tr>
-                }
-
-                @* --- PHẦN CÂU HỎI ĐƠN (Normal Questions) --- *@
-                @foreach (var item in normalQuestions)
-                {
-                    <tr>
-                        <td>@item.Id</td>
-                        <td>
-                            <div class="fw-bold text-dark">@(item.Content ?? "Nội dung trống")</div>
-
-                            @{
-                                string mediaLink = item.ListeningResource?.AudioUrl ?? item.MediaUrl;
-                            }
-
-                            @if (!string.IsNullOrEmpty(mediaLink))
-                            {
-                                <div class="mt-1">
-                                    @if (mediaLink.EndsWith(".mp3") || mediaLink.EndsWith(".wav"))
-                                    {
-                                        <audio controls src="@mediaLink" style="height: 25px; width: 200px;"></audio>
-                                    }
-                                    else
-                                    {
-                                        <a href="@mediaLink" target="_blank" class="badge bg-info text-decoration-none"><i class="fa fa-paperclip"></i> File đính kèm</a>
-                                    }
-                                </div>
-                            }
-                        </td>
-                        <td><span class="badge bg-secondary">@item.Type</span></td>
-                        <td>
-                            <span class="badge bg-light text-dark border">Level @item.Level</span>
-                            @* Thêm hiển thị Topic *@
-                            @if (item.QuestionTopics != null && item.QuestionTopics.Any())
-                            {
-                                <div class="small mt-1 text-muted">(@string.Join(", ", item.QuestionTopics.Select(qt => qt.Topic.Name)))</div>
-                            }
-                        </td>
-                        <td class="text-center">
-                            <div class="btn-group shadow-sm">
-                                @if (item.Type == QuestionType.Listening && item.ListeningResourceId.HasValue)
-                                {
-                                    <a asp-action="EditListening" asp-route-id="@item.Id" class="btn btn-sm btn-outline-warning"><i class="fa fa-pencil"></i></a>
-                                    <a asp-action="DetailsListening" asp-route-id="@item.Id" class="btn btn-sm btn-outline-info"><i class="fa fa-eye"></i></a>
-                                }
-                                else
-                                {
-                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary"><i class="fa fa-pencil"></i></a>
-                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-info"><i class="fa fa-eye"></i></a>
-                                }
-                                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger"><i class="fa fa-trash"></i></a>
-                            </div>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
     </div>
 </div>
 
+@section Scripts {
 <script>
-    // FIX 4: Đảm bảo Selects chọn đúng giá trị khi quay lại từ POST
-    var currentType = "@ViewData["CurrentType"]";
-    var currentLevel = "@ViewData["CurrentLevel"]";
-    var currentTopic = "@ViewData["CurrentTopicId"]";
+    $(document).ready(function () {
+        // Giữ lại giá trị lọc và trạng thái Tab sau khi tải trang
+        var currentLevel = "@(currentLevel?.ToString() ?? "")";
+        var currentTopicId = "@(currentTopicId?.ToString() ?? "")";
+        var currentType = "@(currentType?.ToString() ?? "")";
+        var currentFilter = "@(currentFilter?.ToString() ?? "")";
+        var activeTab = localStorage.getItem('activeBankTab');
 
-    if(currentType) document.querySelector('select[name="filterType"]').value = currentType;
-    if(currentLevel) document.querySelector('select[name="filterLevel"]').value = currentLevel;
-    if(currentTopic) document.querySelector('select[name="filterTopicId"]').value = currentTopic;
+        // Gán giá trị lọc
+        if (currentLevel) { $('select[name="filterLevel"]').val(currentLevel); }
+        if (currentTopicId) { $('select[name="filterTopicId"]').val(currentTopicId); }
+        
+        // --- Logic quản lý Tab ---
+        let initialTabId = 'reading-tab';
+        
+        // 1. Nếu có lọc theo Type, chọn Tab tương ứng
+        if (currentType) {
+            let enumValue = parseInt(currentType);
+            let map = {
+                3: 'reading-tab', 
+                4: 'listening-tab',
+                5: 'speaking-tab',
+                6: 'writing-tab',
+                1: 'general-tab', 
+                2: 'general-tab' 
+            };
+            // Sử dụng map[enumValue] hoặc fallback an toàn
+            initialTabId = map[enumValue] ? map[enumValue] : (activeTab ? activeTab + '-tab' : 'reading-tab');
+        } else if (activeTab) {
+             initialTabId = activeTab + '-tab';
+        }
+        
+        // Kích hoạt Tab
+        var tabElement = document.getElementById(initialTabId);
+        if (tabElement) {
+            new bootstrap.Tab(tabElement).show();
+        } else {
+             new bootstrap.Tab(document.getElementById('reading-tab')).show();
+        }
+
+        // Lưu trạng thái Tab khi chuyển
+        $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+            localStorage.setItem('activeBankTab', e.target.id.replace('-tab', ''));
+        });
+    });
 </script>
+}
+
+@functions {
+    public string GetQuestionTypeDisplay(QuestionType type) => type switch
+    {
+        QuestionType.General => "Trắc nghiệm Đơn",
+        QuestionType.MultipleChoice => "Trắc nghiệm Đa",
+        QuestionType.ReadingPassage => "ĐỌC",
+        QuestionType.Listening => "NGHE",
+        QuestionType.Speaking => "NÓI",
+        QuestionType.Writing => "VIẾT",
+        _ => "Khác"
+    };
+    
+    public string GetTypeCssColor(QuestionType type) => type switch
+    {
+        QuestionType.ReadingPassage => "warning",
+        QuestionType.Listening => "info",
+        QuestionType.Speaking => "danger",
+        QuestionType.Writing => "success",
+        _ => "primary"
+    };
+
+    // Hàm Render để tạo HTML cho từng Tab (Đã sửa lỗi cú pháp nội suy chuỗi)
+    public Microsoft.AspNetCore.Html.HtmlString RenderTabContent(List<Question> questions, QuestionType type)
+    {
+        if (questions == null || !questions.Any())
+        {
+            // Đã sửa lỗi cú pháp tại đây
+            return new Microsoft.AspNetCore.Html.HtmlString($@"
+                <div class=""text-center py-4 text-muted"">
+                    Không có câu hỏi nào thuộc loại {GetQuestionTypeDisplay(type)} khớp với bộ lọc.
+                </div>");
+        }
+
+        // Gom nhóm theo ParentId (nếu có)
+        var groupedItems = questions
+            .GroupBy(q => new 
+            { 
+                ParentId = q.ReadingPassageId.HasValue || q.ListeningResourceId.HasValue ? (q.ReadingPassageId ?? q.ListeningResourceId).ToString() : q.Id.ToString(),
+                q.Type 
+            })
+            .ToList();
+
+        var sb = new System.Text.StringBuilder();
+
+        // Đã sửa lỗi cú pháp tại đây
+        sb.AppendLine($@"
+            <div class=""table-responsive"" style=""max-height: 60vh; overflow-y: auto;"">
+                <table class=""table table-striped table-hover align-middle mb-0"">
+                    <thead class=""table-dark sticky-top"">
+                        <tr>
+                            <th style=""width: 5%"">STT</th>
+                            <th style=""width: 55%"">Nội dung câu hỏi / Bài gốc</th>
+                            <th style=""width: 10%"">Loại</th>
+                            <th style=""width: 10%"">Độ khó</th>
+                            <th style=""width: 10%"">Chủ đề</th>
+                            <th style=""width: 10%"" class=""text-center"">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>");
+
+        int currentGlobalIndex = 1;
+
+        foreach (var group in groupedItems)
+        {
+            var firstItem = group.First();
+            bool isGrouped = group.Count() > 1;
+            
+            string groupActionName = (firstItem.Type == QuestionType.ReadingPassage) ? "EditReading" : 
+                                     (firstItem.Type == QuestionType.Listening ? "EditListening" : "Edit");
+
+            // --- HÀNG TIÊU ĐỀ NHÓM (Dùng cho Bài đọc/Nghe) ---
+            if (isGrouped)
+            {
+                string parentTitle = (firstItem.ReadingPassage != null) ? firstItem.ReadingPassage.Title : (firstItem.ListeningResource != null ? firstItem.ListeningResource.Title : "Nhóm câu hỏi");
+                
+                // Đã sửa lỗi cú pháp tại đây
+                sb.AppendLine($@"
+                    <tr class=""table-secondary bg-opacity-25 fw-bold border-bottom border-dark"">
+                        <td><span class=""badge bg-dark"">#G</span></td>
+                        <td colspan=""4"">
+                            <i class=""fa fa-folder-open""></i> {parentTitle} ({group.Count()} câu)
+                        </td>
+                        <td class=""text-center"">
+                            <div class=""btn-group btn-group-sm"">
+                                <a href=""/Questions/{groupActionName}/{firstItem.Id}"" class=""btn btn-warning"" title=""Sửa nhóm""><i class=\"fa fa-pencil\"></i></a>
+                                <a href=""/Questions/Details/{firstItem.Id}"" class=""btn btn-info"" title=""Xem chi tiết nhóm""><i class=\"fa fa-eye\"></i></a>
+                                <a href=""/Questions/Delete/{firstItem.Id}"" class=""btn btn-danger"" title=""Xóa nhóm""><i class=\"fa fa-trash\"></i></a>
+                            </div>
+                        </td>
+                    </tr>");
+            }
+            
+            // --- HÀNG CÂU HỎI CON / CÂU HỎI ĐƠN LẺ ---
+            foreach (var item in group.OrderBy(q => q.Id))
+            {
+                string detailAction = isGrouped ? (firstItem.Type == QuestionType.ReadingPassage ? "DetailsReading" : "DetailsListening") : "Details";
+                string editAction = isGrouped ? groupActionName : "Edit";
+                
+                // Chuẩn bị các giá trị phức tạp
+                string itemContent = item.Content;
+                string topicDisplay = item.QuestionTopics?.Any() == true ? $"<span class=\"small text-muted\">{item.QuestionTopics.First().Topic.Name}</span>" : "<span class=\"small text-secondary\">---</span>";
+                
+                // Đã sửa lỗi cú pháp tại đây (dùng System.String.IsNullOrEmpty)
+                string mediaDisplay = (!string.IsNullOrEmpty(item.MediaUrl) || !string.IsNullOrEmpty(item.ListeningResource?.AudioUrl)) ? $"<div class=\"small text-muted mt-1\"><i class=\"fa fa-paperclip\"></i> File</div>" : "";
+                
+                string typeBadge = isGrouped ? "" : $"<span class=\"badge bg-{GetTypeCssColor(item.Type)}\">{GetQuestionTypeDisplay(item.Type)}</span>";
+
+                // Đã sửa lỗi cú pháp tại đây
+                sb.AppendLine($@"
+                    <tr>
+                        <td>{currentGlobalIndex++}</td>
+                        <td class=""{(isGrouped ? "ps-5 small" : "")}"">
+                            {(isGrouped ? "<i class=\"fa fa-arrow-right small me-2 text-primary\"></i>" : "")}
+                            {itemContent}
+                            {mediaDisplay}
+                        </td>
+                        <td>
+                            {typeBadge}
+                        </td>
+                        <td><span class=\"badge bg-light text-dark border\">Level {item.Level}</span></td>
+                        <td>
+                            {topicDisplay}
+                        </td>
+                        <td class=\"text-center\">
+                            <div class=\"btn-group btn-group-sm\">
+                                <a href=""/Questions/{editAction}/{item.Id}"" class=""btn btn-outline-warning"" title=""Sửa""><i class=\"fa fa-pencil\"></i></a>
+                                <a href=""/Questions/{detailAction}/{item.Id}"" class=""btn btn-outline-info"" title=""Xem chi tiết""><i class=\"fa fa-eye\"></i></a>
+                                <a href=""/Questions/Delete/{item.Id}"" class=""btn btn-outline-danger"" title=""Xóa""><i class=\"fa fa-trash""></i></a>
+                            </div>
+                        </td>
+                    </tr>");
+            }
+        }
+
+        sb.AppendLine("</tbody></table></div>");
+        return new Microsoft.AspNetCore.Html.HtmlString(sb.ToString());
+    }
+}
