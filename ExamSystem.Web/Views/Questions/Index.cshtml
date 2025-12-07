@@ -11,7 +11,7 @@
     var readingGroups = readingQuestions
         .GroupBy(x => x.ReadingPassageId.HasValue
                         ? "ID_" + x.ReadingPassageId
-                        : (x.PassageText ?? "No_Content_" + x.Id)) // Nếu null thì gán tên tạm
+                        :( "No_Content_" + x.Id)) // Nếu null thì gán tên tạm
         .ToList();
     var normalQuestions = Model.Where(x => x.Type != QuestionType.ReadingPassage).ToList();
 }
@@ -53,10 +53,6 @@
                     if (firstItem.ReadingPassage != null && !string.IsNullOrEmpty(firstItem.ReadingPassage.Content))
                     {
                         rawPassage = firstItem.ReadingPassage.Content;
-                    }
-                    else if (!string.IsNullOrEmpty(firstItem.PassageText))
-                    {
-                        rawPassage = firstItem.PassageText;
                     }
                     else
                     {

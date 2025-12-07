@@ -3,6 +3,13 @@
 
 @{
     ViewData["Title"] = "Sửa câu hỏi";
+
+    // Lấy danh sách đáp án đã chuẩn hóa (Nếu không có, đây là câu Writing/Speaking)
+    // Sắp xếp theo ID để đảm bảo thứ tự A, B, C, D
+    var answers = Model.Answers?.OrderBy(a => a.Id).ToList();
+
+    // Tìm đáp án đúng để điền vào ô CorrectAnswer
+    var correctAnswer = answers?.FirstOrDefault(a => a.IsCorrect)?.Content;
 }
 
 <div class="container mt-4">
@@ -11,29 +18,52 @@
             <h4><i class="fa fa-pencil"></i> Sửa câu hỏi #@Model.Id (@Model.Type)</h4>
         </div>
         <div class="card-body">
+            @* QUAN TRỌNG: Form phải nhận đủ thông tin để Controller có thể cập nhật Answers *@
             <form asp-action="Edit" enctype="multipart/form-data">
                 <input type="hidden" asp-for="Id" />
-                <input type="hidden" asp-for="Type" id="QuestionType" /> <div class="row">
+                <input type="hidden" asp-for="Type" id="QuestionType" />
+                <input type="hidden" asp-for="Explaination" /> @* Giữ lại Explaination nếu không sửa *@
+
+                <div class="row">
                     <div class="col-md-8">
                         <div class="form-group mb-3">
                             <label class="fw-bold">Nội dung / Đề bài</label>
                             <textarea asp-for="Content" class="form-control" rows="5"></textarea>
                         </div>
 
+                        @* HIỂN THỊ OPTIONS TỪ BẢNG ANSWERS MỚI *@
                         @if (Model.Type != QuestionType.Writing && Model.Type != QuestionType.Speaking)
                         {
                             <div class="card border-secondary mb-3">
                                 <div class="card-header bg-secondary text-white">Đáp án (Chỉ cho trắc nghiệm)</div>
                                 <div class="card-body">
                                     <div class="row g-2">
-                                        <div class="col-6"><input asp-for="OptionA" class="form-control" placeholder="A" /></div>
-                                        <div class="col-6"><input asp-for="OptionB" class="form-control" placeholder="B" /></div>
-                                        <div class="col-6"><input asp-for="OptionC" class="form-control" placeholder="C" /></div>
-                                        <div class="col-6"><input asp-for="OptionD" class="form-control" placeholder="D" /></div>
+                                        @* Dùng logic duyệt Answers và map ngược vào các ô input OptionA/B/C/D*@
+                                        @for (int i = 0; i < 4; i++)
+                                        {
+                                            var currentAnswer = answers?.ElementAtOrDefault(i);
+                                            var answerChar = ((char)('A' + i)).ToString();
+                                            var placeholder = answerChar;
+
+                                            <div class="col-6">
+                                                <div class="input-group">
+                                                    <span class="input-group-text fw-bold">@answerChar</span>
+                                                    @* CHÚ Ý: Phải sử dụng OptionA/B/C/D từ ViewModel (Hoặc dùng name trực tiếp) để POST hoạt động *@
+                                                    @* Dùng name trực tiếp để gửi data về Controller, nơi helper CreateAnswersFromModel xử lý *@
+                                                    <input name="Option@(answerChar)"
+                                                           class="form-control"
+                                                           placeholder="@placeholder"
+                                                           value="@(currentAnswer?.Content)" />
+                                                </div>
+                                            </div>
+                                        }
                                     </div>
                                     <div class="mt-2">
-                                        <label>Đáp án đúng:</label>
-                                        <input asp-for="CorrectAnswer" class="form-control w-25 text-uppercase" />
+                                        <label>Đáp án đúng (A/B/C/D):</label>
+                                        @* PHẢI SỬ DỤNG TRƯỜNG CorrectAnswer TỪ MODEL ĐỂ POST VỀ CONTROLLER *@
+                                        <input name="CorrectAnswer"
+                                               class="form-control w-25 text-uppercase"
+                                               value="@(answers?.FirstOrDefault(a => a.IsCorrect)?.Content)" />
                                     </div>
                                 </div>
                             </div>
@@ -52,6 +82,7 @@
                             </select>
                         </div>
 
+                        @* HIỂN THỊ MEDIA (Giữ nguyên) *@
                         @if (Model.Type == QuestionType.Speaking || Model.Type == QuestionType.Listening || !string.IsNullOrEmpty(Model.MediaUrl))
                         {
                             <div class="card bg-light">
@@ -60,17 +91,17 @@
                                     @if (!string.IsNullOrEmpty(Model.MediaUrl))
                                     {
                                         <div class="mb-2">
-                                            @if (Model.MediaUrl.EndsWith("mp3"))
+                                            @if (Model.MediaUrl.EndsWith("mp3") || Model.MediaUrl.EndsWith("wav"))
                                             {
                                                 <audio controls src="@Model.MediaUrl" class="w-100"></audio>
                                             }
                                             else
                                             {
-
                                                 <img src="@Model.MediaUrl" class="img-fluid" style="max-height:150px" />
                                             }
                                         </div>
                                     }
+                                    @* Name input file phải khớp với tham số IFormFile fileUpload trong Edit POST *@
                                     <input type="file" name="fileUpload" class="form-control" />
                                     <small class="text-muted">Chọn file mới để thay thế.</small>
                                 </div>

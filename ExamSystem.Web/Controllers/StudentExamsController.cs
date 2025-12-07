@@ -55,27 +55,23 @@ namespace ExamSystem.Web.Controllers
             var questions = examQuestions.Select(eq => eq.Question).ToList();
             return View(questions);
         }
-        
+
 
         // 3. NỘP BÀI (POST) - Chấm điểm theo cấu trúc mới
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SubmitExam(int examId, Dictionary<int, string> userAnswers)
         {
-            
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            // Kiểm tra xem đã đăng nhập chưa
             if (currentUserId == null)
             {
-                // Đây là trường hợp khẩn cấp, nên chuyển hướng đến trang đăng nhập hoặc báo lỗi
                 return Challenge();
             }
 
-            // Lấy lại bộ câu hỏi đề thi để so sánh đáp án
             var originalQuestions = await _context.ExamQuestions
                 .Include(eq => eq.Question)
-                    .ThenInclude(q => q.Answers) // Cần bảng Answers để chấm điểm
+                    .ThenInclude(q => q.Answers)
                 .Where(eq => eq.ExamId == examId)
                 .Select(eq => eq.Question)
                 .ToListAsync();
@@ -83,11 +79,10 @@ namespace ExamSystem.Web.Controllers
             int correctCount = 0;
             var resultDetails = new List<TestResult>();
 
-            // Tạo lượt thi mới
             var attempt = new TestAttempt
             {
                 ExamId = examId,
-                UserId = currentUserId, // <<< SỬA TỪ USER.IDENTITY.NAME SANG CURRENTUSERID (ID DB)
+                UserId = currentUserId,
                 StartTime = DateTime.Now
             };
 
@@ -96,39 +91,36 @@ namespace ExamSystem.Web.Controllers
                 string selectedVal = userAnswers.ContainsKey(q.Id) ? userAnswers[q.Id] : null;
                 bool isCorrect = false;
 
-                // --- LOGIC CHẤM ĐIỂM ---
+                // --- LOGIC CHẤM ĐIỂM CHUẨN HÓA (CHỈ DÙNG BẢNG ANSWERS) ---
                 if (q.Answers != null && q.Answers.Any())
                 {
                     var dbCorrectAnswer = q.Answers.FirstOrDefault(a => a.IsCorrect);
+
+                    // So sánh nội dung đáp án người dùng chọn với nội dung đáp án đúng
+                    // Tức là: User chọn "ĐA B" (Content của đáp án B), và đáp án B đó là đúng.
                     if (dbCorrectAnswer != null && selectedVal == dbCorrectAnswer.Content)
                     {
                         isCorrect = true;
                     }
                 }
-                else // Fallback
-                {
-                    if (!string.IsNullOrEmpty(q.CorrectAnswer) && string.Equals(selectedVal, q.CorrectAnswer, StringComparison.OrdinalIgnoreCase))
-                    {
-                        isCorrect = true;
-                    }
-                }
+
+                // GHI CHÚ: Loại bỏ hoàn toàn khối ELSE (Fallback) cũ vì các cột đã xóa
 
                 if (isCorrect) correctCount++;
 
                 resultDetails.Add(new TestResult
                 {
                     QuestionId = q.Id,
-                    SelectedAnswer = selectedVal, // Lưu nội dung đáp án sinh viên chọn
+                    SelectedAnswer = selectedVal,
                     IsCorrect = isCorrect
                 });
             }
 
-            // Tính điểm
             attempt.Score = originalQuestions.Count > 0 ? (double)correctCount / originalQuestions.Count * 10 : 0;
             attempt.TestResults = resultDetails;
 
             _context.TestAttempts.Add(attempt);
-            await _context.SaveChangesAsync(); // Lỗi Foreign Key sẽ không còn xảy ra ở đây
+            await _context.SaveChangesAsync();
 
             return RedirectToAction("Result", new { id = attempt.Id });
         }

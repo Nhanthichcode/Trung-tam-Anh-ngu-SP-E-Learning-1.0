@@ -16,13 +16,13 @@ namespace ExamSystem.Core.Entities
 
         // Các trường sắp xóa (đánh dấu Obsolete để nhớ)
         public string? MediaUrl { get; set; }
-        public string? PassageText { get; set; }
-        public string? Transcript { get; set; }
-        public string? OptionA { get; set; }
-        public string? OptionB { get; set; }
-        public string? OptionC { get; set; }
-        public string? OptionD { get; set; }
-        public string? CorrectAnswer { get; set; }
+        //public string? PassageText { get; set; }
+        //public string? Transcript { get; set; }
+        //public string? OptionA { get; set; }
+        //public string? OptionB { get; set; }
+        //public string? OptionC { get; set; }
+        //public string? OptionD { get; set; }
+        //public string? CorrectAnswer { get; set; }
         public string? Explaination { get; set; }
         public DateTime CreatedDate { get; set; } = DateTime.Now;
 

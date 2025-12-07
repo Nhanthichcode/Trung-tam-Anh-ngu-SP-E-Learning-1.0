@@ -17,12 +17,14 @@
                 <strong>ID:</strong> @Model.Id <br />
                 <strong>Loại:</strong> @Model.Type <br />
                 <strong>Nội dung:</strong> @Model.Content
-                @if (!string.IsNullOrEmpty(Model.PassageText))
+                @if (Model.Type == Core.Enums.QuestionType.ReadingPassage || Model.Type == Core.Enums.QuestionType.Listening)
                 {
                     <br />
                     <strong>Lưu ý:</strong>
 
-                    <span class="text-danger fw-bold">Đây là câu hỏi thuộc bài đọc. Việc xóa này chỉ xóa câu hỏi con, không ảnh hưởng các câu khác trong bài.</span>
+                    <span class="text-danger fw-bold">
+                        Câu hỏi này thuộc về một Bài Đọc/Bài Nghe lớn. Việc xóa chỉ xóa câu hỏi con này (ID: @Model.Id), không ảnh hưởng đến các câu hỏi anh em khác trong cùng bài.
+                    </span>
                 }
             </div>
 

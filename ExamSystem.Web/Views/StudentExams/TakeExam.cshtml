@@ -5,8 +5,9 @@
     ViewData["Title"] = "Làm bài thi";
 
     // 1. Tách nhóm để hiển thị đẹp
+    // FIX 1: Đã sửa logic GroupBy (loại bỏ q.PassageText)
     var readingGroups = Model.Where(x => x.Type == QuestionType.ReadingPassage)
-        .GroupBy(x => x.ReadingPassageId.HasValue ? "ID_" + x.ReadingPassageId : x.PassageText)
+        .GroupBy(x => x.ReadingPassageId.HasValue ? x.ReadingPassageId : null) // Dùng ID (int?)
         .ToList();
 
     var listeningGroups = Model.Where(x => x.Type == QuestionType.Listening && x.ListeningResourceId.HasValue)
@@ -30,6 +31,9 @@
     <form asp-action="SubmitExam" method="post" id="examForm">
         <input type="hidden" name="examId" value="@ViewBag.ExamId" />
 
+        @* ---------------------------------------------------------------------- *@
+        @* 1. PHẦN NGHE (LISTENING GROUPS) *@
+        @* ---------------------------------------------------------------------- *@
         @foreach (var group in listeningGroups)
         {
             var resource = group.First().ListeningResource;
@@ -47,16 +51,20 @@
                     @foreach (var q in group)
                     {
                         questionCounter++;
-                       { await RenderQuestion(q, questionCounter); }
+                        { await RenderQuestion(q, questionCounter); }
                     }
                 </div>
             </div>
         }
 
+        @* ---------------------------------------------------------------------- *@
+        @* 2. PHẦN ĐỌC (READING GROUPS) *@
+        @* ---------------------------------------------------------------------- *@
         @foreach (var group in readingGroups)
         {
             var first = group.First();
-            var passageText = first.ReadingPassage?.Content ?? first.PassageText;
+            // FIX 2: Chỉ lấy nội dung từ ReadingPassage (chúng ta đã xóa PassageText)
+            var passageText = first.ReadingPassage?.Content ?? "Không có nội dung bài đọc";
 
             <div class="card mb-4 border-warning">
                 <div class="card-header bg-warning text-dark fw-bold">
@@ -68,12 +76,15 @@
                     @foreach (var q in group)
                     {
                         questionCounter++;
-                       { await RenderQuestion(q, questionCounter); }
+                        { await RenderQuestion(q, questionCounter); }
                     }
                 </div>
             </div>
         }
 
+        @* ---------------------------------------------------------------------- *@
+        @* 3. CÂU HỎI ĐƠN (NORMAL, SPEAKING, WRITING) *@
+        @* ---------------------------------------------------------------------- *@
         @foreach (var q in normalQuestions)
         {
             questionCounter++;
@@ -85,13 +96,12 @@
                         if (!string.IsNullOrEmpty(media))
                         {
                             <div class="mb-2">
-                                @if (media.EndsWith("mp3"))
+                                @if (media.EndsWith("mp3") || media.EndsWith("wav"))
                                 {
                                     <audio controls src="@media"></audio>
                                 }
                                 else
                                 {
-
                                     <img src="@media" class="img-fluid" style="max-height:200px" />
                                 }
                             </div>
@@ -113,6 +123,7 @@
 </div>
 
 @functions {
+    // FIX 3: HÀM RENDER QUESTION CHỈ DÙNG BẢNG ANSWERS MỚI
     public async Task RenderQuestion(ExamSystem.Core.Entities.Question q, int index)
     {
         <div class="mb-3">
@@ -120,15 +131,15 @@
                 <span class="badge bg-primary me-2">Câu @index</span> @q.Content
             </p>
 
-            @if (q.Type == ExamSystem.Core.Enums.QuestionType.Writing)
+            @if (q.Type == ExamSystem.Core.Enums.QuestionType.Writing || q.Type == ExamSystem.Core.Enums.QuestionType.Speaking)
             {
-                <textarea name="userAnswers[@q.Id]" class="form-control" rows="5" placeholder="Nhập bài viết của bạn..."></textarea>
+                <textarea name="userAnswers[@q.Id]" class="form-control" rows="5" placeholder="Nhập bài làm của bạn (Viết/Nói)..."></textarea>
             }
             else if (q.Answers != null && q.Answers.Any())
             {
                 // Dùng bảng Answers mới
                 <div class="row g-2">
-                    @foreach (var ans in q.Answers)
+                    @foreach (var ans in q.Answers.OrderBy(a => a.Id)) // Sắp xếp theo ID để đảm bảo thứ tự A, B, C, D
                     {
                         <div class="col-md-6">
                             <div class="form-check p-2 border rounded bg-light">
@@ -141,28 +152,7 @@
                     }
                 </div>
             }
-            else
-            {
-                // Fallback cũ (OptionA...)
-                <div class="row g-2">
-                    @{
-                        var opts = new[] { q.OptionA, q.OptionB, q.OptionC, q.OptionD };
-                        var labels = new[] { "A", "B", "C", "D" };
-                    }
-                    @for (int i = 0; i < 4; i++)
-                    {
-                        if (!string.IsNullOrEmpty(opts[i]))
-                        {
-                            <div class="col-md-6">
-                                <div class="form-check p-2 border rounded bg-light">
-                                    <input class="form-check-input ms-1" type="radio" name="userAnswers[@q.Id]" value="@opts[i]" id="opt_@q.Id@i">
-                                    <label class="form-check-label ms-2 w-100" for="opt_@q.Id@i">@labels[i]. @opts[i]</label>
-                                </div>
-                            </div>
-                        }
-                    }
-                </div>
-            }
+            @* KHÔNG CẦN KHỐI ELSE/FALLBACK CŨ VÌ CÁC CỘT OptionA/B/C/D ĐÃ BỊ XÓA *@
         </div>
         <hr class="text-muted opacity-25" />
     }

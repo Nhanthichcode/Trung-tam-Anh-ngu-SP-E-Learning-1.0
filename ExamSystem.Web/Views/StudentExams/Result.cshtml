@@ -58,7 +58,7 @@
         // Lấy danh sách đáp án đã load và đáp án đúng
         var allAnswers = question?.Answers?.OrderBy(a => a.Id).Take(4).ToList();
         var dbCorrectAnswer = allAnswers?.FirstOrDefault(a => a.IsCorrect);
-        var correctContent = dbCorrectAnswer?.Content ?? question?.CorrectAnswer; // Fallback cột cũ nếu cần
+        var correctContent = dbCorrectAnswer?.Content; // Fallback cột cũ nếu cần
 
         <div class="card mb-4 @borderClass shadow-sm">
             <div class="card-header @bgHeader d-flex justify-content-between align-items-center">
