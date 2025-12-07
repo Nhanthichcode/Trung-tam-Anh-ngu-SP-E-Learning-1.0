@@ -22,7 +22,7 @@
 
   <ItemGroup>
     <Folder Include="Areas\Identity\Data\" />
-    <Folder Include="wwwroot\uploads\" />
+    <Folder Include="wwwroot\uploads\audio\" />
   </ItemGroup>
 
 </Project>

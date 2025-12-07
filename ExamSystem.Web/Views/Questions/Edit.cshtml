@@ -1,15 +1,8 @@
-﻿@model ExamSystem.Core.Entities.Question
+﻿@model ExamSystem.Web.Models.QuestionViewModel
 @using ExamSystem.Core.Enums
 
 @{
     ViewData["Title"] = "Sửa câu hỏi";
-
-    // Lấy danh sách đáp án đã chuẩn hóa (Nếu không có, đây là câu Writing/Speaking)
-    // Sắp xếp theo ID để đảm bảo thứ tự A, B, C, D
-    var answers = Model.Answers?.OrderBy(a => a.Id).ToList();
-
-    // Tìm đáp án đúng để điền vào ô CorrectAnswer
-    var correctAnswer = answers?.FirstOrDefault(a => a.IsCorrect)?.Content;
 }
 
 <div class="container mt-4">
@@ -18,11 +11,11 @@
             <h4><i class="fa fa-pencil"></i> Sửa câu hỏi #@Model.Id (@Model.Type)</h4>
         </div>
         <div class="card-body">
-            @* QUAN TRỌNG: Form phải nhận đủ thông tin để Controller có thể cập nhật Answers *@
+
             <form asp-action="Edit" enctype="multipart/form-data">
                 <input type="hidden" asp-for="Id" />
                 <input type="hidden" asp-for="Type" id="QuestionType" />
-                <input type="hidden" asp-for="Explaination" /> @* Giữ lại Explaination nếu không sửa *@
+                <input type="hidden" asp-for="Explaination" /> @* Giữ lại Explaination *@
 
                 <div class="row">
                     <div class="col-md-8">
@@ -31,39 +24,22 @@
                             <textarea asp-for="Content" class="form-control" rows="5"></textarea>
                         </div>
 
-                        @* HIỂN THỊ OPTIONS TỪ BẢNG ANSWERS MỚI *@
+                        @* HIỂN THỊ OPTIONS TỪ VIEWMODEL *@
                         @if (Model.Type != QuestionType.Writing && Model.Type != QuestionType.Speaking)
                         {
                             <div class="card border-secondary mb-3">
                                 <div class="card-header bg-secondary text-white">Đáp án (Chỉ cho trắc nghiệm)</div>
                                 <div class="card-body">
                                     <div class="row g-2">
-                                        @* Dùng logic duyệt Answers và map ngược vào các ô input OptionA/B/C/D*@
-                                        @for (int i = 0; i < 4; i++)
-                                        {
-                                            var currentAnswer = answers?.ElementAtOrDefault(i);
-                                            var answerChar = ((char)('A' + i)).ToString();
-                                            var placeholder = answerChar;
-
-                                            <div class="col-6">
-                                                <div class="input-group">
-                                                    <span class="input-group-text fw-bold">@answerChar</span>
-                                                    @* CHÚ Ý: Phải sử dụng OptionA/B/C/D từ ViewModel (Hoặc dùng name trực tiếp) để POST hoạt động *@
-                                                    @* Dùng name trực tiếp để gửi data về Controller, nơi helper CreateAnswersFromModel xử lý *@
-                                                    <input name="Option@(answerChar)"
-                                                           class="form-control"
-                                                           placeholder="@placeholder"
-                                                           value="@(currentAnswer?.Content)" />
-                                                </div>
-                                            </div>
-                                        }
+                                        @* Sử dụng các trường OptionX của ViewModel, đã được map ngược từ Controller *@
+                                        <div class="col-6"><div class="input-group"><span class="input-group-text fw-bold">A</span><input name="OptionA" class="form-control" placeholder="A" value="@Model.OptionA" /></div></div>
+                                        <div class="col-6"><div class="input-group"><span class="input-group-text fw-bold">B</span><input name="OptionB" class="form-control" placeholder="B" value="@Model.OptionB" /></div></div>
+                                        <div class="col-6"><div class="input-group"><span class="input-group-text fw-bold">C</span><input name="OptionC" class="form-control" placeholder="C" value="@Model.OptionC" /></div></div>
+                                        <div class="col-6"><div class="input-group"><span class="input-group-text fw-bold">D</span><input name="OptionD" class="form-control" placeholder="D" value="@Model.OptionD" /></div></div>
                                     </div>
                                     <div class="mt-2">
                                         <label>Đáp án đúng (A/B/C/D):</label>
-                                        @* PHẢI SỬ DỤNG TRƯỜNG CorrectAnswer TỪ MODEL ĐỂ POST VỀ CONTROLLER *@
-                                        <input name="CorrectAnswer"
-                                               class="form-control w-25 text-uppercase"
-                                               value="@(answers?.FirstOrDefault(a => a.IsCorrect)?.Content)" />
+                                        <input name="CorrectAnswer" class="form-control w-25 text-uppercase" value="@Model.CorrectAnswer" />
                                     </div>
                                 </div>
                             </div>
@@ -101,7 +77,6 @@
                                             }
                                         </div>
                                     }
-                                    @* Name input file phải khớp với tham số IFormFile fileUpload trong Edit POST *@
                                     <input type="file" name="fileUpload" class="form-control" />
                                     <small class="text-muted">Chọn file mới để thay thế.</small>
                                 </div>

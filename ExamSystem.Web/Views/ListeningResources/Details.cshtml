@@ -1,36 +1,43 @@
-@model ExamSystem.Core.Entities.ListeningResource
+﻿@model ExamSystem.Core.Entities.ListeningResource
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Chi tiết File nghe";
 }
 
-<h1>Details</h1>
+<div class="container mt-4">
+    <div class="card border-info shadow-sm">
+        <div class="card-header bg-info text-white">
+            <h4 class="m-0"><i class="fa fa-eye"></i> Chi tiết Tài nguyên nghe #@Model.Id</h4>
+        </div>
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-2 fw-bold">Tiêu đề:</dt>
+                <dd class="col-sm-10 fs-5 text-primary">@Html.DisplayFor(model => model.Title)</dd>
 
-<div>
-    <h4>ListeningResource</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Title)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Title)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.AudioUrl)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.AudioUrl)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Transcript)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Transcript)
-        </dd>
-    </dl>
-</div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+                <dt class="col-sm-2 fw-bold">Audio:</dt>
+                <dd class="col-sm-10">
+                    @if (!string.IsNullOrEmpty(Model.AudioUrl))
+                    {
+                        <audio controls src="@Model.AudioUrl" class="w-100"></audio>
+                        <p class="small text-muted mt-1">Đường dẫn: @Model.AudioUrl</p>
+                    }
+                    else
+                    {
+                        <p class="text-danger">Không có file audio đính kèm.</p>
+                    }
+                </dd>
+
+                <dt class="col-sm-2 fw-bold">Transcript:</dt>
+                <dd class="col-sm-10">
+                    <div class="p-3 bg-light rounded border" style="white-space: pre-wrap;">
+                        @Html.DisplayFor(model => model.Transcript)
+                    </div>
+                </dd>
+            </dl>
+        </div>
+        <div class="card-footer d-flex justify-content-between">
+            <a asp-action="Index" class="btn btn-secondary"><i class="fa fa-arrow-left"></i> Quay lại</a>
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning"><i class="fa fa-pencil"></i> Sửa File nghe</a>
+        </div>
+    </div>
 </div>

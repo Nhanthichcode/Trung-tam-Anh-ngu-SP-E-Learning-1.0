@@ -1,47 +1,81 @@
-@model IEnumerable<ExamSystem.Core.Entities.ListeningResource>
+﻿@model IEnumerable<ExamSystem.Core.Entities.ListeningResource>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Quản lý File nghe";
 }
 
-<h1>Index</h1>
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="text-primary m-0"><i class="fa fa-headphones"></i> Kho Tài nguyên Nghe</h2>
+        <a asp-action="Create" class="btn btn-success shadow-sm">
+            <i class="fa fa-plus-circle"></i> Thêm File nghe mới
+        </a>
+    </div>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Title)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.AudioUrl)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Transcript)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Title)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.AudioUrl)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Transcript)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
+    @* === FORM LỌC & TÌM KIẾM === *@
+    <form asp-action="Index" method="get" class="mb-4 p-3 bg-light rounded shadow-sm">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-10">
+                <label class="form-label fw-bold">Tìm kiếm (Tiêu đề hoặc Transcript)</label>
+                <input type="text" name="searchString" value="@ViewData["CurrentFilter"]" class="form-control" placeholder="Nhập từ khóa..." />
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100"><i class="fa fa-filter"></i> Lọc</button>
+            </div>
+        </div>
+    </form>
+    @* === KẾT THÚC FORM LỌC === *@
+
+
+    @* === BẢNG DỮ LIỆU CÓ THANH CUỘN DỌC === *@
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive" style="max-height: 550px; overflow-y: auto;">
+                <table class="table table-striped table-hover align-middle mb-0">
+                    <thead class="bg-primary text-white sticky-top">
+                        <tr>
+                            <th style="width: 5%">ID</th>
+                            <th style="width: 20%">@Html.DisplayNameFor(model => model.Title)</th>
+                            <th style="width: 25%">@Html.DisplayNameFor(model => model.AudioUrl)</th>
+                            <th style="width: 35%">@Html.DisplayNameFor(model => model.Transcript)</th>
+                            <th style="width: 15%" class="text-center">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Any())
+                        {
+                            <tr><td colspan="5" class="text-center py-4 text-muted">Không tìm thấy tài nguyên nghe nào.</td></tr>
+                        }
+
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td><span class="badge bg-secondary">@item.Id</span></td>
+                                <td class="fw-bold">@Html.DisplayFor(modelItem => item.Title)</td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(item.AudioUrl))
+                                    {
+                                        <audio controls src="@item.AudioUrl" style="height: 25px; width: 100%;"></audio>
+                                    }
+                            </td>
+                            <td>
+                                @* Cắt bớt Transcript để hiển thị gọn gàng *@
+                                @(item.Transcript != null && item.Transcript.Length > 120
+                                                                ? item.Transcript.Substring(0, 120) + "..."
+                                                                : item.Transcript)
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group shadow-sm">
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-warning" title="Sửa"><i class="fa fa-pencil"></i></a>
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-info" title="Xem chi tiết"><i class="fa fa-eye"></i></a>
+                                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger" title="Xóa"><i class="fa fa-trash"></i></a>
+                                </div>
+                            </td>
+                        </tr>
+                                                }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

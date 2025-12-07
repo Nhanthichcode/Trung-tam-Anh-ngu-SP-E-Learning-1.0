@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -20,9 +20,19 @@ namespace ExamSystem.Web.Controllers
         }
 
         // GET: ReadingPassages
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string searchString)
         {
-            return View(await _context.ReadingPassages.ToListAsync());
+            var passagesQuery = _context.ReadingPassages.AsQueryable();
+
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                // Lọc theo Title hoặc Content
+                passagesQuery = passagesQuery.Where(p => p.Title.Contains(searchString) || p.Content.Contains(searchString));
+            }
+
+            ViewData["CurrentFilter"] = searchString;
+
+            return View(await passagesQuery.OrderByDescending(p => p.Id).ToListAsync());
         }
 
         // GET: ReadingPassages/Details/5
@@ -135,18 +145,48 @@ namespace ExamSystem.Web.Controllers
         }
 
         // POST: ReadingPassages/Delete/5
+        // Trong ReadingPassagesController.cs
+
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
+            // 1. TÌM VÀ TẢI TẤT CẢ CÂU HỎI LIÊN QUAN VÀ CON CỦA CHÚNG
+            var relatedQuestions = await _context.Questions
+                .Include(q => q.Answers) // Đã có
+                .Include(q => q.QuestionTopics) // Thêm QuestionTopics
+                .Where(q => q.ReadingPassageId == id)
+                .ToListAsync();
+
+            // 2. TÌM BÀI ĐỌC GỐC
             var readingPassage = await _context.ReadingPassages.FindAsync(id);
-            if (readingPassage != null)
+
+            if (readingPassage == null)
             {
-                _context.ReadingPassages.Remove(readingPassage);
+                return NotFound();
             }
 
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            // 3. XÓA CÂU HỎI VÀ TẤT CẢ CHILD CỦA CHÚNG
+            if (relatedQuestions.Any())
+            {
+                _context.Questions.RemoveRange(relatedQuestions);
+            }
+
+            // 4. XÓA BÀI ĐỌC GỐC
+            _context.ReadingPassages.Remove(readingPassage);
+
+            try
+            {
+                // 5. LƯU THAY ĐỔI
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
+            catch (DbUpdateException ex)
+            {
+                //Console.WriteLine($"Database Delete Error: {ex.InnerException?.Message}");
+                ViewData["ErrorMessage"] = "Không thể xóa. Vẫn còn các câu hỏi sử dụng bài đọc này.";
+                return View("Delete", readingPassage);
+            }
         }
 
         private bool ReadingPassageExists(int id)

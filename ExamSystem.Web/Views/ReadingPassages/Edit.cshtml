@@ -1,39 +1,43 @@
-@model ExamSystem.Core.Entities.ReadingPassage
+﻿@model ExamSystem.Core.Entities.ReadingPassage
 
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Sửa Bài đọc";
 }
 
-<h1>Edit</h1>
+<div class="container mt-4">
+    <div class="card border-warning shadow-lg">
+        <div class="card-header bg-warning text-dark">
+            <h4 class="m-0"><i class="fa fa-pencil"></i> Sửa Bài đọc #@Model.Id</h4>
+        </div>
+        <div class="card-body">
+            <form asp-action="Edit">
+                <input type="hidden" asp-for="Id" />
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-<h4>ReadingPassage</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="Id" />
-            <div class="form-group">
-                <label asp-for="Title" class="control-label"></label>
-                <input asp-for="Title" class="form-control" />
-                <span asp-validation-for="Title" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Content" class="control-label"></label>
-                <input asp-for="Content" class="form-control" />
-                <span asp-validation-for="Content" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
-            </div>
-        </form>
+                <div class="form-group mb-3">
+                    <label asp-for="Title" class="form-label fw-bold">Tiêu đề Bài đọc (*)</label>
+                    <input asp-for="Title" class="form-control" />
+                    <span asp-validation-for="Title" class="text-danger"></span>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="Content" class="form-label fw-bold">Nội dung (*)</label>
+                    <textarea asp-for="Content" class="form-control" rows="10"></textarea>
+                    <span asp-validation-for="Content" class="text-danger"></span>
+                </div>
+
+                <div class="d-flex justify-content-between mt-4">
+                    <a asp-action="Index" class="btn btn-secondary"><i class="fa fa-arrow-left"></i> Hủy và Quay lại</a>
+                    <button type="submit" class="btn btn-warning px-5 shadow">
+                        <i class="fa fa-save"></i> Cập nhật
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
-
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

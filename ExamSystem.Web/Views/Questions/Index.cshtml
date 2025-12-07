@@ -4,16 +4,20 @@
 @{
     ViewData["Title"] = "Quản lý câu hỏi";
 
-    // Lọc và gom nhóm an toàn
+    // Lọc và gom nhóm an toàn (giữ nguyên logic)
     var readingQuestions = Model.Where(x => x.Type == QuestionType.ReadingPassage);
-
-    // Gom nhóm: Nếu không có ID và không có Text thì gom vào nhóm "Unknown"
     var readingGroups = readingQuestions
-        .GroupBy(x => x.ReadingPassageId.HasValue
-                        ? "ID_" + x.ReadingPassageId
-                        :( "No_Content_" + x.Id)) // Nếu null thì gán tên tạm
+        .GroupBy(x => x.ReadingPassageId.HasValue ? "ID_" + x.ReadingPassageId : ("No_Content_" + x.Id))
         .ToList();
     var normalQuestions = Model.Where(x => x.Type != QuestionType.ReadingPassage).ToList();
+
+    // Lấy dữ liệu từ ViewBag (cần được Controller cung cấp)
+    var allTopics = ViewData["Topics"] as SelectList;
+
+    // Lấy giá trị lọc hiện tại
+    var currentType = ViewData["CurrentType"];
+    var currentLevel = ViewData["CurrentLevel"];
+    var currentTopic = ViewData["CurrentTopic"];
 }
 
 <div class="container-fluid mt-3">
@@ -22,12 +26,48 @@
         <a asp-action="Create" class="btn btn-success shadow-sm"><i class="fa fa-plus-circle"></i> Tạo mới</a>
     </div>
 
+    @* === FORM LỌC & TÌM KIẾM === *@
+    <form asp-action="Index" method="get" class="mb-4 p-3 bg-light rounded shadow-sm">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Tìm kiếm (Nội dung)</label>
+                <input type="text" name="searchString" value="@ViewData["CurrentFilter"]" class="form-control" placeholder="Nhập từ khóa..." />
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label fw-bold">Loại câu hỏi</label>
+                <select name="filterType" class="form-select" asp-items="Html.GetEnumSelectList<QuestionType>()">
+                    <option value="">-- Tất cả --</option>
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label fw-bold">Độ khó</label>
+                <select name="filterLevel" class="form-select" asp-items="@ViewData["Levels"] as SelectList">
+                    <option value="">-- Tất cả --</option>
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label fw-bold">Chủ đề (Topic)</label>
+                <select name="filterTopicId" class="form-select" asp-items="allTopics">
+                    <option value="">-- Tất cả --</option>
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100"><i class="fa fa-filter"></i> Lọc</button>
+            </div>
+        </div>
+    </form>
+    @* === KẾT THÚC FORM LỌC === *@
+
     <div class="table-responsive shadow-sm bg-white rounded">
         <table class="table table-hover align-middle mb-0">
             <thead class="bg-primary text-white">
                 <tr>
                     <th style="width: 5%">ID</th>
-                    <th style="width: 50%">Nội dung / Bài đọc</th>
+                    <th style="width: 50%">Nội dung</th>
                     <th style="width: 15%">Loại</th>
                     <th style="width: 15%">Info</th>
                     <th style="width: 15%" class="text-center">Thao tác</th>
@@ -40,28 +80,15 @@
                     <tr><td colspan="5" class="text-center py-4 text-muted">Chưa có dữ liệu.</td></tr>
                 }
 
+                @* --- PHẦN BÀI ĐỌC (Reading Groups) --- *@
                 @foreach (var group in readingGroups)
                 {
                     var firstItem = group.FirstOrDefault();
-                    if (firstItem == null) { continue; } // Bỏ qua nếu nhóm rỗng
+                    if (firstItem == null) { continue; }
 
                     var collapseId = "collapse_" + firstItem.Id;
-
-                    // --- LOGIC FIX LỖI NULL (TƯỜNG MINH) ---
-                    string rawPassage = string.Empty;
-
-                    if (firstItem.ReadingPassage != null && !string.IsNullOrEmpty(firstItem.ReadingPassage.Content))
-                    {
-                        rawPassage = firstItem.ReadingPassage.Content;
-                    }
-                    else
-                    {
-                        rawPassage = "(Nội dung bài đọc trống)";
-                    }
-
-                    // Cắt chuỗi an toàn
+                    string rawPassage = firstItem.ReadingPassage?.Content ?? "(Nội dung bài đọc trống)";
                     string displayPassage = rawPassage.Length > 80 ? rawPassage.Substring(0, 80) + "..." : rawPassage;
-                    // ----------------------------------------
 
                     <tr class="table-warning border-bottom border-warning">
                         <td><span class="badge bg-dark">#G</span></td>
@@ -99,6 +126,7 @@
                     </tr>
                 }
 
+                @* --- PHẦN CÂU HỎI ĐƠN (Normal Questions) --- *@
                 @foreach (var item in normalQuestions)
                 {
                     <tr>
@@ -107,28 +135,32 @@
                             <div class="fw-bold text-dark">@(item.Content ?? "Nội dung trống")</div>
 
                             @{
-                                // Fix lỗi null cho Audio luôn
-                                string mediaLink = "";
-                                if (item.ListeningResource != null) mediaLink = item.ListeningResource.AudioUrl;
-                                else if (!string.IsNullOrEmpty(item.MediaUrl)) mediaLink = item.MediaUrl;
+                                string mediaLink = item.ListeningResource?.AudioUrl ?? item.MediaUrl;
                             }
 
                             @if (!string.IsNullOrEmpty(mediaLink))
                             {
                                 <div class="mt-1">
-                                    @if (mediaLink.EndsWith(".mp3"))
+                                    @if (mediaLink.EndsWith(".mp3") || mediaLink.EndsWith(".wav"))
                                     {
                                         <audio controls src="@mediaLink" style="height: 25px; width: 200px;"></audio>
                                     }
                                     else
                                     {
-                                        <a href="@mediaLink" target="_blank" class="badge bg-info text-decoration-none"><i class="fa fa-paperclip"></i> File</a>
+                                        <a href="@mediaLink" target="_blank" class="badge bg-info text-decoration-none"><i class="fa fa-paperclip"></i> File đính kèm</a>
                                     }
                                 </div>
                             }
                         </td>
                         <td><span class="badge bg-secondary">@item.Type</span></td>
-                        <td><span class="badge bg-light text-dark border">Level @item.Level</span></td>
+                        <td>
+                            <span class="badge bg-light text-dark border">Level @item.Level</span>
+                            @* Thêm hiển thị Topic *@
+                            @if (item.QuestionTopics != null && item.QuestionTopics.Any())
+                            {
+                                <div class="small mt-1 text-muted">(@string.Join(", ", item.QuestionTopics.Select(qt => qt.Topic.Name)))</div>
+                            }
+                        </td>
                         <td class="text-center">
                             <div class="btn-group shadow-sm">
                                 @if (item.Type == QuestionType.Listening && item.ListeningResourceId.HasValue)
@@ -152,6 +184,12 @@
 </div>
 
 <script>
+    // FIX 4: Đảm bảo Selects chọn đúng giá trị khi quay lại từ POST
     var currentType = "@ViewData["CurrentType"]";
+    var currentLevel = "@ViewData["CurrentLevel"]";
+    var currentTopic = "@ViewData["CurrentTopicId"]";
+
     if(currentType) document.querySelector('select[name="filterType"]').value = currentType;
+    if(currentLevel) document.querySelector('select[name="filterLevel"]').value = currentLevel;
+    if(currentTopic) document.querySelector('select[name="filterTopicId"]').value = currentTopic;
 </script>

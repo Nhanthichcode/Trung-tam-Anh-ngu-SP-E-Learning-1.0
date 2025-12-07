@@ -344,6 +344,59 @@
             // Re-index before submit
             questionEditor.validateForm();
             return true;
-        }
+            }
+                $('#ReadingPassageId').on('change', function () {
+            var passageId = $(this).val();
+            var contentArea = $('#PassageText');
+
+            if (passageId) {
+                // Gửi yêu cầu AJAX để lấy nội dung bài đọc
+                $.ajax({
+                    url: '/Questions/GetPassageContent',
+                    type: 'GET',
+                    data: { id: passageId },
+                    success: function (result) {
+                        // Điền nội dung vào textarea
+                        contentArea.val(result.content);
+                    },
+                    error: function () {
+                        contentArea.val('Lỗi: Không thể tải nội dung bài đọc.');
+                    }
+                });
+            } else {
+                // Nếu chọn '-- Chọn bài đọc --', xóa nội dung
+                contentArea.val('');
+            }
+        });
+
+        // Lắng nghe sự kiện thay đổi của Dropdown File nghe
+        $('#ListeningResourceId').on('change', function () {
+            var resourceId = $(this).val();
+            var contentArea = $('#PassageText'); // Giả định Transcript dùng chung ID PassageText
+
+            if (resourceId) {
+                // Gửi yêu cầu AJAX để lấy nội dung nghe
+                $.ajax({
+                    url: '/Questions/GetListeningContent',
+                    type: 'GET',
+                    data: { id: resourceId },
+                    success: function (result) {
+                        // Điền Transcript vào textarea
+                        contentArea.val(result.transcript);
+
+                        // TÙY CHỌN: Hiển thị file nghe (Nếu cần)
+                        // if (result.audioUrl) {
+                        //    alert('File nghe: ' + result.audioUrl);
+                        // }
+                    },
+                    error: function () {
+                        contentArea.val('Lỗi: Không thể tải Transcript.');
+                    }
+                });
+            } else {
+                // Nếu chọn '-- Chọn bài nghe --', xóa nội dung
+                contentArea.val('');
+            }
+        });        
     </script>
 }

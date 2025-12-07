@@ -1,39 +1,50 @@
-@model ExamSystem.Core.Entities.ListeningResource
+﻿@model ExamSystem.Core.Entities.ListeningResource
 
 @{
-    ViewData["Title"] = "Delete";
+    ViewData["Title"] = "Xác nhận xóa File nghe";
 }
 
-<h1>Delete</h1>
+<div class="container mt-5">
+    <div class="card border-danger shadow-lg">
+        <div class="card-header bg-danger text-white">
+            <h4 class="m-0"><i class="fa fa-exclamation-triangle"></i> CẢNH BÁO XÓA TÀI NGUYÊN NGHE</h4>
+        </div>
+        <div class="card-body">
 
-<h3>Are you sure you want to delete this?</h3>
-<div>
-    <h4>ListeningResource</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Title)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Title)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.AudioUrl)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.AudioUrl)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Transcript)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Transcript)
-        </dd>
-    </dl>
-    
-    <form asp-action="Delete">
-        <input type="hidden" asp-for="Id" />
-        <input type="submit" value="Delete" class="btn btn-danger" /> |
-        <a asp-action="Index">Back to List</a>
-    </form>
+            <p class="fw-bold text-danger fs-5">Bạn có chắc chắn muốn xóa Tài nguyên nghe này không?</p>
+            <p class="text-muted">
+                <i class="fa fa-warning"></i>
+                Việc xóa tài nguyên này sẽ **XÓA FILE AUDIO VẬT LÝ** và **TẤT CẢ CÂU HỎI** đang sử dụng nó.
+                Đây là hành động không thể hoàn tác.
+            </p>
+
+            <hr class="text-danger" />
+
+            <dl class="row bg-light p-3 rounded">
+                <dt class="col-sm-3 fw-bold">ID</dt>
+                <dd class="col-sm-9">@Model.Id</dd>
+
+                <dt class="col-sm-3 fw-bold">Tiêu đề</dt>
+                <dd class="col-sm-9">@Model.Title</dd>
+
+                <dt class="col-sm-3 fw-bold">File Audio</dt>
+                <dd class="col-sm-9">
+                    @if (!string.IsNullOrEmpty(Model.AudioUrl))
+                    {
+                        <audio controls src="@Model.AudioUrl" style="width: 100%;"></audio>
+                    }
+                </dd>
+            </dl>
+
+            <form asp-action="Delete">
+                <input type="hidden" asp-for="Id" />
+                <div class="d-flex justify-content-between mt-4">
+                    <a asp-action="Index" class="btn btn-secondary"><i class="fa fa-arrow-left"></i> Hủy và Quay lại</a>
+                    <button type="submit" class="btn btn-danger px-5 shadow">
+                        <i class="fa fa-trash"></i> Xác nhận XÓA
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>

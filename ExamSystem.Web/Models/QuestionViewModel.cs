@@ -12,6 +12,7 @@ namespace ExamSystem.Web.Models
         public QuestionType Type { get; set; }
         public int Level { get; set; } = 1;
         [Display(Name = "Nội dung câu hỏi")]
+        public string? MediaUrl { get; set; }
         public string? Content { get; set; } // Nội dung câu hỏi (hoặc đề bài)
         [Display(Name = "Nội dung bài đọc")]
         public string? PassageText { get; set; }

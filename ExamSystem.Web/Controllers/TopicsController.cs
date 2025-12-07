@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -49,22 +49,27 @@ namespace ExamSystem.Web.Controllers
             return View();
         }
 
-        // POST: Topics/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Name,Description")] Topic topic)
+        public async Task<IActionResult> Create([Bind("Name,Description")] Topic topic)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(topic);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                try
+                {
+                    _context.Add(topic);
+                    await _context.SaveChangesAsync();
+                    return Json(new { success = true, id = topic.Id });
+                }
+                catch (Exception ex)
+                {
+                    return Json(new { success = false, message = "Lỗi khi lưu dữ liệu vào cơ sở dữ liệu." });
+                }
             }
-            return View(topic);
+            // Nếu ModelState không hợp lệ
+            return Json(new { success = false, message = "Dữ liệu nhập không hợp lệ. Vui lòng kiểm tra lại Tên chủ đề." });
         }
-
         // GET: Topics/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
@@ -82,15 +87,13 @@ namespace ExamSystem.Web.Controllers
         }
 
         // POST: Topics/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Description")] Topic topic)
         {
             if (id != topic.Id)
             {
-                return NotFound();
+                return Json(new { success = false, message = "ID không khớp." });
             }
 
             if (ModelState.IsValid)
@@ -99,23 +102,26 @@ namespace ExamSystem.Web.Controllers
                 {
                     _context.Update(topic);
                     await _context.SaveChangesAsync();
+                    return Json(new { success = true });
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!TopicExists(topic.Id))
+                    if (!_context.Topics.Any(e => e.Id == topic.Id))
                     {
-                        return NotFound();
+                        return Json(new { success = false, message = "Không tìm thấy Chủ đề." });
                     }
                     else
                     {
                         throw;
                     }
                 }
-                return RedirectToAction(nameof(Index));
+                catch (Exception ex)
+                {
+                    return Json(new { success = false, message = "Lỗi khi cập nhật dữ liệu." });
+                }
             }
-            return View(topic);
+            return Json(new { success = false, message = "Dữ liệu nhập không hợp lệ." });
         }
-
         // GET: Topics/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
@@ -134,21 +140,27 @@ namespace ExamSystem.Web.Controllers
             return View(topic);
         }
 
-        // POST: Topics/Delete/5
-        [HttpPost, ActionName("Delete")]
+        // 3. Sửa hàm DELETECONFIRMED (POST)
+        [HttpPost, ActionName("DeleteConfirmed")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var topic = await _context.Topics.FindAsync(id);
             if (topic != null)
             {
-                _context.Topics.Remove(topic);
+                try
+                {
+                    _context.Topics.Remove(topic);
+                    await _context.SaveChangesAsync();
+                    return Json(new { success = true });
+                }
+                catch (Exception ex)
+                {
+                    return Json(new { success = false, message = "Lỗi khi xóa: Chủ đề này có thể đang được sử dụng." });
+                }
             }
-
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return Json(new { success = false, message = "Không tìm thấy Chủ đề để xóa." });
         }
-
         private bool TopicExists(int id)
         {
             return _context.Topics.Any(e => e.Id == id);

@@ -33,22 +33,48 @@ namespace ExamSystem.Infrastructure.Data
         {
             base.OnModelCreating(builder);
 
-            // Tại đây bạn có thể cấu hình thêm (Fluent API)
-            // Ví dụ: Đổi tên bảng User mặc định cho gọn
             builder.Entity<AppUser>().ToTable("Users");
             builder.Entity<Question>().ToTable("Questions");
+
+            // --- CẤU HÌNH CASCADE DELETE CHO BÀI ĐỌC ---
+            builder.Entity<Question>()
+                .HasOne(q => q.ReadingPassage)
+                .WithMany() // Nếu bạn không có Navigation Property trong ReadingPassage
+                .HasForeignKey(q => q.ReadingPassageId)
+                .OnDelete(DeleteBehavior.Cascade); // <<< THÊM: Khi xóa Passage, Questions liên quan sẽ bị xóa
+
+            // --- CẤU HÌNH CASCADE DELETE CHO BÀI NGHE ---
+            builder.Entity<Question>()
+                .HasOne(q => q.ListeningResource)
+                .WithMany() // Nếu bạn không có Navigation Property trong ListeningResource
+                .HasForeignKey(q => q.ListeningResourceId)
+                .OnDelete(DeleteBehavior.Cascade); // <<< THÊM: Khi xóa Resource, Questions liên quan sẽ bị xóa
+
+            // --- CẤU HÌNH KHÓA CHÍNH KÉP (QUESTIONTOPIC) ---
             builder.Entity<QuestionTopic>()
                 .HasKey(qt => new { qt.QuestionId, qt.TopicId });
 
+            // Cấu hình xóa chuỗi cho QuestionTopic -> Question
             builder.Entity<QuestionTopic>()
                 .HasOne(qt => qt.Question)
                 .WithMany(q => q.QuestionTopics)
-                .HasForeignKey(qt => qt.QuestionId);
+                .HasForeignKey(qt => qt.QuestionId)
+                .OnDelete(DeleteBehavior.Cascade); // <<< THÊM: Khi xóa Question, các QuestionTopic liên quan sẽ bị xóa
 
+            // Cấu hình xóa chuỗi cho QuestionTopic -> Topic
             builder.Entity<QuestionTopic>()
                 .HasOne(qt => qt.Topic)
                 .WithMany(t => t.QuestionTopics)
-                .HasForeignKey(qt => qt.TopicId);
+                .HasForeignKey(qt => qt.TopicId)
+                .OnDelete(DeleteBehavior.Cascade); // <<< THÊM: Khi xóa Topic, các QuestionTopic liên quan sẽ bị xóa
+
+            // --- CẤU HÌNH CASCADE DELETE CHO ANSWERS ---
+            builder.Entity<Answer>()
+                .HasOne(a => a.Question)
+                .WithMany(q => q.Answers)
+                .HasForeignKey(a => a.QuestionId)
+                .OnDelete(DeleteBehavior.Cascade); // <<< THÊM: Khi xóa Question, Answers sẽ bị xóa
         }
+
     }
 }
