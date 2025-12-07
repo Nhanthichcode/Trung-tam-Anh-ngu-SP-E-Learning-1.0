@@ -1,59 +1,87 @@
 ﻿@model ExamSystem.Core.Entities.Exam
 
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Sửa Đề thi";
 }
 
-<h1>Edit</h1>
+<div class="container mt-4">
+    <div class="card border-warning shadow-lg">
+        <div class="card-header bg-warning text-dark">
+            <h4 class="m-0"><i class="fa fa-pencil"></i> Sửa Đề thi #@Model.Id</h4>
+        </div>
+        <div class="card-body">
+            <form asp-action="Edit">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                <input type="hidden" asp-for="Id" />
 
-<h4>Exam</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="Id" />
-            <div class="form-group">
-                <label asp-for="Title" class="control-label"></label>
-                <input asp-for="Title" class="form-control" />
-                <span asp-validation-for="Title" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Description" class="control-label"></label>
-                <input asp-for="Description" class="form-control" />
-                <span asp-validation-for="Description" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="DurationMinutes" class="control-label"></label>
-                <input asp-for="DurationMinutes" class="form-control" />
-                <span asp-validation-for="DurationMinutes" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="StartDate" class="control-label"></label>
-                <input asp-for="StartDate" class="form-control" />
-                <span asp-validation-for="StartDate" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="EndDate" class="control-label"></label>
-                <input asp-for="EndDate" class="form-control" />
-                <span asp-validation-for="EndDate" class="text-danger"></span>
-            </div>
-            <div class="form-group form-check">
-                <label class="form-check-label">
-                    <input class="form-check-input" asp-for="IsActive" /> @Html.DisplayNameFor(model => model.IsActive)
-                </label>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
-            </div>
-        </form>
+                <div class="row">
+                    <div class="col-md-6">
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Title" class="form-label fw-bold">Tiêu đề Đề thi (*)</label>
+                            <input asp-for="Title" class="form-control" />
+                            <span asp-validation-for="Title" class="text-danger small"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Description" class="form-label fw-bold">Mô tả ngắn</label>
+                            <textarea asp-for="Description" class="form-control" rows="2"></textarea>
+                            <span asp-validation-for="Description" class="text-danger small"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="DurationMinutes" class="form-label fw-bold"><i class="fa fa-clock"></i> Thời lượng (Phút) (*)</label>
+                            <input asp-for="DurationMinutes" class="form-control" type="number" min="5" />
+                            <span asp-validation-for="DurationMinutes" class="text-danger small"></span>
+                        </div>
+
+                    </div>
+                    <div class="col-md-6">
+
+                        <div class="form-group mb-3">
+                            <label asp-for="StartDate" class="form-label fw-bold"><i class="fa fa-calendar-check-o"></i> Thời gian Bắt đầu (*)</label>
+                            @* Định dạng lại giá trị StartDate để hiển thị đúng trong type="datetime-local" *@
+                            @{
+                                // ASP.NET Core không tự động định dạng DateTime cho type="datetime-local", cần định dạng thủ công
+                                string startDateTime = Model.StartDate.ToString("yyyy-MM-ddTHH:mm");
+                            }
+                            <input asp-for="StartDate" class="form-control" type="datetime-local" value="@startDateTime" />
+                            <span asp-validation-for="StartDate" class="text-danger small"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="EndDate" class="form-label fw-bold"><i class="fa fa-calendar-times-o"></i> Thời gian Kết thúc (Tùy chọn)</label>
+                            @{
+                                string endDateTime = Model.EndDate.HasValue ? Model.EndDate.Value.ToString("yyyy-MM-ddTHH:mm") : "";
+                            }
+                            <input asp-for="EndDate" class="form-control" type="datetime-local" value="@endDateTime" />
+                            <span asp-validation-for="EndDate" class="text-danger small"></span>
+                        </div>
+
+                        <div class="form-group form-check mt-4 p-3 bg-light border rounded">
+                            <input class="form-check-input" asp-for="IsActive" />
+                            <label class="form-check-label fw-bold" asp-for="IsActive">
+                                <i class="fa fa-toggle-on"></i> @Html.DisplayNameFor(model => model.IsActive)
+                            </label>
+                            <div class="small text-muted">Bật để cho phép sinh viên bắt đầu làm bài khi đến thời gian.</div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between mt-5">
+                    <a asp-action="Index" class="btn btn-secondary"><i class="fa fa-arrow-left"></i> Quay lại danh sách</a>
+                    <button type="submit" value="Save" class="btn btn-warning px-5 shadow-sm">
+                        <i class="fa fa-save"></i> Lưu Thay đổi
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

@@ -5,10 +5,10 @@ namespace ExamSystem.Core.Enums
 {
     public enum QuestionType
     {
-        [Display(Name = "Câu hỏi chung")]
-        General = 0,
-        [Display(Name="Nhiều đáp án")]
-        MultipleChoice = 1, // Trắc nghiệm ABCD
+        //[Display(Name = "Câu hỏi chung")]
+        //General = 0,
+        //[Display(Name="Nhiều đáp án")]
+        //MultipleChoice = 1, // Trắc nghiệm ABCD
         [Display(Name = "Bài viết")]
         Writing = 2,          // Tự luận (Writing)
         [Display(Name = "Bài nghe")] 

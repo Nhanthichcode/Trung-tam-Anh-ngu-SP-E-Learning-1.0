@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ExamSystem.Core.Entities;
-using ExamSystem.Core.Enums; // Cần để dùng QuestionType
+using ExamSystem.Core.Enums;
 using ExamSystem.Infrastructure.Data;
 
 namespace ExamSystem.Web.Controllers
@@ -20,37 +20,40 @@ namespace ExamSystem.Web.Controllers
             _context = context;
         }
 
-        // GET: Exams
-        public async Task<IActionResult> Index()
+        #region CRUD CƠ BẢN & INDEX (Giữ nguyên)
+        public async Task<IActionResult> Index(string searchString, string filterStatus)
         {
-            return View(await _context.Exams.ToListAsync());
+            var examsQuery = _context.Exams.AsQueryable();
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                examsQuery = examsQuery.Where(e => e.Title.Contains(searchString) || (e.Description != null && e.Description.Contains(searchString)));
+            }
+            if (!string.IsNullOrEmpty(filterStatus))
+            {
+                if (bool.TryParse(filterStatus, out bool isActive))
+                {
+                    examsQuery = examsQuery.Where(e => e.IsActive == isActive);
+                }
+            }
+
+            ViewData["CurrentFilter"] = searchString;
+            ViewData["CurrentStatus"] = filterStatus;
+            return View(await examsQuery.OrderByDescending(e => e.Id).ToListAsync());
         }
 
-        // GET: Exams/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
-
-            // Load đầy đủ thông tin: Câu hỏi -> Bài đọc / File nghe đi kèm
             var exam = await _context.Exams
                 .Include(e => e.ExamQuestions).ThenInclude(eq => eq.Question).ThenInclude(q => q.ReadingPassage)
                 .Include(e => e.ExamQuestions).ThenInclude(eq => eq.Question).ThenInclude(q => q.ListeningResource)
                 .FirstOrDefaultAsync(m => m.Id == id);
-
             if (exam == null) return NotFound();
-
             return View(exam);
         }
 
-        // GET: Exams/Create
-        public IActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: Exams/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        public IActionResult Create() => View();
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,Title,Description,DurationMinutes,StartDate,EndDate,IsActive")] Exam exam)
         {
             if (ModelState.IsValid)
@@ -62,23 +65,18 @@ namespace ExamSystem.Web.Controllers
             return View(exam);
         }
 
-        // GET: Exams/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
-
             var exam = await _context.Exams.FindAsync(id);
             if (exam == null) return NotFound();
             return View(exam);
         }
 
-        // POST: Exams/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Title,Description,DurationMinutes,StartDate,EndDate,IsActive")] Exam exam)
         {
             if (id != exam.Id) return NotFound();
-
             if (ModelState.IsValid)
             {
                 try
@@ -96,18 +94,14 @@ namespace ExamSystem.Web.Controllers
             return View(exam);
         }
 
-        // GET: Exams/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
-
             var exam = await _context.Exams.FirstOrDefaultAsync(m => m.Id == id);
             if (exam == null) return NotFound();
-
             return View(exam);
         }
 
-        // POST: Exams/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
@@ -117,77 +111,139 @@ namespace ExamSystem.Web.Controllers
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
+        #endregion
 
         // =========================================================================
         // TÍNH NĂNG MỚI: QUẢN LÝ CÂU HỎI TRONG ĐỀ
         // =========================================================================
 
-        // 1. TẠO ĐỀ TỰ ĐỘNG (RANDOM: 1 Đọc + 1 Nghe + 1 Nói + 1 Viết)
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AutoGenerate(int id)
+        // 1. FORM CẤU HÌNH TẠO ĐỀ TỰ ĐỘNG (GET) - Giữ nguyên
+        [HttpGet]
+        public async Task<IActionResult> ConfigureAutoGenerate(int id)
         {
             var exam = await _context.Exams.FindAsync(id);
             if (exam == null) return NotFound();
 
-            // A. Random 1 Bài Đọc (Lấy tất cả câu hỏi thuộc bài đọc đó)
+            await PrepareQuestionViewBag();
+            ViewData["ExamId"] = id;
+            ViewData["ExamTitle"] = exam.Title;
+
+            return View();
+        }
+
+        // 2. TẠO ĐỀ TỰ ĐỘNG (RANDOM THEO LEVEL) - POST - Giữ nguyên
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AutoGenerate(int id, int targetLevel)
+        {
+            var exam = await _context.Exams.FindAsync(id);
+            if (exam == null) return NotFound();
+
+            if (targetLevel < 1 || targetLevel > 5) targetLevel = 3;
+
             var randomReading = await _context.ReadingPassages
-                .Include(r => r.Questions)
-                .OrderBy(r => Guid.NewGuid()) // Sắp xếp ngẫu nhiên
-                .FirstOrDefaultAsync();
+                .Include(r => r.Questions.Where(q => q.Level == targetLevel))
+                .Where(r => r.Questions.Any(q => q.Level == targetLevel))
+                .OrderBy(r => Guid.NewGuid()).FirstOrDefaultAsync();
 
-            // B. Random 1 Bài Nghe (Lấy tất cả câu hỏi thuộc bài nghe đó)
             var randomListening = await _context.ListeningResources
-                .Include(l => l.Questions)
-                .OrderBy(l => Guid.NewGuid())
-                .FirstOrDefaultAsync();
+                .Include(l => l.Questions.Where(q => q.Level == targetLevel))
+                .Where(l => l.Questions.Any(q => q.Level == targetLevel))
+                .OrderBy(l => Guid.NewGuid()).FirstOrDefaultAsync();
 
-            // C. Random 1 Câu Nói (Speaking)
             var randomSpeaking = await _context.Questions
-                .Where(q => q.Type == QuestionType.Speaking)
-                .OrderBy(q => Guid.NewGuid())
-                .FirstOrDefaultAsync();
+                .Where(q => q.Type == QuestionType.Speaking && q.Level == targetLevel)
+                .OrderBy(q => Guid.NewGuid()).FirstOrDefaultAsync();
 
-            // D. Random 1 Câu Viết (Writing)
             var randomWriting = await _context.Questions
-                .Where(q => q.Type == QuestionType.Writing)
-                .OrderBy(q => Guid.NewGuid())
-                .FirstOrDefaultAsync();
+                .Where(q => q.Type == QuestionType.Writing && q.Level == targetLevel)
+                .OrderBy(q => Guid.NewGuid()).FirstOrDefaultAsync();
 
-            // E. Tổng hợp danh sách câu hỏi cần thêm
             var questionsToAdd = new List<Question>();
-            if (randomReading != null) questionsToAdd.AddRange(randomReading.Questions);
-            if (randomListening != null) questionsToAdd.AddRange(randomListening.Questions);
+            if (randomReading != null) questionsToAdd.AddRange(randomReading.Questions.Where(q => q.Level == targetLevel));
+            if (randomListening != null) questionsToAdd.AddRange(randomListening.Questions.Where(q => q.Level == targetLevel));
             if (randomSpeaking != null) questionsToAdd.Add(randomSpeaking);
             if (randomWriting != null) questionsToAdd.Add(randomWriting);
 
-            // F. Lưu vào Database
             await AddQuestionsToExam(id, questionsToAdd);
-
             return RedirectToAction(nameof(Details), new { id = id });
         }
 
-        // 2. CHỌN CÂU HỎI THỦ CÔNG (Theo cấu trúc 4 phần) - GET
+        // 3. CHỌN CÂU HỎI THỦ CÔNG (Theo cấu trúc 4 phần) - GET (ĐÃ FIX LỌC RỖNG)
         [HttpGet]
-        public async Task<IActionResult> AddQuestions(int? id)
+        public async Task<IActionResult> AddQuestions(int? id, string searchString, int? filterLevel, int? filterTopicId)
         {
             if (id == null) return NotFound();
             var exam = await _context.Exams.FindAsync(id);
             if (exam == null) return NotFound();
 
+            await PrepareQuestionViewBag();
             ViewData["ExamTitle"] = exam.Title;
             ViewData["ExamId"] = id;
 
-            // Lấy dữ liệu đã phân loại để hiển thị lên View chọn
-            ViewBag.ReadingPassages = await _context.ReadingPassages.Include(r => r.Questions).ToListAsync();
-            ViewBag.ListeningResources = await _context.ListeningResources.Include(l => l.Questions).ToListAsync();
-            ViewBag.SpeakingQuestions = await _context.Questions.Where(q => q.Type == QuestionType.Speaking).ToListAsync();
-            ViewBag.WritingQuestions = await _context.Questions.Where(q => q.Type == QuestionType.Writing).ToListAsync();
+            // Lọc Speaking/Writing (Logic giữ nguyên)
+            var speakingQuery = _context.Questions
+                .Include(q => q.QuestionTopics).ThenInclude(qt => qt.Topic)
+                .Where(q => q.Type == QuestionType.Speaking).AsQueryable();
 
-            return View(); // Bạn sẽ cần cập nhật View AddQuestions.cshtml để hiển thị 4 danh sách này
+            var writingQuery = _context.Questions
+                .Include(q => q.QuestionTopics).ThenInclude(qt => qt.Topic)
+                .Where(q => q.Type == QuestionType.Writing).AsQueryable();
+
+            if (filterLevel.HasValue)
+            {
+                speakingQuery = speakingQuery.Where(q => q.Level == filterLevel);
+                writingQuery = writingQuery.Where(q => q.Level == filterLevel);
+            }
+            if (filterTopicId.HasValue)
+            {
+                speakingQuery = speakingQuery.Where(q => q.QuestionTopics.Any(qt => qt.TopicId == filterTopicId));
+                writingQuery = writingQuery.Where(q => q.QuestionTopics.Any(qt => qt.TopicId == filterTopicId));
+            }
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                speakingQuery = speakingQuery.Where(q => q.Content.Contains(searchString));
+                writingQuery = writingQuery.Where(q => q.Content.Contains(searchString));
+            }
+
+            // --- FIX: Tải Bài đọc/Nghe chỉ có câu hỏi con ---
+
+            // 1. Lấy ID của các ReadingPassage đã được gán
+            var passageIdsWithQuestions = await _context.Questions
+                .Where(q => q.ReadingPassageId.HasValue)
+                .Select(q => q.ReadingPassageId.Value)
+                .Distinct()
+                .ToListAsync();
+
+            ViewBag.ReadingPassages = await _context.ReadingPassages
+                .Include(r => r.Questions)
+                .Where(r => passageIdsWithQuestions.Contains(r.Id))
+                .ToListAsync();
+
+            // 2. Lấy ID của các ListeningResource đã được gán
+            var listeningIdsWithQuestions = await _context.Questions
+                .Where(q => q.ListeningResourceId.HasValue)
+                .Select(q => q.ListeningResourceId.Value)
+                .Distinct()
+                .ToListAsync();
+
+            ViewBag.ListeningResources = await _context.ListeningResources
+                .Include(l => l.Questions)
+                .Where(l => listeningIdsWithQuestions.Contains(l.Id))
+                .ToListAsync();
+
+            ViewBag.SpeakingQuestions = await speakingQuery.ToListAsync();
+            ViewBag.WritingQuestions = await writingQuery.ToListAsync();
+
+            // Truyền lại giá trị lọc
+            ViewData["CurrentFilter"] = searchString;
+            ViewData["CurrentLevel"] = filterLevel;
+            ViewData["CurrentTopicId"] = filterTopicId;
+
+            return View();
         }
 
-        // 3. XỬ LÝ LƯU CÂU HỎI THỦ CÔNG - POST
+        // 4. XỬ LÝ LƯU CÂU HỎI THỦ CÔNG - POST (Giữ nguyên)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddQuestionsManual(int examId,
@@ -198,21 +254,17 @@ namespace ExamSystem.Web.Controllers
         {
             var questionsToAdd = new List<Question>();
 
-            // Lấy câu hỏi từ Bài Đọc được chọn
             if (selectedReadingId.HasValue)
             {
                 var qs = await _context.Questions.Where(q => q.ReadingPassageId == selectedReadingId).ToListAsync();
                 questionsToAdd.AddRange(qs);
             }
-
-            // Lấy câu hỏi từ Bài Nghe được chọn
             if (selectedListeningId.HasValue)
             {
                 var qs = await _context.Questions.Where(q => q.ListeningResourceId == selectedListeningId).ToListAsync();
                 questionsToAdd.AddRange(qs);
             }
 
-            // Lấy câu hỏi Speaking & Writing (Giảng viên có thể chọn nhiều câu)
             var otherIds = new List<int>();
             if (selectedSpeakingIds != null) otherIds.AddRange(selectedSpeakingIds);
             if (selectedWritingIds != null) otherIds.AddRange(selectedWritingIds);
@@ -228,7 +280,8 @@ namespace ExamSystem.Web.Controllers
             return RedirectToAction(nameof(Details), new { id = examId });
         }
 
-        // --- Helper: Thêm danh sách câu hỏi vào đề (tránh trùng) ---
+
+        // --- Helper functions (Giữ nguyên) ---
         private async Task AddQuestionsToExam(int examId, List<Question> questions)
         {
             if (questions == null || !questions.Any()) return;
@@ -254,9 +307,20 @@ namespace ExamSystem.Web.Controllers
             await _context.SaveChangesAsync();
         }
 
-        private bool ExamExists(int id)
+        private bool ExamExists(int id) => _context.Exams.Any(e => e.Id == id);
+
+        private async Task PrepareQuestionViewBag()
         {
-            return _context.Exams.Any(e => e.Id == id);
+            var levelItems = new List<SelectListItem>
+                {
+                    new SelectListItem { Value = "1", Text = "1 - Dễ" },
+                    new SelectListItem { Value = "2", Text = "2 - Trung bình" },
+                    new SelectListItem { Value = "3", Text = "3 - Khó" },
+                    new SelectListItem { Value = "4", Text = "4 - Khó+" },
+                    new SelectListItem { Value = "5", Text = "5 - Rất khó" }
+                };
+            ViewBag.Levels = new SelectList(levelItems, "Value", "Text");
+            ViewBag.Topics = new MultiSelectList(await _context.Topics.ToListAsync(), "Id", "Name");
         }
     }
 }

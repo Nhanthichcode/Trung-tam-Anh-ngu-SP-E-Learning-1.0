@@ -60,21 +60,21 @@ namespace ExamSystem.Web.Controllers
 
             // Chuẩn bị ViewBag cho các Dropdown
             await PrepareViewBag(filterTopicId, filterLevel);
-            return View(await questionsQuery.OrderByDescending(q => q.Id).ToListAsync());
+
+            // FIX: Sắp xếp GIẢM DẦN theo ngày tạo
+            return View(await questionsQuery.OrderByDescending(q => q.CreatedDate).ToListAsync());
         }
+
         // 2. DETAILS (GET) - Dùng chung cho General, Speaking, Writing
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
-
             var question = await _context.Questions
                 .Include(q => q.Answers)
                 .Include(q => q.ListeningResource)
                 .Include(q => q.ReadingPassage)
                 .FirstOrDefaultAsync(m => m.Id == id);
-
             if (question == null) return NotFound();
-
             return View(question);
         }
 
@@ -157,16 +157,17 @@ namespace ExamSystem.Web.Controllers
             {
                 try
                 {
-                    ReadingPassage newPassage = null;
-                    if (model.Type == QuestionType.ReadingPassage && !string.IsNullOrEmpty(model.PassageText))
+                    if (model.Type == QuestionType.ReadingPassage && !model.ReadingPassageId.HasValue)
                     {
-                        newPassage = new ReadingPassage
-                        {
-                            Content = model.PassageText,
-                            Title = "New Passage " + DateTime.Now.Ticks
-                        };
-                        _context.ReadingPassages.Add(newPassage);
-                        await _context.SaveChangesAsync();
+                        ModelState.AddModelError("", "Vui lòng chọn Bài đọc từ kho.");
+                        await PrepareViewBag();
+                        return View("Create", model);
+                    }
+                    if (model.Type == QuestionType.Listening && !model.ListeningResourceId.HasValue)
+                    {
+                        ModelState.AddModelError("", "Vui lòng chọn File nghe từ kho.");
+                        await PrepareViewBag();
+                        return View("Create", model);
                     }
 
                     foreach (var sub in model.SubQuestions)
@@ -178,7 +179,7 @@ namespace ExamSystem.Web.Controllers
                             Type = model.Type,
                             Level = model.Level,
                             CreatedDate = DateTime.Now,
-                            ReadingPassageId = (newPassage != null) ? newPassage.Id : model.ReadingPassageId,
+                            ReadingPassageId = model.ReadingPassageId,
                             ListeningResourceId = model.ListeningResourceId,
                             Content = sub.Content,
                             Explaination = sub.Explaination,
@@ -603,23 +604,34 @@ namespace ExamSystem.Web.Controllers
 
         private async Task PrepareViewBag(int? currentTopicId = null, int? currentLevel = null)
         {
-            // Tạo danh sách Level (1-5) thủ công
+            // 1. Chuẩn bị Levels
             var levelItems = new List<SelectListItem>
-                {
-                    new SelectListItem { Value = "1", Text = "1 - Dễ" },
-                    new SelectListItem { Value = "2", Text = "2 - Trung bình" },
-                    new SelectListItem { Value = "3", Text = "3 - Khó" },
-                    new SelectListItem { Value = "4", Text = "4 - Khó+" },
-                    new SelectListItem { Value = "5", Text = "5 - Rất khó" }
-                };
+            {
+                new SelectListItem { Value = "1", Text = "1 - Dễ" },
+                new SelectListItem { Value = "2", Text = "2 - Trung bình" },
+                new SelectListItem { Value = "3", Text = "3 - Khó" },
+                new SelectListItem { Value = "4", Text = "4 - Khó+" },
+                new SelectListItem { Value = "5", Text = "5 - Rất khó" }
+            };
 
-            // Tạo SelectList cho Topics
+            // 2. Chuẩn bị Topics
             ViewData["Topics"] = new SelectList(await _context.Topics.ToListAsync(), "Id", "Name", currentTopicId);
-            // Gán Levels đã tạo (Chọn giá trị Level hiện tại)
+
+            // 3. Gán Levels (Chọn giá trị Level hiện tại)
             ViewData["Levels"] = new SelectList(levelItems, "Value", "Text", currentLevel?.ToString());
+
+            // 4. Chuẩn bị Enum QuestionType cho bộ lọc chính
+            ViewBag.QuestionTypes = new SelectList(Enum.GetValues(typeof(QuestionType)).Cast<QuestionType>().Select(v => new SelectListItem
+            {
+                Text = v.ToString(), // Bạn có thể dùng DisplayAttribute để lấy tên đẹp hơn
+                Value = ((int)v).ToString()
+            }).ToList(), "Value", "Text", ViewData["CurrentType"]);
+
+            // 5. Chuẩn bị Bài đọc/Bài nghe cho form Create (nếu cần)
             ViewData["Passages"] = new SelectList(await _context.ReadingPassages.ToListAsync(), "Id", "Title");
             ViewData["Listenings"] = new SelectList(await _context.ListeningResources.ToListAsync(), "Id", "Title");
         }
+
 
         private List<Answer> CreateAnswersFromModel(QuestionViewModel model)
         {
