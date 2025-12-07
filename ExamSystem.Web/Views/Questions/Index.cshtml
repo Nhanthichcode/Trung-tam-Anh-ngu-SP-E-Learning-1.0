@@ -9,9 +9,10 @@
 
     // Gom nhóm: Nếu không có ID và không có Text thì gom vào nhóm "Unknown"
     var readingGroups = readingQuestions
-        .GroupBy(x => x.ReadingPassageId.HasValue ? "ID_" + x.ReadingPassageId : (x.PassageText ?? "Unknown"))
+        .GroupBy(x => x.ReadingPassageId.HasValue
+                        ? "ID_" + x.ReadingPassageId
+                        : (x.PassageText ?? "No_Content_" + x.Id)) // Nếu null thì gán tên tạm
         .ToList();
-
     var normalQuestions = Model.Where(x => x.Type != QuestionType.ReadingPassage).ToList();
 }
 

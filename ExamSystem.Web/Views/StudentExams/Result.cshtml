@@ -50,32 +50,82 @@
     @foreach (var item in Model.TestResults.Select((value, index) => new { value, index }))
     {
         var result = item.value;
+        var question = result.Question;
         var borderClass = result.IsCorrect ? "border-success" : "border-danger";
         var bgHeader = result.IsCorrect ? "bg-success text-white" : "bg-danger text-white";
         var iconStatus = result.IsCorrect ? "fa-check" : "fa-times";
 
+        // Lấy danh sách đáp án đã load và đáp án đúng
+        var allAnswers = question?.Answers?.OrderBy(a => a.Id).Take(4).ToList();
+        var dbCorrectAnswer = allAnswers?.FirstOrDefault(a => a.IsCorrect);
+        var correctContent = dbCorrectAnswer?.Content ?? question?.CorrectAnswer; // Fallback cột cũ nếu cần
+
         <div class="card mb-4 @borderClass shadow-sm">
             <div class="card-header @bgHeader d-flex justify-content-between align-items-center">
                 <span>
-                    <strong>Câu @(item.index + 1):</strong>
-                    @(result.IsCorrect ? "Chính xác" : "Sai")
+                    <strong>Câu @(item.index + 1):</strong> @(question?.Content)
                 </span>
                 <i class="fa @iconStatus fa-lg"></i>
             </div>
 
             <div class="card-body">
-                <h5 class="card-title mb-3">@result.Question.Content</h5>
-
-                @if (!string.IsNullOrEmpty(result.Question.MediaUrl))
+                @* Hiển thị Media (Nếu là Speaking, Listening lẻ) *@
+                @if (!string.IsNullOrEmpty(question?.MediaUrl) || question?.ListeningResource?.AudioUrl != null)
                 {
-                    <div class="alert alert-info mb-3">
+                    <div class="alert alert-info mb-3 p-2">
                         <i class="fa fa-paperclip"></i> Tài liệu đính kèm:
-                        <a href="@result.Question.MediaUrl" target="_blank">Xem tài liệu</a>
+                        @if (question.MediaUrl != null)
+                        {
+                            <a href="@question.MediaUrl" target="_blank">Xem ảnh/tài liệu</a>
+                        }
+                        else if (question.ListeningResource?.AudioUrl != null)
+                        {
+                            <audio controls src="@question.ListeningResource.AudioUrl" class="w-100"></audio>
+                        }
                     </div>
                 }
 
                 <hr class="text-muted" />
 
+                @* 1. HIỂN THỊ CÁC LỰA CHỌN A, B, C, D *@
+                @if (allAnswers != null && allAnswers.Any())
+                {
+                    <h5>Các lựa chọn:</h5>
+                    <div class="row g-2 mb-3">
+                        @for (int i = 0; i < allAnswers.Count; i++)
+                        {
+                            var ans = allAnswers[i];
+                            var answerChar = ((char)('A' + i)).ToString();
+
+                            var isUserSelected = (result.SelectedAnswer == ans.Content);
+                            var isCorrect = ans.IsCorrect;
+
+                            var boxClass = isCorrect ? "bg-success text-white" :
+                            isUserSelected && !isCorrect ? "bg-danger text-white" :
+                            "bg-light text-dark";
+
+                            <div class="col-md-6">
+                                <div class="p-2 rounded border @boxClass d-flex justify-content-between">
+                                    <span>
+                                        <strong>@answerChar.</strong> @ans.Content
+                                    </span>
+                                    @if (isCorrect)
+                                    {
+                                        <i class="fa fa-check-circle text-white" title="Đáp án đúng"></i>
+                                    }
+                                    else if (isUserSelected)
+                                    {
+                                        <i class="fa fa-times-circle text-white" title="Bạn đã chọn"></i>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+
+                <hr class="mt-4" />
+
+                @* 2. TỔNG HỢP KẾT QUẢ VÀ GIẢI THÍCH *@
                 <div class="row">
                     <div class="col-md-6">
                         <small class="text-muted">Bạn đã chọn:</small><br />
@@ -86,24 +136,33 @@
                         else
                         {
                             <span class="fw-bold @(result.IsCorrect ? "text-success" : "text-danger")">
-                                Đáp án @result.SelectedAnswer
+                                @result.SelectedAnswer
                             </span>
                         }
                     </div>
 
                     <div class="col-md-6">
-                        <small class="text-muted">Đáp án đúng:</small><br />
-                        <span class="text-success fw-bold">
-                            Đáp án @result.Question.CorrectAnswer
-                        </span>
+                        <small class="text-muted">Đáp án chính xác:</small><br />
+                        @if (result.IsCorrect)
+                        {
+                            <span class="text-success fw-bold">CHÍNH XÁC</span>
+                        }
+                        else if (!string.IsNullOrEmpty(correctContent))
+                        {
+                            <span class="text-success fw-bold">@correctContent</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Không xác định</span>
+                        }
                     </div>
                 </div>
 
-                @if (!string.IsNullOrEmpty(result.Question.Explaination))
+                @if (!string.IsNullOrEmpty(question?.Explaination))
                 {
                     <div class="mt-3 p-3 bg-light rounded border border-info">
                         <strong class="text-info"><i class="fa fa-lightbulb-o"></i> Giải thích chi tiết:</strong>
-                        <p class="mb-0 mt-1">@result.Question.Explaination</p>
+                        <p class="mb-0 mt-1">@question.Explaination</p>
                     </div>
                 }
             </div>

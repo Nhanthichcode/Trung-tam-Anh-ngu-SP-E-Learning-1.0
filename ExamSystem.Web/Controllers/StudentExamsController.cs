@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Security.Claims;
 
 namespace ExamSystem.Web.Controllers
 {
@@ -54,13 +55,22 @@ namespace ExamSystem.Web.Controllers
             var questions = examQuestions.Select(eq => eq.Question).ToList();
             return View(questions);
         }
+        
 
         // 3. NỘP BÀI (POST) - Chấm điểm theo cấu trúc mới
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SubmitExam(int examId, Dictionary<int, string> userAnswers)
         {
-            // userAnswers: Key = QuestionId, Value = Đáp án chọn (A, B, C, D hoặc Text)
+            
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            // Kiểm tra xem đã đăng nhập chưa
+            if (currentUserId == null)
+            {
+                // Đây là trường hợp khẩn cấp, nên chuyển hướng đến trang đăng nhập hoặc báo lỗi
+                return Challenge();
+            }
 
             // Lấy lại bộ câu hỏi đề thi để so sánh đáp án
             var originalQuestions = await _context.ExamQuestions
@@ -77,7 +87,7 @@ namespace ExamSystem.Web.Controllers
             var attempt = new TestAttempt
             {
                 ExamId = examId,
-                UserId = User.Identity.Name, // Hoặc lấy ID từ Claims
+                UserId = currentUserId, // <<< SỬA TỪ USER.IDENTITY.NAME SANG CURRENTUSERID (ID DB)
                 StartTime = DateTime.Now
             };
 
@@ -86,23 +96,18 @@ namespace ExamSystem.Web.Controllers
                 string selectedVal = userAnswers.ContainsKey(q.Id) ? userAnswers[q.Id] : null;
                 bool isCorrect = false;
 
-                // --- LOGIC CHẤM ĐIỂM MỚI (Ưu tiên bảng Answers) ---
+                // --- LOGIC CHẤM ĐIỂM ---
                 if (q.Answers != null && q.Answers.Any())
                 {
-                    // Tìm đáp án đúng trong DB
                     var dbCorrectAnswer = q.Answers.FirstOrDefault(a => a.IsCorrect);
-
-                    // So sánh nội dung đáp án người dùng chọn với nội dung đáp án đúng
                     if (dbCorrectAnswer != null && selectedVal == dbCorrectAnswer.Content)
                     {
                         isCorrect = true;
                     }
                 }
-                // --- LOGIC FALLBACK (Dành cho câu hỏi cũ chưa migrate) ---
-                else
+                else // Fallback
                 {
-                    if (!string.IsNullOrEmpty(q.CorrectAnswer) &&
-                        string.Equals(selectedVal, q.CorrectAnswer, StringComparison.OrdinalIgnoreCase))
+                    if (!string.IsNullOrEmpty(q.CorrectAnswer) && string.Equals(selectedVal, q.CorrectAnswer, StringComparison.OrdinalIgnoreCase))
                     {
                         isCorrect = true;
                     }
@@ -110,32 +115,53 @@ namespace ExamSystem.Web.Controllers
 
                 if (isCorrect) correctCount++;
 
-                // Lưu chi tiết từng câu
-                //resultDetails.Add(new TestResult
-                //{
-                //    QuestionId = q.Id,
-                //    TestAttemptId = int.Parse(selectedVal),
-                //    IsCorrect = isCorrect
-                //});
+                resultDetails.Add(new TestResult
+                {
+                    QuestionId = q.Id,
+                    SelectedAnswer = selectedVal, // Lưu nội dung đáp án sinh viên chọn
+                    IsCorrect = isCorrect
+                });
             }
 
             // Tính điểm
-            attempt.Score = (double)correctCount / originalQuestions.Count * 10;
+            attempt.Score = originalQuestions.Count > 0 ? (double)correctCount / originalQuestions.Count * 10 : 0;
             attempt.TestResults = resultDetails;
 
             _context.TestAttempts.Add(attempt);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(); // Lỗi Foreign Key sẽ không còn xảy ra ở đây
 
             return RedirectToAction("Result", new { id = attempt.Id });
         }
 
-        // 4. KẾT QUẢ (Giữ nguyên hoặc tùy chỉnh)
         public async Task<IActionResult> Result(int id)
         {
             var attempt = await _context.TestAttempts
-                .Include(a => a.Exam)
-                .Include(a => a.TestResults)
+                .Include(a => a.Exam) // Tải thông tin đề thi
+                .Include(a => a.TestResults) // Tải chi tiết kết quả
+                    .ThenInclude(tr => tr.Question) // <<< FIX QUAN TRỌNG: Tải thông tin Câu hỏi cho từng TestResult
                 .FirstOrDefaultAsync(a => a.Id == id);
+
+            // Thêm các ThenInclude cần thiết để hiển thị (MediaUrl, Answers, etc.)
+            // Nếu bạn cần hiển thị đáp án đúng (từ Answers) và link Media:
+            if (attempt?.TestResults != null)
+            {
+                // Để tránh code quá dài, ta dùng Select và Load lại dữ liệu cần thiết
+                var questionIds = attempt.TestResults.Select(tr => tr.QuestionId).ToList();
+
+                var detailedQuestions = await _context.Questions
+                    .Include(q => q.Answers) // Cần để hiển thị đáp án đúng A, B, C, D
+                    .Where(q => questionIds.Contains(q.Id))
+                    .ToListAsync();
+
+                // Gán lại Question đã có đủ Include (Đây là giải pháp an toàn nhất)
+                foreach (var tr in attempt.TestResults)
+                {
+                    tr.Question = detailedQuestions.FirstOrDefault(q => q.Id == tr.QuestionId);
+                }
+            }
+
+            if (attempt == null) return NotFound();
+
             return View(attempt);
         }
     }

@@ -20,59 +20,55 @@
                 <small class="text-muted" id="TypeHint">Chọn loại câu hỏi để hiển thị form nhập liệu tương ứng.</small>
             </div>
 
+            @* ============================================== *@
+            @* == FORM A: CÂU HỎI ĐƠN (NORMAL) == *@
+            @* ============================================== *@
             <div id="FormNormal" style="display:none;">
                 <form asp-action="Create" enctype="multipart/form-data">
                     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                    <input type="hidden" name="Type" id="HiddenTypeNormal" />
+                    <input type="hidden" asp-for="Type" id="HiddenTypeNormal" />
 
                     <div class="row">
                         <div class="col-md-8">
-                            <div class="form-group mb-3">
-                                <label asp-for="Content" class="fw-bold" id="LabelContent">Nội dung câu hỏi <span class="text-danger">*</span></label>
-                                <textarea asp-for="Content" class="form-control" rows="4" placeholder="Nhập nội dung..."></textarea>
-                                <span asp-validation-for="Content" class="text-danger"></span>
-                            </div>
-
-                            <div class="card border-secondary mb-3" id="SectionOptions">
-                                <div class="card-header bg-secondary text-white fw-bold">
-                                    <i class="fa fa-list"></i> Đáp án trắc nghiệm
+                            <div class="card border-secondary mb-3">
+                                <div class="card-header fw-bold bg-light">
+                                    <i class="fa fa-pencil-square-o"></i> Nội dung chính
                                 </div>
                                 <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-md-6 mb-2">
-                                            <div class="input-group">
-                                                <span class="input-group-text fw-bold">A</span>
-                                                <input asp-for="OptionA" class="form-control" placeholder="Lựa chọn A" />
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6 mb-2">
-                                            <div class="input-group">
-                                                <span class="input-group-text fw-bold">B</span>
-                                                <input asp-for="OptionB" class="form-control" placeholder="Lựa chọn B" />
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6 mb-2">
-                                            <div class="input-group">
-                                                <span class="input-group-text fw-bold">C</span>
-                                                <input asp-for="OptionC" class="form-control" placeholder="Lựa chọn C" />
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6 mb-2">
-                                            <div class="input-group">
-                                                <span class="input-group-text fw-bold">D</span>
-                                                <input asp-for="OptionD" class="form-control" placeholder="Lựa chọn D" />
-                                            </div>
-                                        </div>
+                                    <div class="form-group mb-3">
+                                        <label asp-for="Content" class="fw-bold" id="LabelContent">Nội dung câu hỏi <span class="text-danger">*</span></label>
+                                        <textarea asp-for="Content" class="form-control" rows="4" placeholder="Nhập nội dung..."></textarea>
+                                        <span asp-validation-for="Content" class="text-danger"></span>
                                     </div>
-                                    <div class="row mt-3">
-                                        <div class="col-md-4">
-                                            <label asp-for="CorrectAnswer" class="fw-bold">Đáp án đúng (A/B/C/D)</label>
-                                            <input asp-for="CorrectAnswer" class="form-control text-uppercase text-center fw-bold text-success" maxlength="1" placeholder="VD: A" style="width: 80px;" />
-                                            <span asp-validation-for="CorrectAnswer" class="text-danger"></span>
+
+                                    <div class="card border-secondary mb-3" id="SectionOptions">
+                                        <div class="card-header bg-secondary text-white fw-bold">
+                                            <i class="fa fa-list"></i> Đáp án trắc nghiệm
                                         </div>
-                                        <div class="col-md-8">
-                                            <label asp-for="Explaination" class="fw-bold">Giải thích đáp án</label>
-                                            <input asp-for="Explaination" class="form-control" placeholder="Hiện sau khi thi xong..." />
+                                        <div class="card-body">
+                                            <div class="row g-2">
+                                                <div class="col-md-6"><div class="input-group"><span class="input-group-text fw-bold">A</span><input asp-for="OptionA" class="form-control" placeholder="Lựa chọn A" /></div></div>
+                                                <div class="col-md-6"><div class="input-group"><span class="input-group-text fw-bold">B</span><input asp-for="OptionB" class="form-control" placeholder="Lựa chọn B" /></div></div>
+                                                <div class="col-md-6"><div class="input-group"><span class="input-group-text fw-bold">C</span><input asp-for="OptionC" class="form-control" placeholder="Lựa chọn C" /></div></div>
+                                                <div class="col-md-6"><div class="input-group"><span class="input-group-text fw-bold">D</span><input asp-for="OptionD" class="form-control" placeholder="Lựa chọn D" /></div></div>
+                                            </div>
+                                            <div class="row mt-3">
+                                                <div class="col-md-4">
+                                                    <label asp-for="CorrectAnswer" class="fw-bold">Đáp án đúng</label>
+                                                    <select asp-for="CorrectAnswer" class="form-select text-success fw-bold">
+                                                        <option value="">-- Chọn --</option>
+                                                        <option value="A">A</option>
+                                                        <option value="B">B</option>
+                                                        <option value="C">C</option>
+                                                        <option value="D">D</option>
+                                                    </select>
+                                                    <span asp-validation-for="CorrectAnswer" class="text-danger"></span>
+                                                </div>
+                                                <div class="col-md-8">
+                                                    <label asp-for="Explaination" class="fw-bold">Giải thích đáp án</label>
+                                                    <input asp-for="Explaination" class="form-control" placeholder="Hiện sau khi thi xong..." />
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -81,12 +77,10 @@
 
                         <div class="col-md-4">
                             <div class="card bg-light mb-3" id="SectionMedia">
-                                <div class="card-header fw-bold text-dark">
-                                    <i class="fa fa-upload"></i> File đính kèm
-                                </div>
+                                <div class="card-header fw-bold text-dark"><i class="fa fa-upload"></i> File đính kèm</div>
                                 <div class="card-body">
                                     <p class="small text-muted mb-2" id="MediaHelpText">Upload Audio hoặc Hình ảnh.</p>
-                                    <input type="file" asp-for="FileUpload" class="form-control" accept=".mp3,.wav,.jpg,.png,.jpeg" />
+                                    <input asp-for="FileUpload" type="file" class="form-control" accept=".mp3,.wav,.jpg,.png,.jpeg" />
                                 </div>
                             </div>
 
@@ -98,6 +92,12 @@
                                     <option value="3">3 - Khó (C1)</option>
                                 </select>
                             </div>
+
+                            <div class="mb-3">
+                                <label class="fw-bold">Gán Chủ đề</label>
+                                <select asp-for="SelectedTopicIds" class="form-select" asp-items="ViewBag.Topics" multiple size="4"></select>
+                                <small class="text-muted">Giữ phím Ctrl để chọn nhiều.</small>
+                            </div>
                         </div>
                     </div>
 
@@ -107,9 +107,11 @@
                 </form>
             </div>
 
+            @* ============================================== *@
+            @* == FORM B: CÂU HỎI NHÓM (GROUP) == *@
+            @* ============================================== *@
             <div id="FormGroup" style="display:none;">
                 <form asp-action="CreateGroupQuestion" method="post" id="GroupFormTag" onsubmit="return validateGroupForm(event)">
-
                     <input type="hidden" asp-for="Type" id="HiddenGroupType" />
 
                     <div class="row mb-3">
@@ -119,7 +121,7 @@
                                 <select asp-for="ReadingPassageId" class="form-select border-success mb-2" asp-items="ViewBag.Passages">
                                     <option value="">-- Chọn bài đọc --</option>
                                 </select>
-                                <small><a href="/ReadingPassages/Create" target="_blank"><i class="fa fa-plus"></i> Tạo bài đọc mới</a> (Sau đó reload trang này)</small>
+                                <small><a href="/ReadingPassages/Create" target="_blank"><i class="fa fa-plus"></i> Tạo bài đọc mới</a></small>
                             </div>
 
                             <div id="SectionListening" style="display:none;">
@@ -127,15 +129,23 @@
                                 <select asp-for="ListeningResourceId" class="form-select border-info mb-2" asp-items="ViewBag.Listenings">
                                     <option value="">-- Chọn bài nghe --</option>
                                 </select>
-                                <small><a href="/ListeningResources/Create" target="_blank"><i class="fa fa-plus"></i> Upload file nghe mới</a> (Sau đó reload trang này)</small>
+                                <small><a href="/ListeningResources/Create" target="_blank"><i class="fa fa-plus"></i> Upload file nghe mới</a></small>
                             </div>
+
+                            @* Thêm ô nhập liệu cho Transcript nếu chọn file nghe mới, hoặc nội dung bài đọc mới*@
+                            <div class="form-group mt-3" id="SectionGroupText">
+                                <label class="fw-bold" id="LabelGroupText">Nội dung Bài đọc/Transcript <span class="text-danger">*</span></label>
+                                <textarea asp-for="PassageText" class="form-control" rows="8" placeholder="Dán nội dung bài đọc hoặc transcript vào đây..."></textarea>
+                                <span class="text-muted small">Chỉ cần dán nội dung nếu bạn **chọn** tạo mới (hoặc không chọn file/bài đọc nào).</span>
+                            </div>
+
                         </div>
 
                         <div class="col-md-4">
+                            @* GÁN CHỦ ĐỀ VÀ LEVEL CHUNG *@
                             <div class="mb-3">
                                 <label class="fw-bold">Gán Chủ đề</label>
                                 <select asp-for="SelectedTopicIds" class="form-select" asp-items="ViewBag.Topics" multiple size="4"></select>
-                                <small class="text-muted">Giữ phím Ctrl để chọn nhiều.</small>
                             </div>
 
                             <label class="fw-bold">Độ khó chung</label>
@@ -148,14 +158,16 @@
                             </select>
 
                             <div class="alert alert-warning small">
-                                <i class="fa fa-lightbulb-o"></i> <span id="GroupHint">...</span>
+                                <i class="fa fa-lightbulb-o"></i> <span id="GroupHint">Chọn Bài Đọc/Nghe trước khi thêm câu hỏi con.</span>
                             </div>
                         </div>
                     </div>
 
                     <hr />
                     <h5 class="text-primary mb-3">Danh sách câu hỏi trắc nghiệm</h5>
+
                     <div id="SubQuestionsContainer">
+                        @* Cấu trúc câu hỏi con mặc định (Đã có trong code cũ) *@
                         <div class="card mb-3 sub-question-item shadow-sm border-0 bg-light border-start border-5 border-success">
                             <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center">
                                 <span>Câu hỏi số 1</span>
@@ -189,7 +201,9 @@
                     </div>
 
                     <div class="d-flex justify-content-between mt-4 mb-5">
-                        <button type="button" class="btn btn-outline-primary" onclick="questionEditor.addRow()"><i class="fa fa-plus-circle"></i> Thêm câu hỏi</button>
+                        <button type="button" class="btn btn-outline-primary" onclick="questionEditor.addRow()">
+                            <i class="fa fa-plus-circle"></i> Thêm câu hỏi
+                        </button>
                         <button type="submit" class="btn btn-success btn-lg px-5 shadow">LƯU DỮ LIỆU</button>
                     </div>
                 </form>
@@ -200,108 +214,134 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-
     <script src="~/js/question-editor.js"></script>
 
     <script>
-        // --- 1. XỬ LÝ LOGIC ẨN/HIỆN FORM ---
+        // --- 1. HANDLE FORM SWITCHING ---
         document.getElementById('TypeSelector').addEventListener('change', function() {
-            var val = this.value; // Giá trị Enum (0,1,2,3,4,5)
+            var val = this.value;
 
-            // Các vùng giao diện
+            // Areas
             var formNormal = document.getElementById('FormNormal');
             var formGroup = document.getElementById('FormGroup');
-
             var sectionPassage = document.getElementById('SectionPassage');
             var sectionListening = document.getElementById('SectionListening');
-
-            // Phần của Form Normal
             var sectionOptions = document.getElementById('SectionOptions');
             var sectionMedia = document.getElementById('SectionMedia');
             var labelContent = document.getElementById('LabelContent');
             var mediaHelp = document.getElementById('MediaHelpText');
+            var groupHint = document.getElementById('GroupHint');
+            var sectionGroupText = document.getElementById('SectionGroupText');
+            var labelGroupText = document.getElementById('LabelGroupText');
+            var groupTypeSelector = document.getElementById('GroupFormTag');
 
-            // Input ẩn
             var hiddenTypeNormal = document.getElementById('HiddenTypeNormal');
             var hiddenGroupType = document.getElementById('HiddenGroupType');
+            var typeSelector = document.getElementById('TypeSelector');
 
-            // Reset
-            formNormal.style.display = 'none';
-            formGroup.style.display = 'none';
-            sectionPassage.style.display = 'none';
-            sectionListening.style.display = 'none';
+            // Reset Visibility
+            if(formNormal) formNormal.style.display = 'none';
+            if(formGroup) formGroup.style.display = 'none';
+            if(sectionPassage) sectionPassage.style.display = 'none';
+            if(sectionListening) sectionListening.style.display = 'none';
+            if(sectionOptions) sectionOptions.style.display = 'block'; // Mặc định hiện cho Normal
+            if(sectionMedia) sectionMedia.style.display = 'block'; // Mặc định hiện cho Normal
+            if(sectionGroupText) sectionGroupText.style.display = 'none';
 
-            if (val === "") return; // Chưa chọn gì
 
-            // LOGIC TÙY BIẾN
-            if (val == "5") {
-                // --- READING (Bài đọc - Group) ---
-                formGroup.style.display = 'block';
-                sectionPassage.style.display = 'block';
-                hiddenGroupType.value = val;
-                document.getElementById('GroupHint').innerText = "Chọn bài đọc từ kho, sau đó thêm các câu hỏi trắc nghiệm.";
+            if (val === "") {
+                if(document.getElementById('TypeHint')) {
+                     document.getElementById('TypeHint').innerText = "Chọn loại câu hỏi để hiển thị form nhập liệu tương ứng.";
+                }
+                return;
             }
-            else if (val == "3") {
-                // --- LISTENING (Bài nghe - Group) ---
-                formGroup.style.display = 'block';
-                sectionListening.style.display = 'block';
-                hiddenGroupType.value = val;
-                document.getElementById('GroupHint').innerText = "Chọn file nghe từ kho, sau đó thêm các câu hỏi liên quan.";
+
+            // --- LOGIC ---
+            if (val == "5" || val == "3") { // Reading (5) or Listening (3) Group
+                if(formGroup) formGroup.style.display = 'block';
+                if(hiddenGroupType) hiddenGroupType.value = val;
+                if(groupTypeSelector) groupTypeSelector.enctype = 'multipart/form-data';
+
+                // Initialize Editor
+                questionEditor.init(1, 'SubQuestionsContainer');
+
+                if (val == "5") {
+                    // READING
+                    if(sectionPassage) sectionPassage.style.display = 'block';
+                    if(sectionListening) sectionListening.style.display = 'none';
+                    if(groupHint) groupHint.innerText = "Chọn bài đọc từ kho (hoặc dán nội dung mới). Sau đó thêm câu hỏi trắc nghiệm.";
+                    if(sectionGroupText) sectionGroupText.style.display = 'block';
+                    if(labelGroupText) labelGroupText.innerText = "Nội dung Bài đọc";
+                } else {
+                    // LISTENING
+                    if(sectionPassage) sectionPassage.style.display = 'none';
+                    if(sectionListening) sectionListening.style.display = 'block';
+                    if(groupHint) groupHint.innerText = "Chọn file nghe từ kho (hoặc upload file nghe mới). Sau đó thêm câu hỏi liên quan.";
+                    if(sectionGroupText) sectionGroupText.style.display = 'block';
+                    if(labelGroupText) labelGroupText.innerText = "Transcript";
+                }
             }
             else {
-                // --- CÁC LOẠI KHÁC (Form Normal - Đơn lẻ) ---
-                formNormal.style.display = 'block';
-                hiddenTypeNormal.value = val;
+                // Normal Forms (Writing, Speaking, General)
+                if(formNormal) formNormal.style.display = 'block';
+                if(hiddenTypeNormal) hiddenTypeNormal.value = val;
 
-                if (val == "2") { // WRITING (Viết)
-                    labelContent.innerText = "Đề bài viết (Topic)";
-                    sectionOptions.style.display = 'none'; // Ẩn đáp án
-                    sectionMedia.style.display = 'none';   // Ẩn upload
+                // Reset Options/Media status to default (General)
+                if(sectionOptions) sectionOptions.style.display = 'block';
+                if(sectionMedia) sectionMedia.style.display = 'block';
+
+                if (val == "2") { // Writing
+                    if(labelContent) labelContent.innerText = "Đề bài viết (Topic)";
+                    if(sectionOptions) sectionOptions.style.display = 'none';
+                    if(sectionMedia) sectionMedia.style.display = 'none';
                 }
-                else if (val == "4") { // SPEAKING (Nói)
-                    labelContent.innerText = "Chủ đề nói (Prompt)";
-                    sectionOptions.style.display = 'none'; // Ẩn đáp án
-                    sectionMedia.style.display = 'block';  // Hiện upload
-                    mediaHelp.innerText = "Upload hình ảnh gợi ý (nếu có).";
+                else if (val == "4") { // Speaking
+                    if(labelContent) labelContent.innerText = "Chủ đề nói (Prompt)";
+                    if(sectionOptions) sectionOptions.style.display = 'none';
+                    if(sectionMedia) sectionMedia.style.display = 'block';
+                    if(mediaHelp) mediaHelp.innerText = "Upload hình ảnh gợi ý (nếu có).";
                 }
-                else {
-                    // GENERAL / MULTIPLE CHOICE (Mặc định)
-                    labelContent.innerText = "Nội dung câu hỏi";
-                    sectionOptions.style.display = 'block';
-                    sectionMedia.style.display = 'block';
-                    mediaHelp.innerText = "Upload file đính kèm (nếu có).";
+                else { // General / Multiple Choice
+                    if(labelContent) labelContent.innerText = "Nội dung câu hỏi";
+                    if(mediaHelp) mediaHelp.innerText = "Upload file đính kèm (nếu có).";
                 }
             }
         });
 
-        // Khởi chạy script khi trang load xong
+        // Initial setup on load
         document.addEventListener('DOMContentLoaded', function() {
-            // Truyền vào số lượng câu hỏi hiện tại (bắt đầu là 1 vì có sẵn 1 dòng)
-            // Tham số 2 là ID của div chứa danh sách câu hỏi
             questionEditor.init(1, 'SubQuestionsContainer');
+
+            var selector = document.getElementById('TypeSelector');
+            if (selector && selector.value !== "") {
+                 selector.dispatchEvent(new Event('change'));
+            }
         });
 
-        // --- 3. VALIDATE VÀ RE-INDEX TRƯỚC KHI SUBMIT ---
+        // --- 2. VALIDATION FOR GROUP FORM (Giữ nguyên) ---
         function validateGroupForm(event) {
             var type = document.getElementById('HiddenGroupType').value;
 
-            // Check Reading ID
+            // Validate Reading Selection
             if (type == "5") {
                 var passageId = document.getElementById('ReadingPassageId').value;
-                if (!passageId) { alert("LỖI: Chưa chọn Bài đọc!"); return false; }
+                var passageText = document.getElementById('PassageText').value;
+                // Nếu cả hai đều trống thì lỗi
+                if (!passageId && !passageText) { alert("LỖI: Vui lòng chọn Bài đọc CÓ SẴN hoặc dán nội dung mới!"); return false; }
             }
 
-            // Check Listening ID
+            // Validate Listening Selection
             if (type == "3") {
                 var audioId = document.getElementById('ListeningResourceId').value;
-                if (!audioId) { alert("LỖI: Chưa chọn Bài nghe!"); return false; }
+                // Nếu cả hai đều trống thì lỗi (Cần update Controller để kiểm tra FileUpload ở đây)
+                if (!audioId) { alert("LỖI: Vui lòng chọn Bài nghe CÓ SẴN!"); return false; }
             }
 
-            // Check số lượng câu hỏi
+            // Validate SubQuestions count
             var questions = document.querySelectorAll('.sub-question-item');
             if (questions.length === 0) { alert("LỖI: Phải có ít nhất 1 câu hỏi!"); return false; }
 
-            // Gọi hàm re-index từ script chung
+            // Re-index before submit
             questionEditor.validateForm();
             return true;
         }

@@ -1,17 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using ExamSystem.Infrastructure.Data;
-using ExamSystem.Core.Entities;
+﻿using ExamSystem.Core.Entities;
 using ExamSystem.Core.Enums;
+using ExamSystem.Infrastructure.Data;
 using ExamSystem.Web.Models;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using System.IO;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
 
 namespace ExamSystem.Web.Controllers
 {
@@ -97,51 +90,69 @@ namespace ExamSystem.Web.Controllers
         // 4. CREATE (GET)
         public IActionResult Create()
         {
+
+            Console.WriteLine("--- BẮT ĐẦU chuẩn bị dữ liệu cho CREATE CÂU HỎI ĐƠN (POST) ---");
             PrepareViewBag();
             return View(new QuestionViewModel());
         }
 
-        // 5. CREATE NORMAL (POST)
+        // 4. TẠO MỚI CÂU HỎI ĐƠN (POST) - Đã thêm try-catch để bắt lỗi crash
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(QuestionViewModel model)
         {
+            Console.WriteLine("--- BẮT ĐẦU CREATE CÂU HỎI ĐƠN (POST) ---");
             ModelState.Remove("SubQuestions");
 
             if (ModelState.IsValid)
             {
-                var question = new Question
+                try
                 {
-                    Type = model.Type,
-                    Level = model.Level,
-                    Content = model.Content ?? "",
-                    Explaination = model.Explaination,
-                    CreatedDate = DateTime.Now
-                };
-
-                // Xử lý Answers (Bảng mới)
-                question.Answers = CreateAnswersFromModel(model);
-
-                // Xử lý File Upload
-                if (model.FileUpload != null && model.FileUpload.Length > 0)
-                {
-                    question.MediaUrl = await UploadFile(model.FileUpload);
-                }
-
-                // Xử lý Topic
-                if (model.SelectedTopicIds != null)
-                {
-                    foreach (var topicId in model.SelectedTopicIds)
+                    var question = new Question
                     {
-                        question.QuestionTopics.Add(new QuestionTopic { TopicId = topicId });
-                    }
-                }
+                        Type = model.Type,
+                        Level = model.Level,
+                        Content = model.Content ?? "",
+                        Explaination = model.Explaination,
+                        CreatedDate = DateTime.Now
+                    };
 
-                _context.Add(question);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                    // CHỈ LƯU ANSWERS NẾU LÀ TRẮC NGHIỆM (Type khác Writing/Speaking)
+                    if (model.Type != QuestionType.Writing && model.Type != QuestionType.Speaking)
+                    {
+                        question.Answers = CreateAnswersFromModel(model);
+                    }
+
+                    // Xử lý File Upload (SPEAKING/LISTENING lẻ)
+                    if (model.FileUpload != null && model.FileUpload.Length > 0)
+                    {
+                        Console.WriteLine("Đang upload file...");
+                        question.MediaUrl = await UploadFile(model.FileUpload);
+                        Console.WriteLine($"Đã lưu MediaUrl: {question.MediaUrl}");
+                    }
+
+                    // Xử lý Chủ đề
+                    if (model.SelectedTopicIds != null)
+                    {
+                        foreach (var topicId in model.SelectedTopicIds)
+                        {
+                            question.QuestionTopics.Add(new QuestionTopic { TopicId = topicId });
+                        }
+                    }
+
+                    _context.Add(question);
+                    await _context.SaveChangesAsync();
+                    Console.WriteLine($"THÀNH CÔNG: Đã lưu câu hỏi ID: {question.Id}");
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"LỖI GHI DB: {ex.Message} - Stack: {ex.StackTrace}");
+                    ModelState.AddModelError("", "Lỗi hệ thống không xác định: " + ex.Message);
+                }
             }
 
+            Console.WriteLine("THẤT BẠI: Trả về View do ModelState Invalid.");
             PrepareViewBag();
             return View(model);
         }
@@ -232,10 +243,6 @@ namespace ExamSystem.Web.Controllers
                 OptionA = question.Answers.FirstOrDefault(a => a.Content.StartsWith("A"))?.Content, // Logic tạm
                 // ... (Bạn có thể map kỹ hơn nếu cần)
             };
-
-            // Vì logic map ngược từ Answers -> OptionA/B/C/D khá phức tạp nếu không lưu thứ tự
-            // Tạm thời ta trả về Question entity cho View Edit cũ (nhưng View Edit phải sửa để nhận Answers)
-            // HOẶC: Để đơn giản, ta vẫn trả về View(question) và sửa View để binding đúng.
 
             return View(question);
         }
@@ -344,7 +351,8 @@ namespace ExamSystem.Web.Controllers
                 PassageText = passageContent,
                 ReadingPassageId = passageId, // Lưu lại ID để update
                 Level = rootQuestion.Level,
-                SubQuestions = siblings.Select(s => {
+                SubQuestions = siblings.Select(s =>
+                {
                     // Logic map Answers (List) -> OptionA/B/C/D (View)
                     // Giả định: Thứ tự lưu trong DB là A, B, C, D
                     var ansList = s.Answers.ToList();
@@ -511,16 +519,34 @@ namespace ExamSystem.Web.Controllers
             return list;
         }
 
+        // Lưu ảnhp
         private async Task<string> UploadFile(IFormFile file)
         {
-            string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads");
-            if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
-            string uniqueFileName = Guid.NewGuid().ToString() + "_" + file.FileName;
-            string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-            using (var fileStream = new FileStream(filePath, FileMode.Create)) { await file.CopyToAsync(fileStream); }
-            return "/uploads/" + uniqueFileName;
-        }
+            // Giữ nguyên try-catch để bắt lỗi trong quá trình I/O
+            try
+            {
+                string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads");
+                if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
 
+                string uniqueFileName = Guid.NewGuid().ToString() + "_" + file.FileName;
+                string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    // SỬ DỤNG COPYTOASYNC (Giống ArticlesController)
+                    await file.CopyToAsync(fileStream);
+                }
+
+                return "/uploads/" + uniqueFileName;
+            }
+            catch (Exception ex)
+            {
+                // Thông báo lỗi bất đồng bộ
+                Console.WriteLine($"FATAL LOG: [ASYNC I/O CRASH] Lỗi ghi file: {ex.Message}");
+                // Throw lại để hàm gọi bắt và trả về ModelState Error
+                throw new InvalidOperationException($"Không thể lưu tệp tin. Vui lòng kiểm tra quyền truy cập.", ex);
+            }
+        }
         // GET: delete
         public async Task<IActionResult> Delete(int? id)
         {
@@ -550,7 +576,7 @@ namespace ExamSystem.Web.Controllers
 
                 // Tùy chọn: Xóa file vật lý nếu muốn tiết kiệm dung lượng
 
-                // if (!string.IsNullOrEmpty(question.MediaUrl)) { ...System.IO.File.Delete... }
+                //if (!string.IsNullOrEmpty(question.MediaUrl)) { ...System.IO.File.Delete... }
 
                 _context.Questions.Remove(question);
 
@@ -704,6 +730,30 @@ namespace ExamSystem.Web.Controllers
                 return RedirectToAction(nameof(Index));
             }
             return View("EditListening", model);
+        }
+
+
+        // KIỂM TRA FILE AN TOÀN TRƯỚC KHI LƯU
+        private bool IsFileValid(IFormFile file, out string errorMessage)
+        {
+            long maxFileSize = 5242880; // 5 MB
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".wav", ".mp3" };
+
+            if (file.Length > maxFileSize)
+            {
+                errorMessage = "Tệp quá lớn. Vui lòng chọn tệp dưới 5 MB.";
+                return false;
+            }
+
+            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (!allowedExtensions.Contains(extension))
+            {
+                errorMessage = $"Định dạng tệp không hợp lệ. Chỉ chấp nhận: {string.Join(", ", allowedExtensions)}.";
+                return false;
+            }
+
+            errorMessage = null;
+            return true;
         }
     }
 }
