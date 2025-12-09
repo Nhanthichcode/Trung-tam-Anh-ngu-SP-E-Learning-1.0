@@ -5,17 +5,14 @@
     ViewData["Title"] = "Soạn đề thi thủ công";
     var examId = ViewData["ExamId"];
 
-    // Ép kiểu dữ liệu từ ViewBag
     var readings = ViewBag.ReadingPassages as List<ReadingPassage>;
     var listenings = ViewBag.ListeningResources as List<ListeningResource>;
     var speakings = ViewBag.SpeakingQuestions as List<Question>;
     var writings = ViewBag.WritingQuestions as List<Question>;
 
-    // Giả định bạn đã truyền Level và Topics vào ViewBag
     var allLevels = ViewBag.Levels as SelectList;
     var allTopics = ViewBag.Topics as MultiSelectList;
 
-    // Lấy giá trị lọc hiện tại
     var currentFilter = ViewData["CurrentFilter"] as string;
     var currentLevel = ViewData["CurrentLevel"]?.ToString();
     var currentTopicId = ViewData["CurrentTopicId"]?.ToString();
@@ -30,20 +27,17 @@
         <a asp-action="Details" asp-route-id="@examId" class="btn btn-secondary"><i class="fa fa-arrow-left"></i> Quay lại</a>
     </div>
 
-    @* BỌC FORM LỌC TRONG MỘT FORM GET RIÊNG *@
+    @* FORM LỌC (Giữ nguyên) *@
     <form asp-action="AddQuestions" method="get">
         <input type="hidden" name="id" value="@examId" />
-
         <div class="row mb-3 p-3 bg-light rounded border">
-            <h6 class="fw-bold text-secondary mb-3"><i class="fa fa-sliders"></i> Bộ lọc Câu hỏi Nói/Viết</h6>
-
+            <h6 class="fw-bold text-secondary mb-3"><i class="fa fa-sliders"></i> Bộ lọc</h6>
             <div class="col-md-3">
-                <label class="small fw-bold">Tìm kiếm Nội dung</label>
+                <label class="small fw-bold">Tìm kiếm</label>
                 <input type="text" name="searchString" value="@currentFilter" class="form-control form-control-sm" placeholder="Từ khóa..." />
             </div>
-
             <div class="col-md-3">
-                <label class="small fw-bold">Lọc theo Chủ đề</label>
+                <label class="small fw-bold">Chủ đề</label>
                 <select name="filterTopicId" class="form-select form-select-sm" asp-items="allTopics">
                     <option value="">-- Tất cả --</option>
                 </select>
@@ -55,174 +49,174 @@
                 </select>
             </div>
             <div class="col-md-3 d-flex align-items-end">
-                <button type="submit" class="btn btn-sm btn-info w-100"><i class="fa fa-filter"></i> Lọc/Tìm</button>
+                <button type="submit" class="btn btn-sm btn-info w-100"><i class="fa fa-filter"></i> Lọc</button>
             </div>
         </div>
     </form>
 
     @* FORM LƯU CHÍNH *@
-    <form asp-action="AddQuestionsManual" method="post">
+    <form asp-action="AddQuestionsManual" method="post" id="mainForm">
         <input type="hidden" name="examId" value="@examId" />
 
         <ul class="nav nav-tabs" id="examTabs" role="tablist">
-            <li class="nav-item" role="presentation"><button class="nav-link active fw-bold" id="reading-tab" data-bs-toggle="tab" data-bs-target="#reading" type="button" role="tab"><i class="fa fa-book text-warning"></i> Kỹ năng ĐỌC</button></li>
-            <li class="nav-item" role="presentation"><button class="nav-link fw-bold" id="listening-tab" data-bs-toggle="tab" data-bs-target="#listening" type="button" role="tab"><i class="fa fa-headphones text-info"></i> Kỹ năng NGHE</button></li>
-            <li class="nav-item" role="presentation"><button class="nav-link fw-bold" id="speaking-tab" data-bs-toggle="tab" data-bs-target="#speaking" type="button" role="tab"><i class="fa fa-microphone text-danger"></i> Kỹ năng NÓI</button></li>
-            <li class="nav-item" role="presentation"><button class="nav-link fw-bold" id="writing-tab" data-bs-toggle="tab" data-bs-target="#writing" type="button" role="tab"><i class="fa fa-pencil text-success"></i> Kỹ năng VIẾT</button></li>
+            <li class="nav-item"><button class="nav-link active fw-bold" id="reading-tab" data-bs-toggle="tab" data-bs-target="#reading" type="button"><i class="fa fa-book text-warning"></i> ĐỌC (Tối đa 4)</button></li>
+            <li class="nav-item"><button class="nav-link fw-bold" id="listening-tab" data-bs-toggle="tab" data-bs-target="#listening" type="button"><i class="fa fa-headphones text-info"></i> NGHE (Tối đa 4)</button></li>
+            <li class="nav-item"><button class="nav-link fw-bold" id="speaking-tab" data-bs-toggle="tab" data-bs-target="#speaking" type="button"><i class="fa fa-microphone text-danger"></i> NÓI (Chọn 1)</button></li>
+            <li class="nav-item"><button class="nav-link fw-bold" id="writing-tab" data-bs-toggle="tab" data-bs-target="#writing" type="button"><i class="fa fa-pencil text-success"></i> VIẾT (Chọn 1)</button></li>
         </ul>
 
         <div class="tab-content border border-top-0 p-4 bg-white shadow-sm rounded-bottom" id="myTabContent">
 
-            @* === TAB ĐỌC VÀ NGHE (Grouped Questions) - Giữ nguyên logic Radio Button === *@
+            @* === TAB 1: ĐỌC (Chọn nhiều bài, chọn nhiều câu) === *@
             <div class="tab-pane fade show active" id="reading" role="tabpanel">
-                <div class="alert alert-warning"><i class="fa fa-info-circle"></i> Vui lòng chọn <strong>1 Bài Đọc</strong> (Hệ thống sẽ tự động thêm tất cả câu hỏi trắc nghiệm thuộc bài đọc này).</div>
+                <div class="alert alert-warning small"><i class="fa fa-info-circle"></i> Chọn tối đa <strong>4 Bài Đọc</strong>. Tích vào bài đọc để hiện danh sách câu hỏi con.</div>
 
-                <div class="list-group" style="max-height: 400px; overflow-y: auto;">
+                <div class="list-group" style="max-height: 500px; overflow-y: auto;">
                     @if (readings != null && readings.Any())
                     {
                         @foreach (var item in readings)
                         {
-                            <label class="list-group-item list-group-item-action d-flex gap-3 align-items-center">
-                                <input class="form-check-input flex-shrink-0" type="radio" name="selectedReadingId" value="@item.Id" style="transform: scale(1.3);">
-                                <div class="w-100">
-                                    <div class="d-flex w-100 justify-content-between">
-                                        <h6 class="mb-1 fw-bold text-primary">@item.Title</h6>
-                                        <span class="badge bg-secondary">@(item.Questions?.Count ?? 0) câu hỏi</span>
+                            var collapseId = "collapse_reading_" + item.Id;
+                            <div class="list-group-item mb-2 border rounded">
+                                <div class="d-flex w-100 justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center gap-3">
+                                        @* Checkbox chọn Bài Đọc (Cha) *@
+                                        <input class="form-check-input reading-parent-check flex-shrink-0" type="checkbox" name="selectedReadingIds" value="@item.Id" style="transform: scale(1.3);">
+
+                                        <a data-bs-toggle="collapse" href="#@collapseId" role="button" aria-expanded="false" class="text-decoration-none fw-bold text-primary">
+                                            @item.Title <span class="badge bg-secondary ms-2">@(item.Questions?.Count ?? 0) câu hỏi</span> <i class="fa fa-chevron-down small"></i>
+                                        </a>
                                     </div>
-                                    <p class="mb-1 text-muted small text-truncate" style="max-width: 800px;">@item.Content</p>
                                 </div>
-                            </label>
+
+                                @* Khu vực câu hỏi con *@
+                                <div class="collapse mt-2 ps-4 border-start border-3 border-warning" id="@collapseId">
+                                    <div class="p-2 bg-light border rounded mb-2 small text-muted fst-italic text-truncate">@item.Content</div>
+
+                                    @if (item.Questions != null && item.Questions.Any())
+                                    {
+                                        <div class="small fw-bold mb-1">Chọn câu hỏi chi tiết:</div>
+                                        <ul class="list-group list-group-flush small">
+                                            @foreach (var q in item.Questions)
+                                            {
+                                                <li class="list-group-item bg-transparent py-1 border-0 d-flex gap-2">
+                                                    @* Checkbox chọn Câu Hỏi (Con) *@
+                                                    <input type="checkbox" name="selectedQuestionIds" value="@q.Id" class="form-check-input reading-child-@item.Id" data-parent-id="@item.Id" data-parent-type="reading">
+                                                    <span>@q.Content</span>
+                                                </li>
+                                            }
+                                        </ul>
+                                    }
+                                </div>
+                            </div>
                         }
                     }
                     else
                     {
-                        <div class="text-center py-3 text-muted">Chưa có dữ liệu bài đọc trong kho.</div>
+                        <div class="text-center py-3 text-muted">Chưa có dữ liệu.</div>
                     }
                 </div>
             </div>
 
+            @* === TAB 2: NGHE (Chọn nhiều bài, chọn nhiều câu) === *@
             <div class="tab-pane fade" id="listening" role="tabpanel">
-                <div class="alert alert-info"><i class="fa fa-info-circle"></i> Vui lòng chọn <strong>1 Bài Nghe</strong> (Hệ thống sẽ tự động thêm tất cả câu hỏi thuộc bài nghe này).</div>
-
-                <div class="list-group" style="max-height: 400px; overflow-y: auto;">
+                <div class="alert alert-info small"><i class="fa fa-info-circle"></i> Chọn tối đa <strong>4 Bài Nghe</strong>.</div>
+                <div class="list-group" style="max-height: 500px; overflow-y: auto;">
                     @if (listenings != null && listenings.Any())
                     {
                         @foreach (var item in listenings)
                         {
-                            <label class="list-group-item list-group-item-action d-flex gap-3 align-items-center">
-                                <input class="form-check-input flex-shrink-0" type="radio" name="selectedListeningId" value="@item.Id" style="transform: scale(1.3);">
-                                <div class="w-100">
-                                    <div class="d-flex w-100 justify-content-between">
-                                        <h6 class="mb-1 fw-bold text-info">@item.Title</h6>
-                                        <span class="badge bg-secondary">@(item.Questions?.Count ?? 0) câu hỏi</span>
+                            var collapseId = "collapse_listening_" + item.Id;
+                            <div class="list-group-item mb-2 border rounded">
+                                <div class="d-flex w-100 justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center gap-3">
+                                        @* Checkbox chọn Bài Nghe (Cha) *@
+                                        <input class="form-check-input listening-parent-check flex-shrink-0" type="checkbox" name="selectedListeningIds" value="@item.Id" style="transform: scale(1.3);">
+
+                                        <a data-bs-toggle="collapse" href="#@collapseId" role="button" aria-expanded="false" class="text-decoration-none fw-bold text-info">
+                                            @item.Title <span class="badge bg-secondary ms-2">@(item.Questions?.Count ?? 0) câu hỏi</span> <i class="fa fa-chevron-down small"></i>
+                                        </a>
                                     </div>
                                     @if (!string.IsNullOrEmpty(item.AudioUrl))
                                     {
-                                        <audio controls src="@item.AudioUrl" style="max-width: 100%; height: 25px;"></audio>
+                                        <audio controls src="@item.AudioUrl" style="height: 30px;"></audio>
                                     }
-                                    <small class="text-muted"><i class="fa fa-link"></i> @item.AudioUrl</small>
                                 </div>
-                            </label>
+                                <div class="collapse mt-2 ps-4 border-start border-3 border-info" id="@collapseId">
+                                    @if (item.Questions != null && item.Questions.Any())
+                                    {
+                                        <div class="small fw-bold mb-1">Chọn câu hỏi chi tiết:</div>
+                                        <ul class="list-group list-group-flush small">
+                                            @foreach (var q in item.Questions)
+                                            {
+                                                <li class="list-group-item bg-transparent py-1 border-0 d-flex gap-2">
+                                                    <input type="checkbox" name="selectedQuestionIds" value="@q.Id" class="form-check-input listening-child-@item.Id" data-parent-id="@item.Id" data-parent-type="listening">
+                                                    <span>@q.Content</span>
+                                                </li>
+                                            }
+                                        </ul>
+                                    }
+                                </div>
+                            </div>
                         }
                     }
                     else
                     {
-                        <div class="text-center py-3 text-muted">Chưa có dữ liệu bài nghe trong kho.</div>
+                        <div class="text-center py-3 text-muted">Chưa có dữ liệu.</div>
                     }
                 </div>
             </div>
-            @* === END TAB ĐỌC VÀ NGHE === *@
 
-
-            @* === TAB NÓI (Speaking Questions) - Có lọc === *@
+            @* === TAB 3: NÓI (Chọn 1) === *@
             <div class="tab-pane fade" id="speaking" role="tabpanel">
-                <div class="alert alert-danger bg-danger bg-opacity-10 text-danger border-danger">
-                    <i class="fa fa-check-square"></i> Chọn các câu hỏi Nói (Có thể chọn nhiều).
-                </div>
-
+                <div class="alert alert-danger bg-danger bg-opacity-10 text-danger border-danger small">Chọn <strong>1 Bài Nói</strong>.</div>
                 <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
                     <table class="table table-hover">
-                        <thead class="table-light sticky-top">
-                            <tr>
-                                <th style="width: 50px;">Chọn</th>
-                                <th style="width: 50%;">Nội dung câu hỏi / Chủ đề</th>
-                                <th style="width: 20%;">Media</th>
-                                <th style="width: 10%;">Độ khó</th>
-                            </tr>
-                        </thead>
                         <tbody>
                             @if (speakings != null && speakings.Any())
                             {
                                 @foreach (var item in speakings)
                                 {
                                     <tr>
-                                        <td class="text-center">
-                                            <input class="form-check-input" type="checkbox" name="selectedSpeakingIds" value="@item.Id" style="transform: scale(1.2);">
+                                        <td style="width: 50px;" class="text-center">
+                                            <input class="form-check-input" type="radio" name="selectedSpeakingId" value="@item.Id" style="transform: scale(1.2);">
                                         </td>
-                                        <td>
-                                            @item.Content
-                                            @if (item.QuestionTopics != null && item.QuestionTopics.Any())
-                                            {
-                                                <div class="small text-muted">(@string.Join(", ", item.QuestionTopics.Select(qt => qt.Topic.Name)))</div>
-                                            }
-                                        </td>
-                                        <td>
-                                            @if (!string.IsNullOrEmpty(item.MediaUrl))
-                                            {
-                                                <a href="@item.MediaUrl" target="_blank" class="badge bg-primary text-decoration-none">Xem ảnh/Audio</a>
-                                            }
-                                        </td>
+                                        <td>@item.Content</td>
                                         <td><span class="badge bg-light text-dark border">Level @item.Level</span></td>
                                     </tr>
                                 }
                             }
                             else
                             {
-                                <tr><td colspan="4" class="text-center">Chưa có câu hỏi Nói (hoặc không khớp bộ lọc).</td></tr>
+                                <tr><td colspan="3" class="text-center">Chưa có dữ liệu.</td></tr>
                             }
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            @* === TAB VIẾT (Writing Questions) - Có lọc === *@
+            @* === TAB 4: VIẾT (Chọn 1) === *@
             <div class="tab-pane fade" id="writing" role="tabpanel">
-                <div class="alert alert-success bg-success bg-opacity-10 text-success border-success">
-                    <i class="fa fa-check-square"></i> Chọn các câu hỏi Viết (Có thể chọn nhiều).
-                </div>
-
+                <div class="alert alert-success bg-success bg-opacity-10 text-success border-success small">Chọn <strong>1 Bài Viết</strong>.</div>
                 <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
                     <table class="table table-hover">
-                        <thead class="table-light sticky-top">
-                            <tr>
-                                <th style="width: 50px;">Chọn</th>
-                                <th>Đề bài viết / Chủ đề</th>
-                                <th style="width: 15%;">Độ khó</th>
-                            </tr>
-                        </thead>
                         <tbody>
                             @if (writings != null && writings.Any())
                             {
                                 @foreach (var item in writings)
                                 {
                                     <tr>
-                                        <td class="text-center">
-                                            <input class="form-check-input" type="checkbox" name="selectedWritingIds" value="@item.Id" style="transform: scale(1.2);">
+                                        <td style="width: 50px;" class="text-center">
+                                            <input class="form-check-input" type="radio" name="selectedWritingId" value="@item.Id" style="transform: scale(1.2);">
                                         </td>
-                                        <td>
-                                            <div style="white-space: pre-wrap;">@item.Content</div>
-                                            @if (item.QuestionTopics != null && item.QuestionTopics.Any())
-                                            {
-                                                <div class="small text-muted">(@string.Join(", ", item.QuestionTopics.Select(qt => qt.Topic.Name)))</div>
-                                            }
-                                        </td>
+                                        <td>@item.Content</td>
                                         <td><span class="badge bg-light text-dark border">Level @item.Level</span></td>
                                     </tr>
                                 }
                             }
                             else
                             {
-                                <tr><td colspan="3" class="text-center">Chưa có câu hỏi Viết (hoặc không khớp bộ lọc).</td></tr>
+                                <tr><td colspan="3" class="text-center">Chưa có dữ liệu.</td></tr>
                             }
                         </tbody>
                     </table>
@@ -232,17 +226,15 @@
         </div>
 
         <div class="mt-4 text-end">
-            <button type="submit" class="btn btn-primary btn-lg shadow px-5">
-                <i class="fa fa-save"></i> LƯU VÀO ĐỀ THI
-            </button>
+            <button type="submit" class="btn btn-primary btn-lg shadow px-5"><i class="fa fa-save"></i> LƯU VÀO ĐỀ THI</button>
         </div>
     </form>
 </div>
 
 @section Scripts {
     <script>
-        // FIX 1 & 2: Giữ lại trạng thái của Dropdown Level và Topic sau khi tải lại trang
         $(document).ready(function () {
+            // FIX 1 & 2: Giữ lại trạng thái của Dropdown Level và Topic sau khi tải lại trang
             var currentLevel = "@(ViewData["CurrentLevel"]?.ToString() ?? "")";
             var currentTopicId = "@(ViewData["CurrentTopicId"]?.ToString() ?? "")";
 
@@ -270,6 +262,79 @@
             // Lưu trạng thái Tab khi chuyển
             $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
                 localStorage.setItem('activeExamTab', e.target.id.replace('-tab', ''));
+            });
+
+            // --- LOGIC CHỌN BÀI ĐỌC / NGHE (CHA - CON) ---
+
+            // A. Khi click Checkbox CHA (Bài đọc/Nghe)
+            // -> Chọn/Bỏ chọn tất cả con + Kiểm tra giới hạn 4 bài
+            $('.reading-parent-check, .listening-parent-check').on('change', function() {
+                var isChecked = $(this).is(':checked');
+                var id = $(this).val();
+
+                // Xác định class của con dựa trên loại cha (đọc hoặc nghe)
+                var childClass = $(this).hasClass('reading-parent-check') ? '.reading-child-' + id : '.listening-child-' + id;
+
+                // Chọn/Bỏ chọn hết con
+                $(childClass).prop('checked', isChecked);
+
+                // Kiểm tra giới hạn số lượng bài CHA được chọn
+                validateParentLimit();
+            });
+
+            // B. Khi click Checkbox CON (Câu hỏi lẻ)
+            // -> Cập nhật trạng thái Cha (Nếu chọn ít nhất 1 con -> Coi như Cha được chọn để tính vào giới hạn 4 bài)
+            $(document).on('change', '.form-check-input[name="selectedQuestionIds"]', function() {
+                var parentId = $(this).data('parent-id');
+                var parentType = $(this).data('parent-type'); // 'reading' or 'listening'
+
+                var childClass = '.' + parentType + '-child-' + parentId;
+                var parentCheckboxName = parentType === 'reading' ? 'selectedReadingIds' : 'selectedListeningIds';
+                var parentCheckbox = $('input[name="' + parentCheckboxName + '"][value="' + parentId + '"]');
+
+                // Logic:
+                // 1. Nếu có ít nhất 1 con được chọn => Tự động check Cha (để tính vào giới hạn 4 bài)
+                // 2. Nếu không có con nào được chọn => Bỏ check Cha
+
+                var anyChildChecked = $(childClass + ':checked').length > 0;
+                parentCheckbox.prop('checked', anyChildChecked);
+
+                validateParentLimit();
+            });
+
+            // Hàm kiểm tra giới hạn 4 bài (Dựa trên số lượng Cha đang được check)
+            function validateParentLimit() {
+                var rCount = $('.reading-parent-check:checked').length;
+                var lCount = $('.listening-parent-check:checked').length;
+
+                if (rCount > 4) {
+                    alert("Bạn chỉ được chọn tối đa 4 Bài Đọc!");
+                    // (Tùy chọn: Hoàn tác hành động vừa rồi để không vượt quá - ở đây chỉ cảnh báo)
+                    return false;
+                }
+                if (lCount > 4) {
+                    alert("Bạn chỉ được chọn tối đa 4 Bài Nghe!");
+                    return false;
+                }
+                return true;
+            }
+
+            // C. Chặn submit form nếu vi phạm
+            $('#mainForm').on('submit', function(e) {
+                if (!validateParentLimit()) {
+                    e.preventDefault();
+                    return false;
+                }
+                // (Tùy chọn) Kiểm tra xem có chọn câu hỏi nào không
+                var totalQ = $('input[name="selectedQuestionIds"]:checked').length +
+                             $('input[name="selectedSpeakingId"]:checked').length +
+                             $('input[name="selectedWritingId"]:checked').length;
+
+                if(totalQ === 0) {
+                    if(!confirm("Bạn chưa chọn câu hỏi nào. Vẫn tiếp tục lưu?")) {
+                        e.preventDefault();
+                    }
+                }
             });
         });
     </script>

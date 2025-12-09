@@ -65,19 +65,6 @@ namespace ExamSystem.Web.Controllers
             return View(await questionsQuery.OrderByDescending(q => q.CreatedDate).ToListAsync());
         }
 
-        // 2. DETAILS (GET) - Dùng chung cho General, Speaking, Writing
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null) return NotFound();
-            var question = await _context.Questions
-                .Include(q => q.Answers)
-                .Include(q => q.ListeningResource)
-                .Include(q => q.ReadingPassage)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (question == null) return NotFound();
-            return View(question);
-        }
-
         public async Task<IActionResult> Create()
         {
             await PrepareViewBag();
@@ -151,17 +138,32 @@ namespace ExamSystem.Web.Controllers
         {
             ModelState.Remove("Content");
             ModelState.Remove("FileUpload");
+            ModelState.Remove("PassageTitle");
             foreach (var key in ModelState.Keys.Where(k => k.Contains("Explaination"))) ModelState.Remove(key);
 
             if (ModelState.IsValid)
             {
                 try
                 {
-                    if (model.Type == QuestionType.ReadingPassage && !model.ReadingPassageId.HasValue)
+                    if (!model.ReadingPassageId.HasValue)
                     {
-                        ModelState.AddModelError("", "Vui lòng chọn Bài đọc từ kho.");
-                        await PrepareViewBag();
-                        return View("Create", model);
+                        if (!string.IsNullOrEmpty(model.PassageTitle) && !string.IsNullOrEmpty(model.PassageText))
+                        {
+                            // Create NEW Passage
+                            var newPassage = new ReadingPassage
+                            {
+                                Title = model.PassageTitle,
+                                Content = model.PassageText
+                            };
+                            _context.ReadingPassages.Add(newPassage);
+                            await _context.SaveChangesAsync();
+
+                            model.ReadingPassageId = newPassage.Id; // Use new ID
+                        }
+                        else
+                        {
+                            ModelState.AddModelError("", "Vui lòng chọn bài đọc có sẵn hoặc nhập đủ Tiêu đề và Nội dung để tạo mới.");
+                        }
                     }
                     if (model.Type == QuestionType.Listening && !model.ListeningResourceId.HasValue)
                     {
@@ -204,162 +206,101 @@ namespace ExamSystem.Web.Controllers
         #endregion
 
         #region 3. EDIT CÂU HỎI ĐƠN & NHÓM
-
-        // 7. EDIT (GET) - Dùng cho Speaking/Writing/General
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null) return NotFound();
-
-            var question = await _context.Questions
-                .Include(q => q.Answers)
-                .FirstOrDefaultAsync(q => q.Id == id);
-
-            if (question == null) return NotFound();
-
-            var model = new QuestionViewModel
-            {
-                Id = question.Id,
-                Type = question.Type,
-                Level = question.Level,
-                Content = question.Content,
-                Explaination = question.Explaination,
-                MediaUrl = question.MediaUrl
-            };
-
-            if (question.Answers != null && question.Answers.Any())
-            {
-                var ansList = question.Answers.OrderBy(a => a.Id).ToList();
-
-                model.OptionA = ansList.ElementAtOrDefault(0)?.Content;
-                model.OptionB = ansList.ElementAtOrDefault(1)?.Content;
-                model.OptionC = ansList.ElementAtOrDefault(2)?.Content;
-                model.OptionD = ansList.ElementAtOrDefault(3)?.Content;
-
-                var correctAns = ansList.FirstOrDefault(a => a.IsCorrect);
-                if (correctAns != null)
-                {
-                    int index = ansList.IndexOf(correctAns);
-                    if (index >= 0 && index < 4) model.CorrectAnswer = ((char)('A' + index)).ToString();
-                }
-            }
-
-            return View(model);
-        }
-
-        // 8. EDIT (POST) - Cập nhật cho câu hỏi đơn (Speaking, Writing, General)
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, QuestionViewModel model, IFormFile fileUpload)
-        {
-            if (id != model.Id) return NotFound();
-
-            var questionInDb = await _context.Questions
-                .Include(q => q.Answers)
-                .FirstOrDefaultAsync(q => q.Id == id);
-
-            if (questionInDb == null) return NotFound();
-
-            ModelState.Remove("Topic");
-            ModelState.Remove("fileUpload");
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    if (fileUpload != null && !IsFileValid(fileUpload, out string fileError))
-                    {
-                        ModelState.AddModelError("fileUpload", fileError);
-                        return View(model);
-                    }
-
-                    questionInDb.Content = model.Content;
-                    questionInDb.Level = model.Level;
-                    questionInDb.Explaination = model.Explaination;
-
-                    if (fileUpload != null && fileUpload.Length > 0)
-                    {
-                        questionInDb.MediaUrl = await UploadFile(fileUpload);
-                    }
-
-                    if (questionInDb.Type != QuestionType.Writing && questionInDb.Type != QuestionType.Speaking)
-                    {
-                        _context.Answers.RemoveRange(questionInDb.Answers);
-                        questionInDb.Answers = CreateAnswersFromModel(model);
-                    }
-
-                    _context.Update(questionInDb);
-                    await _context.SaveChangesAsync();
-
-                    return RedirectToAction(nameof(Index));
-                }
-                catch (Exception ex)
-                {
-                    ModelState.AddModelError("", "Lỗi hệ thống không xác định: " + ex.Message);
-                }
-            }
-            return View(model);
-        }
-
         // 9. DETAILS/EDIT READING
         public async Task<IActionResult> DetailsReading(int? id)
         {
             if (id == null) return NotFound();
-            var rootQuestion = await _context.Questions.Include(q => q.ReadingPassage).FirstOrDefaultAsync(m => m.Id == id);
-            if (rootQuestion == null || rootQuestion.Type != QuestionType.ReadingPassage) return NotFound();
-            string passageContent = rootQuestion.ReadingPassage?.Content ?? "Lỗi tải bài đọc";
-            int? passageId = rootQuestion.ReadingPassageId;
-            List<Question> siblings;
-            if (passageId.HasValue)
-                siblings = await _context.Questions.Include(q => q.Answers).Where(q => q.ReadingPassageId == passageId).OrderBy(q => q.Id).ToListAsync();
-            else
-                siblings = new List<Question>();
 
-            var model = new ReadingDetailsViewModel { PassageText = passageContent, Level = rootQuestion.Level, Questions = siblings };
+            // Tìm câu hỏi gốc (để lấy thông tin bài đọc)
+            var rootQuestion = await _context.Questions
+                .Include(q => q.ReadingPassage)
+                .FirstOrDefaultAsync(m => m.ReadingPassageId == id || m.Id == id); // Tìm linh hoạt
+
+            // Logic lấy PassageId và Content
+            int? passageId = rootQuestion?.ReadingPassageId ?? id; // Ưu tiên ID bài đọc
+            var passage = await _context.ReadingPassages.FindAsync(passageId);
+
+            if (passage == null) return NotFound();
+
+            // Lấy danh sách câu hỏi con
+            var siblings = await _context.Questions
+                .Include(q => q.Answers)
+                .Where(q => q.ReadingPassageId == passageId)
+                .OrderBy(q => q.Id)
+                .ToListAsync();
+
+            var model = new ReadingDetailsViewModel
+            {
+                Id = passage.Id, // QUAN TRỌNG: Gán ID bài đọc vào đây
+                Title = passage.Title,
+                PassageText = passage.Content,
+                Level = rootQuestion?.Level ?? 1,
+                Questions = siblings
+            };
+
             return View(model);
         }
-
         public async Task<IActionResult> EditReading(int? id)
         {
             if (id == null) return NotFound();
-            var rootQuestion = await _context.Questions.Include(q => q.ReadingPassage).FirstOrDefaultAsync(m => m.Id == id);
-            if (rootQuestion == null || rootQuestion.Type != QuestionType.ReadingPassage) return NotFound();
-            string passageContent = rootQuestion.ReadingPassage?.Content ?? "Lỗi tải bài đọc";
-            int? passageId = rootQuestion.ReadingPassageId;
 
-            List<Question> siblings;
-            if (passageId.HasValue)
-                siblings = await _context.Questions.Include(q => q.Answers).Where(q => q.ReadingPassageId == passageId).OrderBy(q => q.Id).ToListAsync();
-            else
-                siblings = new List<Question>();
+            // 1. Tìm Bài Đọc (ReadingPassage) dựa trên ID được gửi lên
+            // Lưu ý: ID gửi lên ở đây là ID của ReadingPassage (từ bảng ReadingPassages), không phải ID Question
+            // HOẶC nếu bạn đang truyền ID của 1 câu hỏi con, phải tìm ngược ra cha.
+            // Giả sử logic Index của bạn truyền ID của ReadingPassage (vì đã gom nhóm):
+
+            // Tìm danh sách câu hỏi thuộc bài đọc này
+            var siblings = await _context.Questions
+                .Include(q => q.Answers)
+                .Where(q => q.ReadingPassageId == id) // Lấy tất cả câu hỏi có ReadingPassageId này
+                .OrderBy(q => q.Id)
+                .ToListAsync();
+
+            // Tìm nội dung bài đọc
+            var passage = await _context.ReadingPassages.FindAsync(id);
+            if (passage == null && siblings.Any())
+            {
+                // Fallback: nếu id truyền vào là id câu hỏi con
+                var firstQ = await _context.Questions.FindAsync(id);
+                if (firstQ?.ReadingPassageId != null)
+                {
+                    passage = await _context.ReadingPassages.FindAsync(firstQ.ReadingPassageId);
+                    siblings = await _context.Questions.Include(a => a.Answers).Where(q => q.ReadingPassageId == firstQ.ReadingPassageId).ToListAsync();
+                }
+            }
+
+            if (passage == null) return NotFound();
 
             var model = new QuestionViewModel
             {
-                PassageText = passageContent,
-                ReadingPassageId = passageId,
-                Level = rootQuestion.Level,
-                SubQuestions = siblings.Select(s =>
+                // Quan trọng: Gán ReadingPassageId để khi Post về biết là bài nào
+                ReadingPassageId = passage.Id,
+                PassageText = passage.Content,
+                Type = QuestionType.ReadingPassage,
+                // Map câu hỏi con sang ViewModel
+                SubQuestions = siblings.Select(s => new SubQuestionInput
                 {
-                    var ansList = s.Answers.ToList();
-                    string correctChar = null;
-                    if (ansList.Any())
-                    {
-                        if (ansList.Count > 0 && ansList[0].IsCorrect) correctChar = "A";
-                        else if (ansList.Count > 1 && ansList[1].IsCorrect) correctChar = "B";
-                        else if (ansList.Count > 2 && ansList[2].IsCorrect) correctChar = "C";
-                        else if (ansList.Count > 3 && ansList[3].IsCorrect) correctChar = "D";
-                    }
-
-                    return new SubQuestionInput
-                    {
-                        Id = s.Id,
-                        Content = s.Content,
-                        Explaination = s.Explaination,
-                        CorrectAnswer = correctChar
-                    };
+                    Id = s.Id,
+                    Content = s.Content,
+                    Explaination = s.Explaination,
+                    OptionA = s.Answers.ElementAtOrDefault(0)?.Content,
+                    OptionB = s.Answers.ElementAtOrDefault(1)?.Content,
+                    OptionC = s.Answers.ElementAtOrDefault(2)?.Content,
+                    OptionD = s.Answers.ElementAtOrDefault(3)?.Content,
+                    CorrectAnswer = GetCorrectChar(s.Answers)
                 }).ToList()
             };
 
             return View("EditReading", model);
+        }
+        private string GetCorrectChar(ICollection<Answer> answers)
+        {
+            var list = answers.ToList();
+            if (list.Count > 0 && list[0].IsCorrect) return "A";
+            if (list.Count > 1 && list[1].IsCorrect) return "B";
+            if (list.Count > 2 && list[2].IsCorrect) return "C";
+            if (list.Count > 3 && list[3].IsCorrect) return "D";
+            return "";
         }
 
         [HttpPost]
@@ -722,6 +663,169 @@ namespace ExamSystem.Web.Controllers
                 audioUrl = resource.AudioUrl
             });
         }
+        #endregion
+
+        // ... (Các phần code cũ giữ nguyên) ...
+
+        #region 6. SPEAKING ACTIONS (MỚI)
+
+        public async Task<IActionResult> DetailsSpeaking(int? id)
+        {
+            if (id == null) return NotFound();
+            var question = await _context.Questions
+                .Include(q => q.QuestionTopics).ThenInclude(qt => qt.Topic)
+                .FirstOrDefaultAsync(m => m.Id == id);
+            if (question == null || question.Type != QuestionType.Speaking) return NotFound();
+            return View(question);
+        }
+
+        public async Task<IActionResult> EditSpeaking(int? id)
+        {
+            if (id == null) return NotFound();
+            var question = await _context.Questions
+                .Include(q => q.QuestionTopics)
+                .FirstOrDefaultAsync(q => q.Id == id);
+
+            if (question == null || question.Type != QuestionType.Speaking) return NotFound();
+
+            var model = new QuestionViewModel
+            {
+                Id = question.Id,
+                Type = QuestionType.Speaking,
+                Level = question.Level,
+                Content = question.Content,
+                Explaination = question.Explaination,
+                MediaUrl = question.MediaUrl,
+                SelectedTopicIds = question.QuestionTopics.Select(qt => qt.TopicId).ToList()
+            };
+
+            await PrepareViewBag(); // Tải Topics/Levels
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditSpeaking(int id, QuestionViewModel model, IFormFile fileUpload)
+        {
+            if (id != model.Id) return NotFound();
+
+            // Validate cơ bản
+            ModelState.Remove("SubQuestions");
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    var question = await _context.Questions.Include(q => q.QuestionTopics).FirstOrDefaultAsync(q => q.Id == id);
+                    if (question == null) return NotFound();
+
+                    // Cập nhật thông tin
+                    question.Content = model.Content;
+                    question.Level = model.Level;
+                    question.Explaination = model.Explaination;
+
+                    // Xử lý File (Ảnh/Audio)
+                    if (fileUpload != null && fileUpload.Length > 0)
+                    {
+                        question.MediaUrl = await UploadFile(fileUpload);
+                    }
+
+                    // Cập nhật Chủ đề (Topics)
+                    question.QuestionTopics.Clear();
+                    if (model.SelectedTopicIds != null)
+                    {
+                        foreach (var topicId in model.SelectedTopicIds)
+                        {
+                            question.QuestionTopics.Add(new QuestionTopic { QuestionId = id, TopicId = topicId });
+                        }
+                    }
+
+                    _context.Update(question);
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError("", "Lỗi: " + ex.Message);
+                }
+            }
+
+            await PrepareViewBag();
+            return View(model);
+        }
+
+        #endregion
+
+        #region 7. WRITING ACTIONS (MỚI)
+
+        public async Task<IActionResult> DetailsWriting(int? id)
+        {
+            if (id == null) return NotFound();
+            var question = await _context.Questions
+                .Include(q => q.QuestionTopics).ThenInclude(qt => qt.Topic)
+                .FirstOrDefaultAsync(m => m.Id == id);
+            if (question == null || question.Type != QuestionType.Writing) return NotFound();
+            return View(question);
+        }
+
+        public async Task<IActionResult> EditWriting(int? id)
+        {
+            if (id == null) return NotFound();
+            var question = await _context.Questions
+                .Include(q => q.QuestionTopics)
+                .FirstOrDefaultAsync(q => q.Id == id);
+
+            if (question == null || question.Type != QuestionType.Writing) return NotFound();
+
+            var model = new QuestionViewModel
+            {
+                Id = question.Id,
+                Type = QuestionType.Writing,
+                Level = question.Level,
+                Content = question.Content,
+                Explaination = question.Explaination,
+                SelectedTopicIds = question.QuestionTopics.Select(qt => qt.TopicId).ToList()
+            };
+
+            await PrepareViewBag();
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditWriting(int id, QuestionViewModel model)
+        {
+            if (id != model.Id) return NotFound();
+            ModelState.Remove("SubQuestions");
+            ModelState.Remove("FileUpload"); // Writing thường không cần file
+
+            if (ModelState.IsValid)
+            {
+                var question = await _context.Questions.Include(q => q.QuestionTopics).FirstOrDefaultAsync(q => q.Id == id);
+                if (question == null) return NotFound();
+
+                question.Content = model.Content;
+                question.Level = model.Level;
+                question.Explaination = model.Explaination;
+
+                question.QuestionTopics.Clear();
+                if (model.SelectedTopicIds != null)
+                {
+                    foreach (var topicId in model.SelectedTopicIds)
+                    {
+                        question.QuestionTopics.Add(new QuestionTopic { QuestionId = id, TopicId = topicId });
+                    }
+                }
+
+                _context.Update(question);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
+
+            await PrepareViewBag();
+            return View(model);
+        }
+
         #endregion
     }
 }

@@ -1,0 +1,85 @@
+﻿@model ExamSystem.Web.Models.QuestionViewModel
+@{
+    ViewData["Title"] = "Sửa bài NÓI";
+}
+
+<div class="container mt-4">
+    <div class="card border-danger shadow-sm">
+        <div class="card-header bg-danger text-white">
+            <h4 class="m-0"><i class="fa fa-microphone"></i> Sửa bài NÓI #@Model.Id</h4>
+        </div>
+        <div class="card-body">
+            <form asp-action="EditSpeaking" enctype="multipart/form-data">
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="Type" />
+
+                <div class="row">
+                    @* Cột Trái: Nội dung & Media *@
+                    <div class="col-md-7">
+                        <div class="form-group mb-3">
+                            <label class="fw-bold mb-1">Nội dung câu hỏi / Gợi ý</label>
+                            <textarea asp-for="Content" class="form-control" rows="4" placeholder="Nhập câu hỏi hoặc gợi ý cho bài nói..."></textarea>
+                            <span asp-validation-for="Content" class="text-danger"></span>
+                        </div>
+
+                        <div class="card bg-light border-0 mb-3">
+                            <div class="card-body text-center">
+                                <label class="fw-bold d-block mb-2">Hình ảnh / Audio đính kèm</label>
+                                @if (!string.IsNullOrEmpty(Model.MediaUrl))
+                                {
+                                    if (Model.MediaUrl.EndsWith("mp3") || Model.MediaUrl.EndsWith("wav"))
+                                    {
+                                        <audio controls src="@Model.MediaUrl" class="w-100 mb-2"></audio>
+                                    }
+                                    else
+                                    {
+                                        <img src="@Model.MediaUrl" class="img-fluid rounded shadow-sm mb-2" style="max-height: 300px;" />
+                                    }
+                                    <div class="text-muted small">File hiện tại: @System.IO.Path.GetFileName(Model.MediaUrl)</div>
+                                }
+                                else
+                                {
+                                    <div class="text-muted fst-italic py-3">Chưa có file đính kèm</div>
+                                }
+
+                                <div class="mt-3 text-start">
+                                    <label class="small text-secondary">Thay đổi file mới (nếu cần):</label>
+                                    <input type="file" name="fileUpload" class="form-control" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @* Cột Phải: Cấu hình *@
+                    <div class="col-md-5">
+                        <div class="card bg-white border h-100">
+                            <div class="card-header bg-light fw-bold">Cấu hình bài thi</div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="fw-bold mb-1">Độ khó (Level)</label>
+                                    <select asp-for="Level" class="form-select" asp-items="ViewBag.Levels"></select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="fw-bold mb-1">Chủ đề (Topics)</label>
+                                    <select asp-for="SelectedTopicIds" class="form-select" asp-items="ViewBag.Topics" multiple size="8"></select>
+                                    <div class="form-text small text-muted"><i class="fa fa-info-circle"></i> Giữ phím Ctrl để chọn nhiều.</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="fw-bold mb-1">Giải thích / Ghi chú (Cho giáo viên)</label>
+                                    <textarea asp-for="Explaination" class="form-control" rows="3"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between mt-4 border-top pt-3">
+                    <a asp-action="Index" class="btn btn-secondary"><i class="fa fa-arrow-left"></i> Quay lại</a>
+                    <button type="submit" class="btn btn-danger px-5 shadow-sm"><i class="fa fa-save"></i> LƯU THAY ĐỔI</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

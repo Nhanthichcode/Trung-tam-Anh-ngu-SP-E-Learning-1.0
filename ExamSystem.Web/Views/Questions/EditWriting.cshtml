@@ -1,0 +1,53 @@
+﻿@model ExamSystem.Web.Models.QuestionViewModel
+@{
+    ViewData["Title"] = "Sửa bài VIẾT";
+}
+
+<div class="container mt-4">
+    <div class="card border-success shadow-sm">
+        <div class="card-header bg-success text-white">
+            <h4 class="m-0"><i class="fa fa-pencil-square-o"></i> Sửa bài VIẾT #@Model.Id</h4>
+        </div>
+        <div class="card-body">
+            <form asp-action="EditWriting">
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="Type" />
+
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="form-group mb-3">
+                            <label class="fw-bold mb-2">Đề bài viết (Prompt)</label>
+                            <textarea asp-for="Content" class="form-control p-3" rows="12" style="font-size: 1.1em; line-height: 1.6;"></textarea>
+                            <span asp-validation-for="Content" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="p-3 bg-light border rounded">
+                            <div class="mb-3">
+                                <label class="fw-bold mb-1">Độ khó</label>
+                                <select asp-for="Level" class="form-select" asp-items="ViewBag.Levels"></select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="fw-bold mb-1">Chủ đề</label>
+                                <select asp-for="SelectedTopicIds" class="form-select" asp-items="ViewBag.Topics" multiple size="8"></select>
+                                <div class="form-text small"><i class="fa fa-info-circle"></i> Giữ Ctrl để chọn nhiều.</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="fw-bold mb-1">Ghi chú chấm điểm</label>
+                                <textarea asp-for="Explaination" class="form-control" rows="4" placeholder="Ghi chú về tiêu chí chấm điểm..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between mt-4 border-top pt-3">
+                    <a asp-action="Index" class="btn btn-secondary"><i class="fa fa-arrow-left"></i> Quay lại</a>
+                    <button type="submit" class="btn btn-success px-5 shadow-sm"><i class="fa fa-save"></i> LƯU BÀI VIẾT</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

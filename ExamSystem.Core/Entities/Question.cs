@@ -1,7 +1,8 @@
-﻿using System;
+﻿using ExamSystem.Core.Enums;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using ExamSystem.Core.Enums;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ExamSystem.Core.Entities
 {
@@ -16,10 +17,18 @@ namespace ExamSystem.Core.Entities
         public string? Explaination { get; set; }
         public DateTime CreatedDate { get; set; } = DateTime.Now;
 
-        public int? ReadingPassageId { get; set; }
-        public ReadingPassage? ReadingPassage { get; set; }
-        public int? ListeningResourceId { get; set; }
-        public ListeningResource? ListeningResource { get; set; }
+        public int? ReadingPassageId { get; set; } // Cột lưu ID
+
+        [ForeignKey("ReadingPassageId")] // <--- QUAN TRỌNG: Chỉ định cột khóa ngoại
+        public virtual ReadingPassage ReadingPassage { get; set; } // Object liên kết
+
+        // --- KHÓA NGOẠI CHO BÀI NGHE ---
+        public int? ListeningResourceId { get; set; } // Cột lưu ID
+
+        [ForeignKey("ListeningResourceId")] // <--- QUAN TRỌNG: Chỉ định cột khóa ngoại
+        public virtual ListeningResource ListeningResource { get; set; } // Object liên kết
+
+
         public ICollection<Answer> Answers { get; set; } = new List<Answer>();
         public ICollection<QuestionTopic> QuestionTopics { get; set; } = new List<QuestionTopic>();
     }

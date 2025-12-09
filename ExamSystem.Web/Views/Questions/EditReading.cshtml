@@ -31,42 +31,30 @@
                 <h5 class="text-primary mb-3">Danh sách câu hỏi chi tiết</h5>
 
                 <div id="SubQuestionsContainer">
+                    @* Trong EditReading.cshtml *@
                     @for (int i = 0; i < Model.SubQuestions.Count; i++)
                     {
-                        <div class="card mb-3 sub-question-item shadow-sm border-0 bg-light">
-                            <div class="card-header bg-white fw-bold">
-                                Câu hỏi số @(i + 1)
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <strong>Câu hỏi số @(i + 1)</strong>
                                 <input type="hidden" name="SubQuestions[@i].Id" value="@Model.SubQuestions[i].Id" />
-                                <button type="button" class="btn btn-sm btn-danger" onclick="questionEditor.removeRow(this)">Xóa</button>
                             </div>
                             <div class="card-body">
-                                <div class="form-group mb-2">
-                                    <label class="small text-muted fw-bold">Nội dung</label>
-                                    <input name="SubQuestions[@i].Content" value="@Model.SubQuestions[i].Content" class="form-control" required />
-                                </div>
+                                <input class="form-control mb-2" name="SubQuestions[@i].Content" value="@Model.SubQuestions[i].Content" placeholder="Nội dung câu hỏi" />
                                 <div class="row g-2">
-                                    <div class="col-6"><input name="SubQuestions[@i].OptionA" value="@Model.SubQuestions[i].OptionA" class="form-control form-control-sm" placeholder="A" required /></div>
-                                    <div class="col-6"><input name="SubQuestions[@i].OptionB" value="@Model.SubQuestions[i].OptionB" class="form-control form-control-sm" placeholder="B" required /></div>
-                                    <div class="col-6"><input name="SubQuestions[@i].OptionC" value="@Model.SubQuestions[i].OptionC" class="form-control form-control-sm" placeholder="C" required /></div>
-                                    <div class="col-6"><input name="SubQuestions[@i].OptionD" value="@Model.SubQuestions[i].OptionD" class="form-control form-control-sm" placeholder="D" required /></div>
+                                    <div class="col-6"><input class="form-control" name="SubQuestions[@i].OptionA" value="@Model.SubQuestions[i].OptionA" placeholder="A" /></div>
+                                    <div class="col-6"><input class="form-control" name="SubQuestions[@i].OptionB" value="@Model.SubQuestions[i].OptionB" placeholder="B" /></div>
+                                    <div class="col-6"><input class="form-control" name="SubQuestions[@i].OptionC" value="@Model.SubQuestions[i].OptionC" placeholder="C" /></div>
+                                    <div class="col-6"><input class="form-control" name="SubQuestions[@i].OptionD" value="@Model.SubQuestions[i].OptionD" placeholder="D" /></div>
                                 </div>
-                                <div class="row mt-2 align-items-center">
-                                    <div class="col-auto"><span class="small fw-bold">Đáp án đúng:</span></div>
-                                    <select name="SubQuestions[@i].CorrectAnswer"
-                                            class="form-select form-select-sm fw-bold text-success border-success"
-                                            style="width: 80px;" required>
-
-                                        @{
-                                            // Chuẩn hóa đáp án từ DB: Viết hoa và cắt khoảng trắng để so sánh chính xác
-                                            var dbAnswer = Model.SubQuestions[i].CorrectAnswer?.Trim().ToUpper();
-                                        }
-
-                                        <option value="A" selected="@(dbAnswer == "A" ? "selected" : null)">A</option>
-                                        <option value="B" selected="@(dbAnswer == "B" ? "selected" : null)">B</option>
-                                        <option value="C" selected="@(dbAnswer == "C" ? "selected" : null)">C</option>
-                                        <option value="D" selected="@(dbAnswer == "D" ? "selected" : null)">D</option>
+                                <div class="mt-2">
+                                    Đáp án đúng:
+                                    <select name="SubQuestions[@i].CorrectAnswer" class="form-select w-auto d-inline">
+                                        <option value="A" selected="@(Model.SubQuestions[i].CorrectAnswer == "A")">A</option>
+                                        <option value="B" selected="@(Model.SubQuestions[i].CorrectAnswer == "B")">B</option>
+                                        <option value="C" selected="@(Model.SubQuestions[i].CorrectAnswer == "C")">C</option>
+                                        <option value="D" selected="@(Model.SubQuestions[i].CorrectAnswer == "D")">D</option>
                                     </select>
-                                    <div class="col"><input name="SubQuestions[@i].Explaination" value="@Model.SubQuestions[i].Explaination" class="form-control form-control-sm" placeholder="Giải thích..." /></div>
                                 </div>
                             </div>
                         </div>

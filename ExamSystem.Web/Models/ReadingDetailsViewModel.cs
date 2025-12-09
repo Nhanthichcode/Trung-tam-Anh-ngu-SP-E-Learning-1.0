@@ -5,6 +5,8 @@ namespace ExamSystem.Web.Models
 {
     public class ReadingDetailsViewModel
     {
+        public int Id { get; set; }
+        public string Title { get; set; }
         public string PassageText { get; set; }
         public int Level { get; set; }
 

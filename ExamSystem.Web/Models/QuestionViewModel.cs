@@ -16,7 +16,8 @@ namespace ExamSystem.Web.Models
         public string? Content { get; set; } // Nội dung câu hỏi (hoặc đề bài)
         [Display(Name = "Nội dung bài đọc")]
         public string? PassageText { get; set; }
-
+        [Display(Name = "Tiêu đề bài đọc")]
+        public string? PassageTitle { get; set; }
         // --- 2. TRẮC NGHIỆM ĐƠN LẺ ---
         public string? OptionA { get; set; }
         public string? OptionB { get; set; }
