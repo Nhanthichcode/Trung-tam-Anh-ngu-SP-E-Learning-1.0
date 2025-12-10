@@ -1,0 +1,26 @@
+﻿@model IEnumerable<ExamSystem.Core.Entities.ListeningResource>
+@{
+    ViewData["Title"] = "Quản lý File Nghe";
+}
+
+<h1>Danh sách File Nghe</h1>
+<p><a asp-action="Create" class="btn btn-primary">Thêm mới</a></p>
+
+<table class="table table-bordered">
+    <thead>
+        <tr><th>Tiêu đề</th><th>Link Audio</th><th>Thao tác</th></tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Title</td>
+                <td><audio controls src="@item.AudioUrl"></audio></td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">Sửa</a>
+                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">Xóa</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

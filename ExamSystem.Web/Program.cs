@@ -60,7 +60,7 @@ using (var scope = app.Services.CreateScope())
     try
     {
         // Gọi hàm Seed data
-        await ExamSystem.Infrastructure.Seeding.DbSeeder.SeedRolesAndAdminAsync(services);
+        await ExamSystem.Infrastructure.Seeding.DbSeeder.SeedAllAsync(services);
     }
     catch (Exception ex)
     {

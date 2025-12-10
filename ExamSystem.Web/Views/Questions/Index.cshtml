@@ -1,0 +1,41 @@
+﻿@model IEnumerable<ExamSystem.Core.Entities.Question>
+@{
+    ViewData["Title"] = "Ngân hàng Câu hỏi";
+}
+
+<h1>Ngân hàng Câu hỏi</h1>
+<p><a asp-action="Create" class="btn btn-primary">Thêm câu hỏi mới</a></p>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Nội dung</th>
+            <th>Loại</th>
+            <th>Bài đọc/Nghe</th>
+            <th>Thao tác</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@Html.Raw(item.Content)</td>
+                <td>@item.SkillType</td>
+                <td>
+                    @if (item.ReadingPassage != null)
+                    {
+                        <span class="badge bg-info">Đọc: @item.ReadingPassage.Title</span>
+                    }
+                    @if (item.ListeningResource != null)
+                    {
+                        <span class="badge bg-warning">Nghe: @item.ListeningResource.Title</span>
+                    }
+                </td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">Sửa</a>
+                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">Xóa</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

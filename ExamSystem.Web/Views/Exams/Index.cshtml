@@ -1,0 +1,47 @@
+﻿@using ExamSystem.Core.Entities
+@model IEnumerable<Exam>
+
+@{
+    ViewData["Title"] = "Quản lý Đề thi";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Danh sách Đề thi</h1>
+    <a asp-action="Create" class="btn btn-primary">+ Tạo Đề thi mới</a>
+</div>
+
+<table class="table table-bordered table-hover">
+    <thead class="table-dark">
+        <tr>
+            <th>Tiêu đề</th>
+            <th>Thời lượng</th>
+            <th>Ngày bắt đầu</th>
+            <th>Trạng thái</th>
+            <th>Thao tác</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Title</td>
+                <td>@item.DurationMinutes phút</td>
+                <td>@item.StartDate.ToString("dd/MM/yyyy HH:mm")</td>
+                <td>
+                    @if (item.IsActive)
+                    {
+                        <span class="badge bg-success">Đang mở</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">Đóng</span>
+                    }
+                </td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">Sửa</a>
+                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">Xóa</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

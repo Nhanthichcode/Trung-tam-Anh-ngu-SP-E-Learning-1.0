@@ -1,0 +1,27 @@
+﻿@model IEnumerable<ExamSystem.Core.Entities.ExamPart>
+@{
+    ViewData["Title"] = "Các phần thi";
+}
+
+<h1>Quản lý Phần thi</h1>
+<p><a asp-action="Create" class="btn btn-primary">Thêm phần thi mới</a></p>
+
+<table class="table table-bordered">
+    <thead>
+        <tr><th>Tên phần</th><th>Thuộc đề thi</th><th>Thứ tự</th><th>Thao tác</th></tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Name</td>
+                <td>@item.Exam?.Title</td>
+                <td>@item.OrderIndex</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">Sửa</a>
+                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">Xóa</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

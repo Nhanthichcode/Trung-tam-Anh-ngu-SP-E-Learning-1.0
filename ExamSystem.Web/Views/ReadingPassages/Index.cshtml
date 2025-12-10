@@ -1,0 +1,26 @@
+﻿@model IEnumerable<ExamSystem.Core.Entities.ReadingPassage>
+@{
+    ViewData["Title"] = "Bài đọc hiểu";
+}
+
+<h1>Quản lý Bài đọc</h1>
+<a asp-action="Create" class="btn btn-primary mb-3">Thêm bài đọc</a>
+
+<table class="table table-bordered">
+    <thead>
+        <tr><th>Tiêu đề</th><th>Nội dung (Preview)</th><th>Thao tác</th></tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Title</td>
+                <td>@(item.Content.Length > 50 ? item.Content.Substring(0, 50) + "..." : item.Content)</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning btn-sm">Sửa</a>
+                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger btn-sm">Xóa</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

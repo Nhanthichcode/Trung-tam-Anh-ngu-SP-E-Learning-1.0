@@ -1,0 +1,33 @@
+﻿@model IEnumerable<ExamSystem.Core.Entities.TestAttempt>
+@{
+    ViewData["Title"] = "Lịch sử thi";
+}
+
+<h1>Lịch sử thi</h1>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Người dùng (ID)</th>
+            <th>Đề thi</th>
+            <th>Ngày thi</th>
+            <th>Điểm số</th>
+            <th>Thao tác</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.UserId</td>
+                <td>@item.Exam?.Title</td>
+                <td>@item.StartTime.ToString("dd/MM/yyyy HH:mm")</td>
+                <td><strong class="text-primary">@item.Score</strong></td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-info btn-sm">Xem chi tiết</a>
+                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger btn-sm">Xóa</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

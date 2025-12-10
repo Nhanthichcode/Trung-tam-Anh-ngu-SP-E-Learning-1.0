@@ -1,0 +1,27 @@
+﻿@model ExamSystem.Core.Entities.ExamPart
+@{
+    ViewData["Title"] = "Tạo Phần thi";
+}
+
+<h4>Tạo Phần thi mới</h4>
+<hr />
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Create">
+            <div class="mb-3">
+                <label class="form-label">Thuộc Đề thi</label>
+                <select asp-for="ExamId" class="form-control" asp-items="ViewBag.ExamId"></select>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Name" class="form-label">Tên phần (VD: Part 1 Listening)</label>
+                <input asp-for="Name" class="form-control" />
+            </div>
+            <div class="mb-3">
+                <label asp-for="OrderIndex" class="form-label">Thứ tự xuất hiện</label>
+                <input asp-for="OrderIndex" type="number" class="form-control" />
+            </div>
+            <button type="submit" class="btn btn-success">Lưu</button>
+            <a asp-action="Index" class="btn btn-secondary">Hủy</a>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,28 @@
+﻿@model ExamSystem.Core.Entities.ReadingPassage
+@{
+    ViewData["Title"] = "Chỉnh sửa bài đọc";
+}
+
+<h4>Tạo Bài đọc mới</h4>
+<hr />
+<form asp-action="Create">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <input type="hidden" asp-for="Id" />
+
+    <div class="mb-3">
+        <label asp-for="Title" class="form-label">Tiêu đề</label>
+        <input asp-for="Title" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="Content" class="form-label">Nội dung bài đọc</label>
+        <textarea asp-for="Content" class="form-control" rows="10"></textarea>
+    </div>
+    <button type="submit" class="btn btn-success">Lưu</button>
+    <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

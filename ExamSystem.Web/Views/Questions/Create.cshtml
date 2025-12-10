@@ -1,0 +1,43 @@
+﻿@model ExamSystem.Core.Entities.Question
+@{
+    ViewData["Title"] = "Tạo câu hỏi";
+}
+
+<h4>Tạo Câu hỏi mới</h4>
+<hr />
+<div class="row">
+    <div class="col-md-8">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="mb-3">
+                <label asp-for="Content" class="form-label">Nội dung câu hỏi</label>
+                <textarea asp-for="Content" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="Content" class="text-danger"></span>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Gắn với Bài Đọc (nếu có)</label>
+                    <select asp-for="ReadingPassageId" class="form-control" asp-items="ViewBag.ReadingPassageId">
+                        <option value="">-- Không chọn --</option>
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Gắn với Bài Nghe (nếu có)</label>
+                    <select asp-for="ListeningResourceId" class="form-control" asp-items="ViewBag.ListeningResourceId">
+                        <option value="">-- Không chọn --</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="SkillType" class="form-label">Kỹ năng (1: Nghe, 2: Đọc)</label>
+                <input asp-for="SkillType" class="form-control" type="number" />
+            </div>
+
+            <button type="submit" class="btn btn-success">Lưu câu hỏi</button>
+            <a asp-action="Index" class="btn btn-secondary">Hủy</a>
+        </form>
+    </div>
+</div>
