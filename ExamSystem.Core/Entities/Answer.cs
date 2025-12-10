@@ -1,19 +1,17 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ExamSystem.Core.Entities
 {
     public class Answer
     {
         public int Id { get; set; }
-
-        [Required]
-        [Display(Name = "Nội dung đáp án")]
-        public string Content { get; set; }
-
-        [Display(Name = "Là đáp án đúng")]
-        public bool IsCorrect { get; set; }
+        public string? Content { get; set; }
+        public bool? IsCorrect { get; set; }
+        public string? TextAnswer { get; set; }
 
         public int QuestionId { get; set; }
-        public Question Question { get; set; }
+        [ForeignKey("QuestionId")]
+        public Question Question { get; set; } = null!;
     }
 }

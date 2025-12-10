@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,13 +11,15 @@ namespace ExamSystem.Core.Entities
     {
         public int Id { get; set; }
 
-        public int ExamId { get; set; }
-        public Exam Exam { get; set; }
+        public int ExamPartId { get; set; }
+        [ForeignKey("ExamPartId")]
+        public ExamPart ExamPart { get; set; } = null!;
 
         public int QuestionId { get; set; }
-        public Question Question { get; set; }
+        [ForeignKey("QuestionId")]
+        public Question Question { get; set; } = null!;
 
-        public int SortOrder { get; set; } // Thứ tự câu hỏi trong đề
-        public double Score { get; set; } // Điểm số riêng cho câu hỏi trong đề này
+        public int SortOrder { get; set; }
+        public double Score { get; set; } = 1.0;
     }
 }

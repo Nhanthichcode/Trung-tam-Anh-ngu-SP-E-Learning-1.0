@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,22 +12,19 @@ namespace ExamSystem.Core.Entities
     {
         public int Id { get; set; }
 
-        [Display(Name = "Người thi")]
-        public string UserId { get; set; }
-        public AppUser User { get; set; }
+        public string UserId { get; set; } = string.Empty;
+        [ForeignKey("UserId")]
+        public AppUser User { get; set; } = null!;
 
-        [Display(Name = "Đề thi")]
         public int ExamId { get; set; }
-        public Exam Exam { get; set; }
+        [ForeignKey("ExamId")]
+        public Exam Exam { get; set; } = null!;
 
-        [Display(Name = "Bắt đầu lúc")]
-        public DateTime StartTime { get; set; } = DateTime.Now;
-
-        [Display(Name = "Nộp bài lúc")]
+        public DateTime StartTime { get; set; }
         public DateTime? SubmitTime { get; set; }
-
-        [Display(Name = "Điểm số")]
         public double Score { get; set; }
+        public int Status { get; set; }
+        public string? TeacherFeedback { get; set; }
 
         public ICollection<TestResult> TestResults { get; set; } = new List<TestResult>();
     }
