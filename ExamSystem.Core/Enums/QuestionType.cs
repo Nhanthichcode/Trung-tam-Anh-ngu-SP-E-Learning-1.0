@@ -5,17 +5,25 @@ namespace ExamSystem.Core.Enums
 {
     public enum QuestionType
     {
-        //[Display(Name = "Câu hỏi chung")]
-        //General = 0,
-        //[Display(Name="Nhiều đáp án")]
-        //MultipleChoice = 1, // Trắc nghiệm ABCD
-        [Display(Name = "Bài viết")]
-        Writing = 2,          // Tự luận (Writing)
-        [Display(Name = "Bài nghe")] 
-        Listening = 3,      // Nghe chọn đáp án
-        [Display(Name = "Bài nói")]
-        Speaking = 4,       // Nói (thu âm)
-        [Display(Name = "Bài đọc")]
-        ReadingPassage = 5
+        [Display(Name = "Trắc nghiệm 1 đáp án")]
+        SingleChoice = 1,   // (Radio button) Dùng cho Reading/Listening VSTEP
+
+        [Display(Name = "Trắc nghiệm nhiều đáp án")]
+        MultipleChoice = 2, // (Checkbox) Dùng cho IELTS (Pick 2 out of 5)
+
+        [Display(Name = "Điền từ")]
+        FillInTheBlank = 3, // (Input text) Dùng cho IELTS Listening/Reading
+
+        [Display(Name = "Nối thông tin")]
+        Matching = 4,       // (Drag & Drop) Dùng cho Matching Headings
+
+        [Display(Name = "Tự luận")]
+        Essay = 5,          // (Textarea) Dùng cho Writing Task 1 & 2
+
+        [Display(Name = "Thu âm")]
+        SpeakingRecording = 6, // (Record Button) Dùng cho Speaking
+
+        [Display(Name = "Sắp xếp câu")]
+        SentenceOrdering = 7   // (Optional)
     }
 }
