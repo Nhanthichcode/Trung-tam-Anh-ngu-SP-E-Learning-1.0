@@ -31,14 +31,16 @@ namespace ExamSystem.Infrastructure.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Content")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("IsCorrect")
+                    b.Property<bool?>("IsCorrect")
                         .HasColumnType("bit");
 
                     b.Property<int>("QuestionId")
                         .HasColumnType("int");
+
+                    b.Property<string>("TextAnswer")
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -118,7 +120,7 @@ namespace ExamSystem.Infrastructure.Migrations
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("AspNetUsers", (string)null);
                 });
 
             modelBuilder.Entity("ExamSystem.Core.Entities.Exam", b =>
@@ -153,7 +155,7 @@ namespace ExamSystem.Infrastructure.Migrations
                     b.ToTable("Exams");
                 });
 
-            modelBuilder.Entity("ExamSystem.Core.Entities.ExamQuestion", b =>
+            modelBuilder.Entity("ExamSystem.Core.Entities.ExamPart", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -162,6 +164,31 @@ namespace ExamSystem.Infrastructure.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("ExamId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("OrderIndex")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExamId");
+
+                    b.ToTable("ExamParts");
+                });
+
+            modelBuilder.Entity("ExamSystem.Core.Entities.ExamQuestion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ExamPartId")
                         .HasColumnType("int");
 
                     b.Property<int>("QuestionId")
@@ -175,7 +202,7 @@ namespace ExamSystem.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ExamId");
+                    b.HasIndex("ExamPartId");
 
                     b.HasIndex("QuestionId");
 
@@ -229,47 +256,25 @@ namespace ExamSystem.Infrastructure.Migrations
                     b.Property<int?>("ListeningResourceId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("ListeningResourceId1")
-                        .HasColumnType("int");
-
                     b.Property<string>("MediaUrl")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("QuestionType")
+                        .HasColumnType("int");
 
                     b.Property<int?>("ReadingPassageId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("ReadingPassageId1")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Type")
+                    b.Property<int>("SkillType")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ListeningResourceId");
 
-                    b.HasIndex("ListeningResourceId1");
-
                     b.HasIndex("ReadingPassageId");
 
-                    b.HasIndex("ReadingPassageId1");
-
-                    b.ToTable("Questions", (string)null);
-                });
-
-            modelBuilder.Entity("ExamSystem.Core.Entities.QuestionTopic", b =>
-                {
-                    b.Property<int>("QuestionId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("TopicId")
-                        .HasColumnType("int");
-
-                    b.HasKey("QuestionId", "TopicId");
-
-                    b.HasIndex("TopicId");
-
-                    b.ToTable("QuestionTopics");
+                    b.ToTable("Questions");
                 });
 
             modelBuilder.Entity("ExamSystem.Core.Entities.ReadingPassage", b =>
@@ -309,8 +314,14 @@ namespace ExamSystem.Infrastructure.Migrations
                     b.Property<DateTime>("StartTime")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
                     b.Property<DateTime?>("SubmitTime")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("TeacherFeedback")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UserId")
                         .IsRequired()
@@ -333,17 +344,29 @@ namespace ExamSystem.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<bool>("IsCorrect")
+                    b.Property<string>("AudioAnswerUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Feedback")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool?>("IsCorrect")
                         .HasColumnType("bit");
 
                     b.Property<int>("QuestionId")
                         .HasColumnType("int");
 
-                    b.Property<string>("SelectedAnswer")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<double>("ScoreObtained")
+                        .HasColumnType("float");
+
+                    b.Property<int?>("SelectedAnswerId")
+                        .HasColumnType("int");
 
                     b.Property<int>("TestAttemptId")
                         .HasColumnType("int");
+
+                    b.Property<string>("TextAnswer")
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -352,26 +375,6 @@ namespace ExamSystem.Infrastructure.Migrations
                     b.HasIndex("TestAttemptId");
 
                     b.ToTable("TestResults");
-                });
-
-            modelBuilder.Entity("ExamSystem.Core.Entities.Topic", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Topics");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -518,11 +521,22 @@ namespace ExamSystem.Infrastructure.Migrations
                     b.Navigation("Question");
                 });
 
-            modelBuilder.Entity("ExamSystem.Core.Entities.ExamQuestion", b =>
+            modelBuilder.Entity("ExamSystem.Core.Entities.ExamPart", b =>
                 {
                     b.HasOne("ExamSystem.Core.Entities.Exam", "Exam")
-                        .WithMany("ExamQuestions")
+                        .WithMany("ExamParts")
                         .HasForeignKey("ExamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Exam");
+                });
+
+            modelBuilder.Entity("ExamSystem.Core.Entities.ExamQuestion", b =>
+                {
+                    b.HasOne("ExamSystem.Core.Entities.ExamPart", "ExamPart")
+                        .WithMany("ExamQuestions")
+                        .HasForeignKey("ExamPartId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -532,7 +546,7 @@ namespace ExamSystem.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Exam");
+                    b.Navigation("ExamPart");
 
                     b.Navigation("Question");
                 });
@@ -542,43 +556,16 @@ namespace ExamSystem.Infrastructure.Migrations
                     b.HasOne("ExamSystem.Core.Entities.ListeningResource", "ListeningResource")
                         .WithMany()
                         .HasForeignKey("ListeningResourceId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                    b.HasOne("ExamSystem.Core.Entities.ListeningResource", null)
-                        .WithMany("Questions")
-                        .HasForeignKey("ListeningResourceId1");
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("ExamSystem.Core.Entities.ReadingPassage", "ReadingPassage")
                         .WithMany()
                         .HasForeignKey("ReadingPassageId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                    b.HasOne("ExamSystem.Core.Entities.ReadingPassage", null)
-                        .WithMany("Questions")
-                        .HasForeignKey("ReadingPassageId1");
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("ListeningResource");
 
                     b.Navigation("ReadingPassage");
-                });
-
-            modelBuilder.Entity("ExamSystem.Core.Entities.QuestionTopic", b =>
-                {
-                    b.HasOne("ExamSystem.Core.Entities.Question", "Question")
-                        .WithMany("QuestionTopics")
-                        .HasForeignKey("QuestionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ExamSystem.Core.Entities.Topic", "Topic")
-                        .WithMany("QuestionTopics")
-                        .HasForeignKey("TopicId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Question");
-
-                    b.Navigation("Topic");
                 });
 
             modelBuilder.Entity("ExamSystem.Core.Entities.TestAttempt", b =>
@@ -672,34 +659,22 @@ namespace ExamSystem.Infrastructure.Migrations
 
             modelBuilder.Entity("ExamSystem.Core.Entities.Exam", b =>
                 {
-                    b.Navigation("ExamQuestions");
+                    b.Navigation("ExamParts");
                 });
 
-            modelBuilder.Entity("ExamSystem.Core.Entities.ListeningResource", b =>
+            modelBuilder.Entity("ExamSystem.Core.Entities.ExamPart", b =>
                 {
-                    b.Navigation("Questions");
+                    b.Navigation("ExamQuestions");
                 });
 
             modelBuilder.Entity("ExamSystem.Core.Entities.Question", b =>
                 {
                     b.Navigation("Answers");
-
-                    b.Navigation("QuestionTopics");
-                });
-
-            modelBuilder.Entity("ExamSystem.Core.Entities.ReadingPassage", b =>
-                {
-                    b.Navigation("Questions");
                 });
 
             modelBuilder.Entity("ExamSystem.Core.Entities.TestAttempt", b =>
                 {
                     b.Navigation("TestResults");
-                });
-
-            modelBuilder.Entity("ExamSystem.Core.Entities.Topic", b =>
-                {
-                    b.Navigation("QuestionTopics");
                 });
 #pragma warning restore 612, 618
         }
