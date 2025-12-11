@@ -1,0 +1,19 @@
+﻿@{
+    ViewData["Title"] = "Import Câu hỏi từ Excel";
+}
+
+<h2>Import Câu hỏi hàng loạt</h2>
+<div class="alert alert-info">
+    <strong>Cấu trúc file Excel (Không cần tiêu đề):</strong><br>
+    Cột A: Nội dung câu hỏi | Cột B: Kỹ năng (1=Nghe, 2=Đọc) | Cột C: Độ khó (1-3)<br>
+    Cột D: Đáp án A | Cột E: Đáp án B | Cột F: Đáp án C | Cột G: Đáp án D<br>
+    Cột H: Vị trí đúng (1, 2, 3, hoặc 4)
+</div>
+
+<form asp-action="Import" enctype="multipart/form-data" method="post">
+    <div class="mb-3">
+        <label>Chọn file Excel (.xlsx)</label>
+        <input type="file" name="file" class="form-control" accept=".xlsx" required />
+    </div>
+    <button type="submit" class="btn btn-success">Upload và Lưu</button>
+</form>

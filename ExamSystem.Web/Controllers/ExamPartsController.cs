@@ -19,12 +19,19 @@ namespace ExamSystem.Web.Controllers
         }
 
         // CREATE
-        public IActionResult Create()
+        // 1. Create GET: Nhận examId từ URL (nếu có)
+        public IActionResult Create(int? examId)
         {
-            ViewData["ExamId"] = new SelectList(_context.Exams, "Id", "Title");
+            // Nếu có examId truyền vào, ta chọn sẵn trong Dropdown
+            ViewData["ExamId"] = new SelectList(_context.Exams, "Id", "Title", examId);
+
+            // Gửi examId sang View để lát nữa biết đường quay lại
+            ViewBag.ReturnExamId = examId;
+
             return View();
         }
 
+        // 2. Create POST
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ExamPart examPart)
@@ -33,11 +40,19 @@ namespace ExamSystem.Web.Controllers
             {
                 _context.Add(examPart);
                 await _context.SaveChangesAsync();
+
+                // TỐI ƯU: Nếu tạo từ trang Soạn đề, hãy quay lại trang Soạn đề
+                if (examPart.ExamId > 0)
+                {
+                    return RedirectToAction("Manage", "Exams", new { id = examPart.ExamId });
+                }
+
                 return RedirectToAction(nameof(Index));
             }
             ViewData["ExamId"] = new SelectList(_context.Exams, "Id", "Title", examPart.ExamId);
             return View(examPart);
         }
+
 
         // EDIT
         public async Task<IActionResult> Edit(int? id)

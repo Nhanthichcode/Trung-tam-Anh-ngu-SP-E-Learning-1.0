@@ -23,6 +23,62 @@ namespace ExamSystem.Web.Controllers
             return View(exams);
         }
 
+        // GET: Exams/Manage/5 (Giao diện soạn đề)
+        public async Task<IActionResult> Manage(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var exam = await _context.Exams
+                .Include(e => e.ExamParts)
+                .ThenInclude(ep => ep.ExamQuestions)
+                .ThenInclude(eq => eq.Question) // Load câu hỏi đã có trong đề
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            if (exam == null) return NotFound();
+
+            // Load danh sách câu hỏi từ ngân hàng để chọn thêm vào
+            ViewBag.AllQuestions = await _context.Questions.Take(50).ToListAsync(); // Load tạm 50 câu
+
+            return View(exam);
+        }
+
+        // POST: Thêm câu hỏi vào phần thi
+        [HttpPost]
+        public async Task<IActionResult> AddQuestionToPart(int examId, int partId, int questionId, float score)
+        {
+            var exists = await _context.ExamQuestions
+                .AnyAsync(eq => eq.ExamPartId == partId && eq.QuestionId == questionId);
+
+            if (!exists)
+            {
+                var link = new ExamQuestion
+                {
+                    ExamPartId = partId,
+                    QuestionId = questionId,
+                    Score = score,
+                    SortOrder = 0 // Mặc định
+                };
+                _context.ExamQuestions.Add(link);
+                await _context.SaveChangesAsync();
+            }
+
+            // Quay lại trang Manage
+            return RedirectToAction("Manage", new { id = examId });
+        }
+
+        // POST: Xóa câu hỏi khỏi phần thi
+        [HttpPost]
+        public async Task<IActionResult> RemoveQuestionFromPart(int examId, int examQuestionId)
+        {
+            var link = await _context.ExamQuestions.FindAsync(examQuestionId);
+            if (link != null)
+            {
+                _context.ExamQuestions.Remove(link);
+                await _context.SaveChangesAsync();
+            }
+            return RedirectToAction("Manage", new { id = examId });
+        }
+
         // ==========================================
         // 2. TẠO MỚI (CREATE)
         // ==========================================

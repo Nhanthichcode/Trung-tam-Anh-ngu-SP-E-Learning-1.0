@@ -3,22 +3,40 @@
     ViewData["Title"] = "Sửa File Nghe";
 }
 
-<form asp-action="Edit" enctype="multipart/form-data">
-    <div class="mb-3">
-        <label asp-for="Title" class="form-label">Tiêu đề bài nghe</label>
-        <input asp-for="Title" class="form-control" required />
-        <input type="hidden" asp-for="Id" />
-    </div>
+<h4>Sửa File Nghe</h4>
+<hr />
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Edit" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Id" />
 
-    <div class="mb-3">
-        <label class="form-label">Chọn file Audio (.mp3)</label>
-        <input type="file" name="audioFile" class="form-control" accept=".mp3,.wav" />
-    </div>
+            <input type="hidden" asp-for="AudioUrl" />
 
-    <div class="mb-3">
-        <label asp-for="Transcript" class="form-label">Lời thoại (Transcript)</label>
-        <textarea asp-for="Transcript" class="form-control" rows="5"></textarea>
-    </div>
+            <div class="mb-3">
+                <label asp-for="Title" class="form-label">Tiêu đề</label>
+                <input asp-for="Title" class="form-control" required />
+            </div>
 
-    <button type="submit" class="btn btn-success">Lưu bài nghe</button>
-</form>
+            <div class="mb-3">
+                <label class="form-label">File âm thanh hiện tại</label>
+                <div>
+                    <audio controls src="@Model.AudioUrl"></audio>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Chọn file mới (Nếu muốn thay đổi)</label>
+                <input type="file" name="audioFile" class="form-control" accept="audio/*" />
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Transcript" class="form-label">Lời thoại</label>
+                <textarea asp-for="Transcript" class="form-control" rows="4"></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Cập nhật</button>
+            <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+        </form>
+    </div>
+</div>

@@ -7,24 +7,26 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1>Danh sách Đề thi</h1>
-    <a asp-action="Create" class="btn btn-primary">+ Tạo Đề thi mới</a>
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> Tạo Đề thi mới
+    </a>
 </div>
 
-<table class="table table-bordered table-hover">
+<table class="table table-bordered table-hover align-middle">
     <thead class="table-dark">
         <tr>
             <th>Tiêu đề</th>
             <th>Thời lượng</th>
             <th>Ngày bắt đầu</th>
             <th>Trạng thái</th>
-            <th>Thao tác</th>
+            <th style="width: 300px;">Thao tác</th>
         </tr>
     </thead>
     <tbody>
         @foreach (var item in Model)
         {
             <tr>
-                <td>@item.Title</td>
+                <td class="fw-bold">@item.Title</td>
                 <td>@item.DurationMinutes phút</td>
                 <td>@item.StartDate.ToString("dd/MM/yyyy HH:mm")</td>
                 <td>
@@ -38,8 +40,17 @@
                     }
                 </td>
                 <td>
-                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">Sửa</a>
-                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">Xóa</a>
+                    <a asp-action="Manage" asp-route-id="@item.Id" class="btn btn-sm btn-info text-white">
+                        <i class="bi bi-gear"></i> Cấu trúc
+                    </a>
+
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">
+                        <i class="bi bi-pencil"></i> Sửa
+                    </a>
+
+                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">
+                        <i class="bi bi-trash"></i> Xóa
+                    </a>
                 </td>
             </tr>
         }

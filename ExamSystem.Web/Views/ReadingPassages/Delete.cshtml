@@ -1,12 +1,12 @@
-﻿@model ExamSystem.Core.Entities.Exam
+﻿@model ExamSystem.Core.Entities.ReadingPassage
 
 @{
-    ViewData["Title"] = "Xóa Đề thi";
+    ViewData["Title"] = "Xóa bài đọc";
 }
 
 <div class="alert alert-danger" role="alert">
     <h4 class="alert-heading"><i class="bi bi-exclamation-triangle-fill"></i> Cảnh báo!</h4>
-    <p>Bạn có chắc chắn muốn xóa đề thi này không? Hành động này <strong>không thể hoàn tác</strong> và có thể xóa luôn các câu hỏi liên quan.</p>
+    <p>Bạn có chắc chắn muốn xóa bài đọc này không? Hành động này <strong>không thể hoàn tác</strong> và có thể xóa luôn các câu hỏi liên quan.</p>
 </div>
 
 <div class="card">
@@ -14,19 +14,11 @@
         <h5 class="card-title text-danger">Thông tin đề thi sẽ xóa:</h5>
         <hr />
         <dl class="row">
-            <dt class="col-sm-3">Tên đề thi</dt>
+            <dt class="col-sm-3">Tên bài đọc</dt>
             <dd class="col-sm-9 fw-bold">@Model.Title</dd>
 
-            <dt class="col-sm-3">Mô tả</dt>
-            <dd class="col-sm-9">@Html.DisplayFor(model => model.Description)</dd>
-
-            <dt class="col-sm-3">Thời lượng</dt>
-            <dd class="col-sm-9">@Model.DurationMinutes phút</dd>
-
-            <dt class="col-sm-3">Trạng thái</dt>
-            <dd class="col-sm-9">
-                @(Model.IsActive ? "Đang mở" : "Đã đóng")
-            </dd>
+            <dt class="col-sm-3">Nội dung</dt>
+            <dd class="col-sm-9">@Html.DisplayFor(model => model.Content)</dd>
         </dl>
 
         <form asp-action="Delete">

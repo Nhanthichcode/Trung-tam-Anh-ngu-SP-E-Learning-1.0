@@ -3,37 +3,92 @@
     ViewData["Title"] = "Ngân hàng Câu hỏi";
 }
 
-<h1>Ngân hàng Câu hỏi</h1>
-<p><a asp-action="Create" class="btn btn-primary">Thêm câu hỏi mới</a></p>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Ngân hàng Câu hỏi</h1>
+    <div>
+        <a asp-action="Import" class="btn btn-success me-2">
+            <i class="bi bi-file-earmark-spreadsheet"></i> Nhập từ Excel
+        </a>
 
-<table class="table table-bordered">
-    <thead>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Thêm thủ công
+        </a>
+    </div>
+</div>
+
+<table class="table table-bordered table-hover align-middle">
+    <thead class="table-light">
         <tr>
-            <th>Nội dung</th>
-            <th>Loại</th>
-            <th>Bài đọc/Nghe</th>
-            <th>Thao tác</th>
+            <th style="width: 67%">Nội dung câu hỏi</th>
+            <th style="width: 10%">Kỹ năng</th>
+            <th style="width: 10%">Hình ảnh</th>
+            <th style="width: 10%">Thao tác</th>
         </tr>
     </thead>
     <tbody>
         @foreach (var item in Model)
         {
             <tr>
-                <td>@Html.Raw(item.Content)</td>
-                <td>@item.SkillType</td>
                 <td>
-                    @if (item.ReadingPassage != null)
+                    <div title="@item.Content">
+                        @if (item.Content.Length > 80)
+                        {
+                            @Html.Raw(item.Content.Substring(0, 80) + "...")
+                        }
+                        else
+                        {
+                            @Html.Raw(item.Content)
+                        }
+                    </div>
+                </td>
+
+                <td class="text-center">
+                    @switch (item.SkillType)
                     {
-                        <span class="badge bg-info">Đọc: @item.ReadingPassage.Title</span>
+                        case ExamSystem.Core.Enums.ExamSkill.Listening:
+                            <span class="badge bg-warning text-dark"><i class="bi bi-headphones"></i> Listening</span>
+                            ;
+                            break;
+                        case ExamSystem.Core.Enums.ExamSkill.Reading:
+                            <span class="badge bg-info text-dark"><i class="bi bi-book"></i> Reading</span>
+                            ;
+                            break;
+                        case ExamSystem.Core.Enums.ExamSkill.Writing:
+                            <span class="badge bg-primary"><i class="bi bi-pen"></i> Writing</span>
+                            ;
+                            break;
+                        case ExamSystem.Core.Enums.ExamSkill.Speaking:
+                            <span class="badge bg-success"><i class="bi bi-mic"></i> Speaking</span>
+                            ;
+                            break;
+                        // --- THÊM CASE NÀY CHO GRAMMAR ---
+                        case ExamSystem.Core.Enums.ExamSkill.Grammar:
+                            <span class="badge bg-secondary"><i class="bi bi-spellcheck"></i> Grammar</span>
+                            ;
+                            break;
+
+                        default:
+                            <span>Khác (@item.SkillType)</span>
+                            ;
+                            break;
                     }
-                    @if (item.ListeningResource != null)
+                    <div class="small text-muted mt-1">Level: @item.Level</div>
+                </td>
+
+                <td>
+                    @if (!string.IsNullOrEmpty(item.MediaUrl))
                     {
-                        <span class="badge bg-warning">Nghe: @item.ListeningResource.Title</span>
+                        <img src="@item.MediaUrl" style="width: 60px; height: 60px; object-fit: cover;" class="rounded border" />
                     }
                 </td>
+
                 <td>
-                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">Sửa</a>
-                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">Xóa</a>
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning" title="Sửa">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger" title="Xóa">
+                        <i class="bi bi-trash"></i>
+                    </a>
                 </td>
             </tr>
         }

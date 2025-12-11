@@ -17,7 +17,7 @@ namespace ExamSystem.Core.Entities
 
         public int ExamId { get; set; }
         [ForeignKey("ExamId")]
-        public Exam Exam { get; set; } = null!;
+        public Exam? Exam { get; set; } = null!;
 
         public ICollection<ExamQuestion> ExamQuestions { get; set; } = new List<ExamQuestion>();
     }

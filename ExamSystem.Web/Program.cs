@@ -4,6 +4,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using System;
 
+//Environment.SetEnvironmentVariable("EPPlusLicenseContext", "NonCommercial"); 
+OfficeOpenXml.ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // 1. Cấu hình kết nối SQL Server

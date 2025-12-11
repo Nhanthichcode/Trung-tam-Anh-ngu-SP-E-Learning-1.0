@@ -1,39 +1,47 @@
-﻿@model ExamSystem.Core.Entities.Exam
+﻿@model ExamSystem.Core.Entities.ListeningResource
 
 @{
-    ViewData["Title"] = "Xóa Đề thi";
+    ViewData["Title"] = "Xóa File Nghe";
 }
 
 <div class="alert alert-danger" role="alert">
-    <h4 class="alert-heading"><i class="bi bi-exclamation-triangle-fill"></i> Cảnh báo!</h4>
-    <p>Bạn có chắc chắn muốn xóa đề thi này không? Hành động này <strong>không thể hoàn tác</strong> và có thể xóa luôn các câu hỏi liên quan.</p>
+    <h4 class="alert-heading">Cảnh báo!</h4>
+    <p>Bạn có chắc chắn muốn xóa bài nghe này không? Hành động này sẽ <strong>xóa vĩnh viễn file âm thanh</strong> khỏi hệ thống và không thể khôi phục.</p>
 </div>
 
-<div class="card">
+<div class="card shadow-sm">
+    <div class="card-header bg-danger text-white">
+        Xác nhận xóa
+    </div>
     <div class="card-body">
-        <h5 class="card-title text-danger">Thông tin đề thi sẽ xóa:</h5>
-        <hr />
         <dl class="row">
-            <dt class="col-sm-3">Tên đề thi</dt>
+            <dt class="col-sm-3">Tiêu đề bài nghe:</dt>
             <dd class="col-sm-9 fw-bold">@Model.Title</dd>
 
-            <dt class="col-sm-3">Mô tả</dt>
-            <dd class="col-sm-9">@Html.DisplayFor(model => model.Description)</dd>
-
-            <dt class="col-sm-3">Thời lượng</dt>
-            <dd class="col-sm-9">@Model.DurationMinutes phút</dd>
-
-            <dt class="col-sm-3">Trạng thái</dt>
+            <dt class="col-sm-3">Nghe thử:</dt>
             <dd class="col-sm-9">
-                @(Model.IsActive ? "Đang mở" : "Đã đóng")
+                @if (!string.IsNullOrEmpty(Model.AudioUrl))
+                {
+                    <audio controls src="@Model.AudioUrl"></audio>
+                }
+                else
+                {
+                    <span class="text-muted">Không có file</span>
+                }
+            </dd>
+
+            <dt class="col-sm-3">Transcript:</dt>
+            <dd class="col-sm-9 text-muted">
+                @(Model.Transcript?.Length > 100 ? Model.Transcript.Substring(0, 100) + "..." : Model.Transcript)
             </dd>
         </dl>
 
         <form asp-action="Delete">
             <input type="hidden" asp-for="Id" />
-            <div class="d-flex gap-2 mt-4">
-                <button type="submit" class="btn btn-danger">Xác nhận Xóa</button>
-                <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-danger">Xóa vĩnh viễn</button>
+                <a asp-action="Index" class="btn btn-secondary">Hủy bỏ</a>
             </div>
         </form>
     </div>

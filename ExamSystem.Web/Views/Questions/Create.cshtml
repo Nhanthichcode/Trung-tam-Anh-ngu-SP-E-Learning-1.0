@@ -1,43 +1,252 @@
-﻿@model ExamSystem.Core.Entities.Question
+﻿@model ExamSystem.Web.Models.UnifiedCreateViewModel
 @{
-    ViewData["Title"] = "Tạo câu hỏi";
+    ViewData["Title"] = "Soạn câu hỏi theo kỹ năng";
 }
 
-<h4>Tạo Câu hỏi mới</h4>
-<hr />
-<div class="row">
-    <div class="col-md-8">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+<form asp-action="Create" enctype="multipart/form-data" id="createForm">
 
-            <div class="mb-3">
-                <label asp-for="Content" class="form-label">Nội dung câu hỏi</label>
-                <textarea asp-for="Content" class="form-control" rows="3"></textarea>
-                <span asp-validation-for="Content" class="text-danger"></span>
-            </div>
-
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">Gắn với Bài Đọc (nếu có)</label>
-                    <select asp-for="ReadingPassageId" class="form-control" asp-items="ViewBag.ReadingPassageId">
-                        <option value="">-- Không chọn --</option>
-                    </select>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">Gắn với Bài Nghe (nếu có)</label>
-                    <select asp-for="ListeningResourceId" class="form-control" asp-items="ViewBag.ListeningResourceId">
-                        <option value="">-- Không chọn --</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="mb-3">
-                <label asp-for="SkillType" class="form-label">Kỹ năng (1: Nghe, 2: Đọc)</label>
-                <input asp-for="SkillType" class="form-control" type="number" />
-            </div>
-
-            <button type="submit" class="btn btn-success">Lưu câu hỏi</button>
-            <a asp-action="Index" class="btn btn-secondary">Hủy</a>
-        </form>
+    <div class="sticky-top bg-white border-bottom py-3 mb-4 shadow-sm" style="z-index: 100;">
+        <div class="container d-flex justify-content-between">
+            <h4 class="text-primary m-0"><i class="bi bi-layers-half"></i> Tạo câu hỏi mới</h4>
+            <button type="submit" class="btn btn-success"><i class="bi bi-save"></i> LƯU DỮ LIỆU</button>
+        </div>
     </div>
-</div>
+
+    <div class="container">
+        <div class="card mb-4 border-primary">
+            <div class="card-header bg-primary text-white fw-bold">1. Chọn Kỹ năng thi</div>
+            <div class="card-body bg-light">
+                <div class="row align-items-center">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Loại kỹ năng:</label>
+                        <select asp-for="SkillType" id="SkillSelect" class="form-select form-select-lg"
+                                asp-items="Html.GetEnumSelectList<ExamSystem.Core.Enums.ExamSkill>()">
+                        </select>
+                        <small class="text-muted">Giao diện sẽ thay đổi theo lựa chọn này.</small>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Độ khó chung:</label>
+                        <select asp-for="Level" class="form-select form-select-lg">
+                            <option value="1">Dễ</option>
+                            <option value="2">Trung bình</option>
+                            <option value="3">Khó</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="section-reading" class="skill-section" style="display:none;">
+            <div class="card mb-4 border-info">
+                <div class="card-header bg-info text-white fw-bold"><i class="bi bi-book"></i> Cấu hình bài ĐỌC</div>
+                <div class="card-body">
+                    <ul class="nav nav-tabs" role="tablist">
+                        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-read-old" type="button">Chọn bài cũ</button></li>
+                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-read-new" type="button">Tạo bài mới</button></li>
+                    </ul>
+                    <div class="tab-content p-3 border border-top-0">
+                        <div class="tab-pane fade show active" id="tab-read-old">
+                            <select asp-for="ReadingPassageId" id="SelectReadingId" class="form-control" asp-items="ViewBag.ReadingPassageId">
+                                <option value="">-- Chọn bài đọc --</option>
+                            </select>
+                            <div id="ReadingPreview" class="mt-2 p-2 bg-light border rounded small d-none" style="max-height:150px; overflow-y:auto;"></div>
+                        </div>
+                        <div class="tab-pane fade" id="tab-read-new">
+                            <input asp-for="NewReadingTitle" class="form-control mb-2" placeholder="Tiêu đề bài đọc (VD: Environment Protection)" />
+                            <textarea asp-for="NewReadingContent" class="form-control" rows="6" placeholder="Paste nội dung bài đọc vào đây..."></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="section-listening" class="skill-section" style="display:none;">
+            <div class="card mb-4 border-warning">
+                <div class="card-header bg-warning text-dark fw-bold"><i class="bi bi-headphones"></i> Cấu hình bài NGHE</div>
+                <div class="card-body">
+                    <ul class="nav nav-tabs" role="tablist">
+                        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-list-old" type="button">Chọn bài cũ</button></li>
+                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-list-new" type="button">Upload mới</button></li>
+                    </ul>
+                    <div class="tab-content p-3 border border-top-0">
+                        <div class="tab-pane fade show active" id="tab-list-old">
+                            <select asp-for="ListeningResourceId" id="SelectListeningId" class="form-control" asp-items="ViewBag.ListeningResourceId">
+                                <option value="">-- Chọn file nghe --</option>
+                            </select>
+                            <div id="ListeningPreview" class="mt-2 d-none">
+                                <audio id="AudioPlayer" controls class="w-100"></audio>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="tab-list-new">
+                            <input asp-for="NewListeningTitle" class="form-control mb-2" placeholder="Tiêu đề bài nghe" />
+                            <input asp-for="NewListeningFile" type="file" class="form-control mb-2" accept="audio/*" />
+                            <textarea asp-for="NewListeningTranscript" class="form-control" rows="3" placeholder="Transcript / Lời dịch..."></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="section-image" class="skill-section" style="display:none;">
+            <div class="card mb-4 border-success">
+                <div class="card-header bg-success text-white fw-bold"><i class="bi bi-image"></i> Hình ảnh minh họa (Speaking/Writing)</div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <label class="form-label">Chọn ảnh (Biểu đồ, Tranh mô tả...):</label>
+                            <input asp-for="CommonImageFile" type="file" class="form-control" accept="image/*" onchange="previewImage(this)" />
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <img id="imgPreview" src="#" alt="Preview" class="img-thumbnail d-none" style="max-height: 150px;" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-5">
+            <div class="card-header bg-secondary text-white fw-bold">2. Danh sách câu hỏi</div>
+            <div class="card-body bg-light">
+                <div id="questions-container">
+                </div>
+
+                <div class="text-center mt-4">
+                    <button type="button" class="btn btn-outline-primary btn-lg border-dashed w-100" onclick="addQuestion()">
+                        <i class="bi bi-plus-circle"></i> Thêm câu hỏi tiếp theo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<template id="q-template">
+    <div class="card mb-3 shadow-sm q-item">
+        <div class="card-header d-flex justify-content-between align-items-center py-2">
+            <h6 class="m-0 fw-bold text-primary">Câu hỏi <span class="q-num"></span></h6>
+            <button type="button" class="btn btn-danger btn-sm" onclick="removeQ(this)"><i class="bi bi-x"></i> Xóa</button>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-7">
+                    <label class="small text-muted">Nội dung câu hỏi / Đề bài:</label>
+                    <textarea name="Questions[{INDEX}].Content" class="form-control mb-2 fw-bold" rows="2"></textarea>
+
+                    <label class="small text-muted">Giải thích (Optional):</label>
+                    <textarea name="Questions[{INDEX}].Explaination" class="form-control form-control-sm" rows="1"></textarea>
+                </div>
+
+                <div class="col-md-5 answer-block">
+                    <div class="bg-white p-2 border rounded">
+                        <label class="small text-success fw-bold mb-2">Chọn đáp án đúng:</label>
+                        @for (int i = 0; i < 4; i++)
+                        {
+                            <div class="input-group input-group-sm mb-1">
+                                <div class="input-group-text">
+                                    <input type="radio" name="Questions[{INDEX}].CorrectAnswerIndex" value="@i" @(i == 0 ? "checked" : "")>
+                                </div>
+                                <input type="text" name="Questions[{INDEX}].Answer@(Convert.ToChar(65 + i))" class="form-control" placeholder="Đáp án @(Convert.ToChar(65 + i))">
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="col-md-5 no-answer-block d-none text-center d-flex align-items-center justify-content-center">
+                    <div class="text-muted border p-3 rounded w-100 bg-light">
+                        <i class="bi bi-pencil-fill"></i><br />Đây là câu hỏi tự luận.<br />Không cần nhập đáp án trắc nghiệm.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        var qCounter = 0;
+
+        // 1. Logic Ẩn/Hiện theo Kỹ Năng
+        function updateUI() {
+            var skill = $("#SkillSelect").val();
+
+            // Reset: Ẩn tất cả section
+            $(".skill-section").hide();
+
+            // Logic hiện section
+            if (skill == "1") $("#section-listening").fadeIn(); // Listening
+            if (skill == "2") $("#section-reading").fadeIn();   // Reading
+            if (skill == "3" || skill == "4") $("#section-image").fadeIn(); // Writing/Speaking
+
+            // Logic ẩn/hiện đáp án trắc nghiệm
+            if (skill == "3" || skill == "4") {
+                $(".answer-block").addClass("d-none");
+                $(".no-answer-block").removeClass("d-none");
+            } else {
+                $(".answer-block").removeClass("d-none");
+                $(".no-answer-block").addClass("d-none");
+            }
+        }
+
+        // 2. Thêm/Xóa câu hỏi
+        function addQuestion() {
+            var template = document.getElementById('q-template').innerHTML;
+            var html = template.replace(/{INDEX}/g, qCounter);
+            $("#questions-container").append(html);
+            qCounter++;
+            updateNumbers();
+            updateUI(); // Cập nhật lại giao diện cho câu hỏi mới thêm
+        }
+
+        function removeQ(btn) {
+            $(btn).closest(".q-item").remove();
+            updateNumbers();
+        }
+
+        function updateNumbers() {
+            $(".q-item").each(function(i) {
+                $(this).find(".q-num").text(i + 1);
+            });
+        }
+
+        // 3. Preview Ảnh Upload
+        window.previewImage = function(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#imgPreview').attr('src', e.target.result).removeClass('d-none');
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // 4. Preview AJAX (Reading/Listening)
+        $(document).ready(function() {
+            addQuestion(); // Mặc định 1 câu
+            $("#SkillSelect").change(updateUI);
+            updateUI(); // Chạy lần đầu
+
+            // Ajax Reading
+            $("#SelectReadingId").change(function() {
+                var id = $(this).val();
+                if(id) {
+                    $.get("/Questions/GetResourceDetails?type=reading&id=" + id, function(d) {
+                         if(d.success) { $("#ReadingPreview").text(d.content).removeClass('d-none'); }
+                    });
+                } else $("#ReadingPreview").addClass('d-none');
+            });
+
+            // Ajax Listening
+            $("#SelectListeningId").change(function() {
+                var id = $(this).val();
+                if(id) {
+                    $.get("/Questions/GetResourceDetails?type=listening&id=" + id, function(d) {
+                         if(d.success) { $("#AudioPlayer").attr('src', d.audioUrl); $("#ListeningPreview").removeClass('d-none'); }
+                    });
+                } else $("#ListeningPreview").addClass('d-none');
+            });
+        });
+    </script>
+}

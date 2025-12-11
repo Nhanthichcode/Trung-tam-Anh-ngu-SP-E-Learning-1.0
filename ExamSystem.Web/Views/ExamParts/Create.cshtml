@@ -3,25 +3,53 @@
     ViewData["Title"] = "Tạo Phần thi";
 }
 
-<h4>Tạo Phần thi mới</h4>
-<hr />
-<div class="row">
-    <div class="col-md-6">
+<div class="card col-md-6 mx-auto shadow-sm">
+    <div class="card-header bg-info text-white">
+        <h5 class="mb-0">Tạo Phần thi mới</h5>
+    </div>
+    <div class="card-body">
         <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            @if (ViewBag.ReturnExamId != null)
+            {
+                <input type="hidden" asp-for="ExamId" value="@ViewBag.ReturnExamId" />
+                <div class="alert alert-info">
+                    Đang thêm phần thi cho đề: <strong>(ID: @ViewBag.ReturnExamId)</strong>
+                </div>
+            }
+            else
+            {
+                <div class="mb-3">
+                    <label asp-for="ExamId" class="form-label">Chọn Đề thi</label>
+                    <select asp-for="ExamId" class="form-select" asp-items="ViewBag.ExamId"></select>
+                </div>
+            }
+
             <div class="mb-3">
-                <label class="form-label">Thuộc Đề thi</label>
-                <select asp-for="ExamId" class="form-control" asp-items="ViewBag.ExamId"></select>
+                <label asp-for="Name" class="form-label">Tên phần (VD: Part 1 - Listening)</label>
+                <input asp-for="Name" class="form-control" placeholder="Nhập tên phần thi..." required />
+                <span asp-validation-for="Name" class="text-danger"></span>
             </div>
+
             <div class="mb-3">
-                <label asp-for="Name" class="form-label">Tên phần (VD: Part 1 Listening)</label>
-                <input asp-for="Name" class="form-control" />
+                <label asp-for="OrderIndex" class="form-label">Thứ tự hiển thị</label>
+                <input asp-for="OrderIndex" type="number" class="form-control" value="1" />
             </div>
-            <div class="mb-3">
-                <label asp-for="OrderIndex" class="form-label">Thứ tự xuất hiện</label>
-                <input asp-for="OrderIndex" type="number" class="form-control" />
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-success">Lưu lại</button>
+
+                @if (ViewBag.ReturnExamId != null)
+                {
+                    // Nếu đến từ trang Manage, nút Hủy sẽ quay lại trang Manage
+                    <a href="/Exams/Manage/@ViewBag.ReturnExamId" class="btn btn-secondary">Quay lại</a>
+                }
+                else
+                {
+                    <a asp-action="Index" class="btn btn-secondary">Hủy</a>
+                }
             </div>
-            <button type="submit" class="btn btn-success">Lưu</button>
-            <a asp-action="Index" class="btn btn-secondary">Hủy</a>
         </form>
     </div>
 </div>

@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace ExamSystem.Core.Enums
 {
@@ -18,6 +19,8 @@ namespace ExamSystem.Core.Enums
         [Display(Name = "Viết (Writing)")]
         Writing = 3,
         [Display(Name = "Nói (Speaking)")]
-        Speaking = 4
+        Speaking = 4,
+        [Display(Name = "Ngữ pháp (Grammar)")]
+        Grammar = 5
     }
 }

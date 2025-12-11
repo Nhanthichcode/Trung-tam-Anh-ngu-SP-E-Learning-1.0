@@ -29,6 +29,6 @@ namespace ExamSystem.Core.Entities
         public int? ReadingPassageId { get; set; }
         public ReadingPassage? ReadingPassage { get; set; }
 
-        public ICollection<Answer> Answers { get; set; } = new List<Answer>();
+        public List<Answer> Answers { get; set; } = new List<Answer>();
     }
 }

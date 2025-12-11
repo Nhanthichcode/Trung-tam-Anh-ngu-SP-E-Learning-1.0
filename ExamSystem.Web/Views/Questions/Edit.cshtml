@@ -1,45 +1,119 @@
 ﻿@model ExamSystem.Core.Entities.Question
+
 @{
-    ViewData["Title"] = "Chỉnh sửa Đề thi";
+    ViewData["Title"] = "Chỉnh sửa câu hỏi";
 }
 
-<div class="card shadow-sm">
-    <div class="card-header bg-warning text-dark">
-        <h4 class="mb-0">Chỉnh sửa Đề thi</h4>
+<div class="card shadow">
+    <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+        <h4 class="mb-0">Chỉnh sửa câu hỏi</h4>
     </div>
     <div class="card-body">
-        <form asp-action="Edit">
+        <form asp-action="Edit" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="Id" />
 
-            <div class="mb-3">
-                <label asp-for="Content" class="form-label">Nội dung câu hỏi</label>
-                <textarea asp-for="Content" class="form-control" rows="3"></textarea>
-                <span asp-validation-for="Content" class="text-danger"></span>
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="MediaUrl" />
+
+            <div class="p-3 mb-4 bg-light border rounded border-warning">
+                <label asp-for="SkillType" class="form-label fw-bold text-uppercase text-dark">Loại kỹ năng</label>
+                <select asp-for="SkillType" class="form-select form-select-lg" id="SkillTypeSelect"
+                        asp-items="Html.GetEnumSelectList<ExamSystem.Core.Enums.ExamSkill>()">
+                </select>
+                <div class="form-text">Thay đổi kỹ năng sẽ làm thay đổi giao diện nhập liệu bên dưới.</div>
             </div>
 
             <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">Gắn với Bài Đọc (nếu có)</label>
-                    <select asp-for="ReadingPassageId" class="form-control" asp-items="ViewBag.ReadingPassageId">
-                        <option value="">-- Không chọn --</option>
-                    </select>
+                <div class="col-md-7 border-end">
+
+                    <div id="block-reading" class="mb-3 p-3 bg-white border rounded" style="display:none;">
+                        <label class="form-label fw-bold text-info"><i class="bi bi-book"></i> Chọn Bài Đọc</label>
+                        <select asp-for="ReadingPassageId" class="form-control" asp-items="ViewBag.ReadingPassageId">
+                            <option value="">-- Chọn bài đọc --</option>
+                        </select>
+                    </div>
+
+                    <div id="block-listening" class="mb-3 p-3 bg-white border rounded" style="display:none;">
+                        <label class="form-label fw-bold text-warning"><i class="bi bi-headphones"></i> Chọn Bài Nghe</label>
+                        <select asp-for="ListeningResourceId" class="form-control" asp-items="ViewBag.ListeningResourceId">
+                            <option value="">-- Chọn file nghe --</option>
+                        </select>
+                    </div>
+
+                    <div id="block-image" class="mb-3 p-3 bg-white border rounded" style="display:none;">
+                        <label class="form-label fw-bold text-success"><i class="bi bi-image"></i> Hình ảnh đính kèm</label>
+
+                        @if (!string.IsNullOrEmpty(Model.MediaUrl))
+                        {
+                            <div class="mb-2 text-center bg-light p-2 rounded">
+                                <img src="@Model.MediaUrl" class="img-thumbnail" style="max-height: 200px;" />
+                                <div class="small text-muted mt-1">Ảnh hiện tại</div>
+                            </div>
+                        }
+
+                        <label>Thay đổi ảnh (Nếu cần):</label>
+                        <input type="file" name="imageFile" class="form-control" accept="image/*" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Content" class="form-label fw-bold">Nội dung câu hỏi / Đề bài (*)</label>
+                        <textarea asp-for="Content" class="form-control" rows="4"></textarea>
+                        <span asp-validation-for="Content" class="text-danger"></span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Level" class="form-label">Độ khó</label>
+                            <select asp-for="Level" class="form-control">
+                                <option value="1">Dễ</option>
+                                <option value="2">Trung bình</option>
+                                <option value="3">Khó</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Explaination" class="form-label">Giải thích đáp án</label>
+                        <textarea asp-for="Explaination" class="form-control" rows="2"></textarea>
+                    </div>
                 </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">Gắn với Bài Nghe (nếu có)</label>
-                    <select asp-for="ListeningResourceId" class="form-control" asp-items="ViewBag.ListeningResourceId">
-                        <option value="">-- Không chọn --</option>
-                    </select>
+
+                <div class="col-md-5 bg-light p-3">
+
+                    <div id="block-answers">
+                        <h5 class="text-success">Các lựa chọn trả lời</h5>
+
+                        @for (int i = 0; i < Model.Answers.Count; i++)
+                        {
+                            <div class="card mb-2">
+                                <div class="card-body p-2">
+                                    <input type="hidden" name="Answers[@i].Id" value="@Model.Answers[i].Id" />
+                                    <input type="hidden" name="Answers[@i].QuestionId" value="@Model.Id" />
+
+                                    <div class="input-group">
+                                        <div class="input-group-text">
+                                            <input class="form-check-input mt-0" type="radio" name="CorrectAnswerIndex" value="@i" @(Model.Answers[i].IsCorrect == true ? "checked" : "")>
+                                        </div>
+                                        <input type="text" name="Answers[@i].Content" value="@Model.Answers[i].Content" class="form-control" placeholder="Đáp án @(Convert.ToChar(65 + i))">
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <div id="block-no-answers" class="alert alert-info text-center" style="display:none;">
+                        <i class="bi bi-info-circle-fill"></i><br />
+                        Kỹ năng này là tự luận (Nói/Viết).<br />
+                        Phần trắc nghiệm sẽ bị ẩn và không được lưu.
+                    </div>
+
                 </div>
             </div>
 
-            <div class="mb-3">
-                <label asp-for="SkillType" class="form-label">Kỹ năng (1: Nghe, 2: Đọc)</label>
-                <input asp-for="SkillType" class="form-control" type="number" />
+            <div class="mt-4 text-center">
+                <button type="submit" class="btn btn-warning btn-lg px-5">Cập nhật thay đổi</button>
+                <a asp-action="Index" class="btn btn-secondary btn-lg">Hủy</a>
             </div>
-
-            <button type="submit" class="btn btn-success">Lưu câu hỏi</button>
-            <a asp-action="Index" class="btn btn-secondary">Hủy</a>
         </form>
     </div>
 </div>
@@ -48,4 +122,41 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+
+    <script>
+        $(document).ready(function () {
+            // Logic Javascript y hệt trang Create
+            function toggleFields() {
+                var skill = $("#SkillTypeSelect").val();
+
+                // Reset
+                $("#block-reading").hide();
+                $("#block-listening").hide();
+                $("#block-image").hide();
+                $("#block-answers").show();
+                $("#block-no-answers").hide();
+
+                // Logic hiển thị
+                if (skill == "1") { // Listening
+                    $("#block-listening").show();
+                }
+                else if (skill == "2") { // Reading
+                    $("#block-reading").show();
+                }
+                else if (skill == "3" || skill == "4") { // Writing / Speaking
+                    $("#block-image").show();
+                    $("#block-answers").hide();
+                    $("#block-no-answers").show();
+                }
+            }
+
+            // 1. Chạy ngay khi trang vừa tải xong để hiển thị đúng theo dữ liệu cũ
+            toggleFields();
+
+            // 2. Chạy mỗi khi người dùng đổi dropdown
+            $("#SkillTypeSelect").change(function () {
+                toggleFields();
+            });
+        });
+    </script>
 }
