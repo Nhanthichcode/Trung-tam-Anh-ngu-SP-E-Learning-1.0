@@ -21,16 +21,86 @@ namespace ExamSystem.Web.Controllers
         }
 
         // INDEX
-        public async Task<IActionResult> Index()
+        // Đảm bảo có using ExamSystem.Web.Models;
+        public async Task<IActionResult> Index(ExamSkill? skillType, int? level)
         {
-            var questions = await _context.Questions
-                .Include(q => q.ReadingPassage)   // Load tên bài đọc
-                .Include(q => q.ListeningResource)// Load tên bài nghe
-                .OrderByDescending(q => q.CreatedDate)
-                .ToListAsync();
-            return View(questions);
-        }
+            var questions = _context.Questions
+                .Include(q => q.ReadingPassage)
+                .Include(q => q.ListeningResource)
+                .OrderBy(q => q.ReadingPassageId) // Sắp xếp để gom nhóm dễ hơn
+                .ThenBy(q => q.ListeningResourceId)
+                .ThenByDescending(q => q.CreatedDate)
+                .AsQueryable();
 
+            // Áp dụng bộ lọc (giữ nguyên logic cũ)
+            if (skillType.HasValue && skillType.Value != ExamSkill.None)
+            {
+                questions = questions.Where(q => q.SkillType == skillType.Value);
+            }
+            if (level.HasValue && level.Value > 0)
+            {
+                questions = questions.Where(q => q.Level == level.Value);
+            }
+
+            var list = await questions.ToListAsync();
+
+            // =================================================================
+            // GOM NHÓM DỮ LIỆU
+            // =================================================================
+            var groupedList = new List<QuestionGroup>();
+
+            // 1. Gom nhóm theo Bài Đọc
+            var readingGroups = list.Where(q => q.ReadingPassageId.HasValue)
+                .GroupBy(q => q.ReadingPassageId)
+                .Select(g => new QuestionGroup
+                {
+                    GroupType = "Reading",
+                    GroupId = g.Key,
+                    GroupTitle = g.First().ReadingPassage.Title,
+                    QuestionCount = g.Count(),
+                    Questions = g.ToList()
+                }).ToList();
+            groupedList.AddRange(readingGroups);
+
+            // 2. Gom nhóm theo Bài Nghe
+            var listeningGroups = list.Where(q => q.ListeningResourceId.HasValue && !q.ReadingPassageId.HasValue) // Tránh trùng lặp nếu câu hỏi bị gán cả 2
+                .GroupBy(q => q.ListeningResourceId)
+                .Select(g => new QuestionGroup
+                {
+                    GroupType = "Listening",
+                    GroupId = g.Key,
+                    GroupTitle = g.First().ListeningResource.Title,
+                    QuestionCount = g.Count(),
+                    Questions = g.ToList()
+                }).ToList();
+            groupedList.AddRange(listeningGroups);
+
+            // 3. Gom nhóm Câu hỏi độc lập (Grammar, Speaking, Writing hoặc Reading/Listening không có ID)
+            var independentQuestions = list.Where(q => !q.ReadingPassageId.HasValue && !q.ListeningResourceId.HasValue).ToList();
+            if (independentQuestions.Any())
+            {
+                // Có thể gom lại thành 1 nhóm duy nhất hoặc giữ riêng lẻ (ta giữ riêng lẻ theo SkillType để dễ quản lý)
+                var independentGroups = independentQuestions.GroupBy(q => q.SkillType)
+                    .Select(g => new QuestionGroup
+                    {
+                        GroupType = g.Key.ToString(),
+                        GroupId = null,
+                        GroupTitle = "Câu hỏi Độc lập (" + g.Key.ToString() + ")",
+                        QuestionCount = g.Count(),
+                        Questions = g.ToList()
+                    }).OrderBy(g => g.GroupType).ToList();
+                groupedList.AddRange(independentGroups);
+            }
+
+
+            // Truyền kết quả đã gom nhóm sang View
+            ViewData["CurrentSkill"] = skillType;
+            ViewData["CurrentLevel"] = level;
+
+            // TRUYỀN DANH SÁCH ĐÃ GOM NHÓM
+            return View("Index", groupedList);
+        }
+        
         // GET: Hiển thị trang upload
         public IActionResult Import()
         {
@@ -112,78 +182,98 @@ namespace ExamSystem.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(UnifiedCreateViewModel model)
         {
-            // --- BƯỚC 1: XỬ LÝ TẠO TÀI NGUYÊN MỚI (NẾU CÓ) ---
-
-            // a. Tạo bài đọc mới
-            if (!string.IsNullOrEmpty(model.NewReadingTitle) && !string.IsNullOrEmpty(model.NewReadingContent))
+            // Bỏ qua validate các trường không cần thiết trong ModelState (do form động)
+            ModelState.Remove("NewListeningFile");
+            ModelState.Remove("CommonImageFile");
+             if (model.SkillType == ExamSkill.Reading)
             {
-                var p = new ReadingPassage { Title = model.NewReadingTitle, Content = model.NewReadingContent };
-                _context.ReadingPassages.Add(p);
-                await _context.SaveChangesAsync();
-                model.ReadingPassageId = p.Id; // Gán ID mới
-            }
-
-            // b. Tạo bài nghe mới
-            if (model.NewListeningFile != null)
-            {
-                var audioName = DateTime.Now.Ticks + Path.GetExtension(model.NewListeningFile.FileName);
-                var path = Path.Combine(_environment.WebRootPath, "uploads", "audio");
-                if (!Directory.Exists(path)) Directory.CreateDirectory(path);
-
-                using (var stream = new FileStream(Path.Combine(path, audioName), FileMode.Create))
+                // Nếu có nhập Tiêu đề & Nội dung mới -> Tạo Bài Đọc mới
+                if (!string.IsNullOrEmpty(model.NewReadingTitle) && !string.IsNullOrEmpty(model.NewReadingContent))
                 {
-                    await model.NewListeningFile.CopyToAsync(stream);
+                    var newPassage = new ReadingPassage
+                    {
+                        Title = model.NewReadingTitle,
+                        Content = model.NewReadingContent
+                    };
+                    _context.ReadingPassages.Add(newPassage);
+                    await _context.SaveChangesAsync(); // Lưu ngay để lấy ID
+
+                     model.ReadingPassageId = newPassage.Id;
                 }
-
-                var r = new ListeningResource
-                {
-                    Title = model.NewListeningTitle ?? "Audio " + DateTime.Now,
-                    AudioUrl = "/uploads/audio/" + audioName,
-                    Transcript = model.NewListeningTranscript
-                };
-                _context.ListeningResources.Add(r);
-                await _context.SaveChangesAsync();
-                model.ListeningResourceId = r.Id; // Gán ID mới
             }
 
-            // c. Upload ảnh chung (cho Speaking/Writing)
-            string? uploadedImageUrl = null;
-            if (model.CommonImageFile != null)
+             if (model.SkillType == ExamSkill.Listening)
+            {
+                 if (model.NewListeningFile != null && model.NewListeningFile.Length > 0)
+                {
+                     var audioName = DateTime.Now.Ticks + Path.GetExtension(model.NewListeningFile.FileName);
+                    var audioPath = Path.Combine(_environment.WebRootPath, "uploads", "audio");
+                    if (!Directory.Exists(audioPath)) Directory.CreateDirectory(audioPath);
+
+                    using (var stream = new FileStream(Path.Combine(audioPath, audioName), FileMode.Create))
+                    {
+                        await model.NewListeningFile.CopyToAsync(stream);
+                    }
+
+                     var newResource = new ListeningResource
+                    {
+                        Title = model.NewListeningTitle ?? "Audio - " + DateTime.Now.ToString("dd/MM/yyyy HH:mm"),
+                        AudioUrl = "/uploads/audio/" + audioName,
+                        Transcript = model.NewListeningTranscript
+                    };
+                    _context.ListeningResources.Add(newResource);
+                    await _context.SaveChangesAsync(); // Lưu ngay để lấy ID
+
+                     model.ListeningResourceId = newResource.Id;
+                }
+            }
+
+             string? uploadedImageUrl = null;
+            if ((model.SkillType == ExamSkill.Speaking || model.SkillType == ExamSkill.Writing) && model.CommonImageFile != null)
             {
                 var imgName = DateTime.Now.Ticks + Path.GetExtension(model.CommonImageFile.FileName);
-                var path = Path.Combine(_environment.WebRootPath, "uploads", "images");
-                if (!Directory.Exists(path)) Directory.CreateDirectory(path);
+                var imgPath = Path.Combine(_environment.WebRootPath, "uploads", "images");
+                if (!Directory.Exists(imgPath)) Directory.CreateDirectory(imgPath);
 
-                using (var stream = new FileStream(Path.Combine(path, imgName), FileMode.Create))
+                using (var stream = new FileStream(Path.Combine(imgPath, imgName), FileMode.Create))
                 {
                     await model.CommonImageFile.CopyToAsync(stream);
                 }
                 uploadedImageUrl = "/uploads/images/" + imgName;
             }
 
-            // --- BƯỚC 2: LƯU DANH SÁCH CÂU HỎI ---
+            // =========================================================================
+            // 2. LƯU DANH SÁCH CÂU HỎI
+            // =========================================================================
 
             if (model.Questions != null && model.Questions.Count > 0)
             {
                 foreach (var item in model.Questions)
                 {
-                    if (string.IsNullOrWhiteSpace(item.Content)) continue; // Bỏ qua dòng trống
+                    // Bỏ qua các dòng trống (nếu người dùng lỡ bấm Thêm nhiều lần mà không nhập)
+                    if (string.IsNullOrWhiteSpace(item.Content)) continue;
 
                     var q = new Question
                     {
                         Content = item.Content,
                         Explaination = item.Explaination,
                         SkillType = model.SkillType,
-                        Level = model.Level, // Lấy độ khó chung (hoặc item.Level nếu muốn riêng)
+                        Level = model.Level, // Lấy độ khó chung đã chọn ở trên
+                        CreatedDate = DateTime.Now,
+
+                        // Gán Tài nguyên (ID đã chọn Cũ hoặc ID Mới vừa tạo ở bước 1)
                         ReadingPassageId = (model.SkillType == ExamSkill.Reading) ? model.ReadingPassageId : null,
                         ListeningResourceId = (model.SkillType == ExamSkill.Listening) ? model.ListeningResourceId : null,
-                        MediaUrl = uploadedImageUrl, // Gán ảnh chung
-                        CreatedDate = DateTime.Now,
-                        Answers = new List<Answer>()
+
+                        // Gán ảnh (Nếu là Speaking/Writing)
+                        MediaUrl = uploadedImageUrl
                     };
 
-                    // Chỉ tạo đáp án nếu KHÔNG phải Speaking/Writing
-                    if (model.SkillType != ExamSkill.Speaking && model.SkillType != ExamSkill.Writing)
+                     q.Answers = new List<Answer>();
+
+                     bool isMultipleChoice = (model.SkillType != ExamSkill.Speaking && model.SkillType != ExamSkill.Writing);
+
+                    if (isMultipleChoice)
                     {
                         q.Answers.Add(new Answer { Content = item.AnswerA ?? "", IsCorrect = (item.CorrectAnswerIndex == 0) });
                         q.Answers.Add(new Answer { Content = item.AnswerB ?? "", IsCorrect = (item.CorrectAnswerIndex == 1) });
@@ -193,12 +283,21 @@ namespace ExamSystem.Web.Controllers
 
                     _context.Questions.Add(q);
                 }
-                await _context.SaveChangesAsync();
-            }
 
-            return RedirectToAction(nameof(Index));
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
+            else
+            {
+                ModelState.AddModelError("", "Vui lòng nhập ít nhất 1 câu hỏi.");
+            }
+ 
+            ViewData["ReadingPassageId"] = new SelectList(_context.ReadingPassages, "Id", "Title", model.ReadingPassageId);
+            ViewData["ListeningResourceId"] = new SelectList(_context.ListeningResources, "Id", "Title", model.ListeningResourceId);
+
+            return View(model);
         }
-        
+
         // EDIT (GET)
         public async Task<IActionResult> Edit(int? id)
         {

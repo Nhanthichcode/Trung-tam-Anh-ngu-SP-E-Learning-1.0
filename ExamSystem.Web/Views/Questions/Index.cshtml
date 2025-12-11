@@ -1,96 +1,306 @@
-﻿@model IEnumerable<ExamSystem.Core.Entities.Question>
+﻿@model IEnumerable<ExamSystem.Web.Models.QuestionGroup>
+@using ExamSystem.Core.Enums
+@using ExamSystem.Web.Models
+
 @{
     ViewData["Title"] = "Ngân hàng Câu hỏi";
+
+    var currentSkill = (ExamSkill?)ViewData["CurrentSkill"] ?? ExamSkill.None;
+    var currentLevel = (int?)ViewData["CurrentLevel"] ?? 0;
+    var skills = Enum.GetValues(typeof(ExamSkill)).Cast<ExamSkill>().Where(s => s != ExamSkill.None);
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1>Ngân hàng Câu hỏi</h1>
-    <div>
-        <a asp-action="Import" class="btn btn-success me-2">
-            <i class="bi bi-file-earmark-spreadsheet"></i> Nhập từ Excel
-        </a>
+<style>
+    .nav-tabs .nav-link {
+        color: #495057;
+        border: none;
+        font-weight: 500;
+    }
 
-        <a asp-action="Create" class="btn btn-primary">
-            <i class="bi bi-plus-lg"></i> Thêm thủ công
+        .nav-tabs .nav-link.active {
+            font-weight: bold;
+            color: #0d6efd !important;
+            border-bottom: 3px solid #0d6efd;
+            background: transparent;
+        }
+
+        .nav-tabs .nav-link:hover {
+            color: #0d6efd;
+        }
+
+    .level-filter {
+        width: 160px;
+    }
+
+    /* Style Group Card */
+    .group-card {
+        border-left: 5px solid #6c757d;
+        transition: all 0.2s;
+    }
+
+        .group-card:hover {
+            box-shadow: 0 .5rem 1rem rgba(0,0,0,.1) !important;
+        }
+
+        .group-card.Reading {
+            border-color: #0dcaf0;
+        }
+
+        .group-card.Listening {
+            border-color: #ffc107;
+        }
+
+        .group-card.Independent {
+            border-color: #adb5bd;
+        }
+
+    /* Nút Toggle Collapse */
+    .btn-toggle-collapse {
+        transition: transform 0.3s ease;
+    }
+
+        .btn-toggle-collapse.collapsed {
+            transform: rotate(-90deg);
+        }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold text-primary m-0"><i class="bi bi-collection"></i> Ngân hàng Câu hỏi</h2>
+        <span class="text-muted small">Quản lý theo nhóm bài đọc/nghe</span>
+    </div>
+    <div>
+        <a asp-action="Import" class="btn btn-outline-success me-2 shadow-sm">
+            <i class="bi bi-file-earmark-excel"></i> Nhập Excel
+        </a>
+        <a asp-action="Create" class="btn btn-primary shadow-sm fw-bold px-3">
+            <i class="bi bi-plus-lg"></i> Soạn câu hỏi mới
         </a>
     </div>
 </div>
 
-<table class="table table-bordered table-hover align-middle">
-    <thead class="table-light">
-        <tr>
-            <th style="width: 67%">Nội dung câu hỏi</th>
-            <th style="width: 10%">Kỹ năng</th>
-            <th style="width: 10%">Hình ảnh</th>
-            <th style="width: 10%">Thao tác</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model)
+<div class="card shadow-sm mb-4 border-0">
+    <div class="card-body p-3 bg-light rounded">
+        <form asp-action="Index" method="get" id="filterForm" class="d-flex justify-content-between align-items-center flex-wrap">
+            <input type="hidden" name="skillType" id="skillTypeHidden" value="@currentSkill" />
+
+            <ul class="nav nav-tabs border-0" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link @(currentSkill == ExamSkill.None ? "active" : "")"
+                       href="?skillType=@((int)ExamSkill.None)&level=@currentLevel">
+                        <i class="bi bi-grid-fill"></i> Tất cả
+                    </a>
+                </li>
+                @foreach (var skill in skills)
+                {
+                    <li class="nav-item">
+                        <a class="nav-link @(currentSkill == skill ? "active" : "")"
+                           href="?skillType=@((int)skill)&level=@currentLevel">
+                            @switch (skill)
+                            {
+                                case ExamSkill.Listening:
+                                    <i class="bi bi-headphones"></i>
+                                    break;
+                                case ExamSkill.Reading:
+
+                                    <i class="bi bi-book"></i>
+                                    break;
+                                case ExamSkill.Writing:
+
+                                    <i class="bi bi-pen"></i>
+                                    break;
+                                case ExamSkill.Speaking:
+
+                                    <i class="bi bi-mic"></i>
+                                    break;
+                                case ExamSkill.Grammar:
+
+                                    <i class="bi bi-spellcheck"></i>
+                                    break;
+                            }
+                            @skill.ToString()
+                        </a>
+                    </li>
+                }
+            </ul>
+
+            <div class="d-flex align-items-center mt-2 mt-md-0">
+                <span class="fw-bold text-secondary small me-2 text-uppercase">Độ khó:</span>
+                <select name="level" id="levelSelect" class="form-select form-select-sm level-filter shadow-sm border-secondary">
+                    <option value="0">-- Tất cả --</option>
+                    <option value="1" selected="@(currentLevel == 1)">🟢 Dễ</option>
+                    <option value="2" selected="@(currentLevel == 2)">🟡 Trung bình</option>
+                    <option value="3" selected="@(currentLevel == 3)">🔴 Khó</option>
+                </select>
+                @if (currentLevel > 0 || currentSkill != ExamSkill.None)
+                {
+                    <a asp-action="Index" class="btn btn-sm btn-link text-danger text-decoration-none ms-2" title="Xóa bộ lọc"><i class="bi bi-x-circle"></i></a>
+                }
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (Model != null && Model.Any())
+{
+    @foreach (var group in Model)
+    {
+        // 1. Tạo ID duy nhất cho việc Collapse (dùng GUID)
+        var collapseId = "collapse-" + Guid.NewGuid();
+
+        // 2. Logic: Kiểm tra xem trong nhóm này CÓ BẤT KỲ câu nào có ảnh không?
+        bool showImageCol = group.Questions.Any(q => !string.IsNullOrEmpty(q.MediaUrl));
+
+        // 3. Phân loại màu sắc và Controller
+        var groupCss = group.GroupType switch
         {
-            <tr>
-                <td>
-                    <div title="@item.Content">
-                        @if (item.Content.Length > 80)
+            "Reading" => "Reading",
+            "Listening" => "Listening",
+            _ => "Independent"
+        };
+        var manageController = group.GroupType switch
+        {
+            "Reading" => "ReadingPassages",
+            "Listening" => "ListeningResources",
+            _ => null
+        };
+        var resourceId = group.GroupId;
+
+        <div class="card shadow-sm mb-4 group-card @groupCss">
+            <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center" style="max-width: 75%;">
+                    <button class="btn btn-link text-dark p-0 me-3 btn-toggle-collapse" type="button" data-bs-toggle="collapse" data-bs-target="#@collapseId" aria-expanded="true">
+                        <i class="bi bi-chevron-down fs-5"></i>
+                    </button>
+
+                    <h5 class="mb-0 fw-bold text-dark text-truncate cursor-pointer" data-bs-toggle="collapse" data-bs-target="#@collapseId">
+                        @if (group.GroupType == "Reading")
                         {
-                            @Html.Raw(item.Content.Substring(0, 80) + "...")
+                            <span class="text-info"><i class="bi bi-book-half"></i> [READING]</span>
+                        }
+                        else if (group.GroupType == "Listening")
+                        {
+
+                            <span class="text-warning"><i class="bi bi-volume-up-fill"></i> [LISTENING]</span>
                         }
                         else
                         {
-                            @Html.Raw(item.Content)
+
+                            <span class="text-secondary"><i class="bi bi-lightning-charge"></i> [ĐỘC LẬP]</span>
                         }
+
+                        <span class="ms-2">@group.GroupTitle</span>
+                    </h5>
+                    <span class="badge bg-light text-secondary border ms-3">@group.QuestionCount câu</span>
+                </div>
+
+                <div class="btn-group">
+                    @if (resourceId.HasValue && manageController != null)
+                    {
+                        <a asp-controller="@manageController" asp-action="Edit" asp-route-id="@resourceId" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-pencil-square"></i> Sửa Bài
+                        </a>
+                        <a asp-controller="@manageController" asp-action="Delete" asp-route-id="@resourceId" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-trash"></i> Xóa Bài
+                        </a>
+                    }
+                </div>
+            </div>
+
+            <div id="@collapseId" class="collapse show">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0 align-middle">
+                            <thead class="table-light text-secondary small text-uppercase">
+                                <tr>
+                                    <th style="width: 5%; text-align:center;">#</th>
+                                    <th>Nội dung câu hỏi</th>
+
+                                    @if (showImageCol)
+                                    {
+                                        <th style="width: 15%; text-align:center;">Hình ảnh</th>
+                                    }
+
+                                    <th style="width: 15%; text-align:center;">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in group.Questions.Select((value, i) => new { i, value }))
+                                {
+                                    var q = item.value;
+                                    <tr>
+                                        <td class="text-center text-muted fw-bold">@(item.i + 1)</td>
+                                        <td style="padding-right: 20px;">
+                                            <div style="font-family: Arial, sans-serif; font-size: 0.95rem; color: #212529;" title="@q.Content">
+                                                @if (q.Content.Length > 150)
+                                                {
+                                                    @Html.Raw(q.Content.Substring(0, 150) + "...")
+                                                }
+                                                else
+                                                {
+                                                    @Html.Raw(q.Content)
+                                                }
+                                            </div>
+                                            <div class="mt-1">
+                                                <span class="badge @(q.Level == 1 ? "bg-success-subtle text-success" : q.Level == 2 ? "bg-warning-subtle text-warning" : "bg-danger-subtle text-danger") border border-0">
+                                                    Level @q.Level
+                                                </span>
+                                                <small class="text-muted ms-2">ID: @q.Id</small>
+                                            </div>
+                                        </td>
+
+                                        @if (showImageCol)
+                                        {
+                                            <td class="text-center">
+                                                @if (!string.IsNullOrEmpty(q.MediaUrl))
+                                                {
+                                                    <img src="@q.MediaUrl" style="width: 45px; height: 45px; object-fit: cover;" class="rounded border shadow-sm" alt="img" />
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted small">-</span>
+                                                }
+                                            </td>
+                                        }
+
+                                        <td class="text-center">
+                                            <a asp-action="Edit" asp-route-id="@q.Id" class="btn btn-sm btn-light text-primary border" title="Sửa câu này">
+                                                <i class="bi bi-pencil-fill"></i>
+                                            </a>
+                                            <a asp-action="Delete" asp-route-id="@q.Id" class="btn btn-sm btn-light text-danger border" title="Xóa câu này">
+                                                <i class="bi bi-trash-fill"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
                     </div>
-                </td>
+                </div>
 
-                <td class="text-center">
-                    @switch (item.SkillType)
-                    {
-                        case ExamSystem.Core.Enums.ExamSkill.Listening:
-                            <span class="badge bg-warning text-dark"><i class="bi bi-headphones"></i> Listening</span>
-                            ;
-                            break;
-                        case ExamSystem.Core.Enums.ExamSkill.Reading:
-                            <span class="badge bg-info text-dark"><i class="bi bi-book"></i> Reading</span>
-                            ;
-                            break;
-                        case ExamSystem.Core.Enums.ExamSkill.Writing:
-                            <span class="badge bg-primary"><i class="bi bi-pen"></i> Writing</span>
-                            ;
-                            break;
-                        case ExamSystem.Core.Enums.ExamSkill.Speaking:
-                            <span class="badge bg-success"><i class="bi bi-mic"></i> Speaking</span>
-                            ;
-                            break;
-                        // --- THÊM CASE NÀY CHO GRAMMAR ---
-                        case ExamSystem.Core.Enums.ExamSkill.Grammar:
-                            <span class="badge bg-secondary"><i class="bi bi-spellcheck"></i> Grammar</span>
-                            ;
-                            break;
+                @if (group.GroupId.HasValue)
+                {
+                    <div class="card-footer bg-white border-top-0 text-center py-2">
+                        <a asp-action="Create" class="btn btn-sm btn-link text-decoration-none fw-bold">
+                            <i class="bi bi-plus-circle"></i> Thêm câu hỏi vào bài này
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+}
+else
+{
+    <div class="text-center py-5">
+        <div class="mb-3"><i class="bi bi-inbox text-muted" style="font-size: 4rem;"></i></div>
+        <h4 class="text-muted">Không tìm thấy dữ liệu</h4>
+        <a asp-action="Create" class="btn btn-primary mt-2">Tạo câu hỏi mới</a>
+    </div>
+}
 
-                        default:
-                            <span>Khác (@item.SkillType)</span>
-                            ;
-                            break;
-                    }
-                    <div class="small text-muted mt-1">Level: @item.Level</div>
-                </td>
-
-                <td>
-                    @if (!string.IsNullOrEmpty(item.MediaUrl))
-                    {
-                        <img src="@item.MediaUrl" style="width: 60px; height: 60px; object-fit: cover;" class="rounded border" />
-                    }
-                </td>
-
-                <td>
-                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning" title="Sửa">
-                        <i class="bi bi-pencil"></i>
-                    </a>
-                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger" title="Xóa">
-                        <i class="bi bi-trash"></i>
-                    </a>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+<script>
+    document.getElementById('levelSelect').addEventListener('change', function() {
+        document.getElementById('filterForm').submit();
+    });
+</script>
