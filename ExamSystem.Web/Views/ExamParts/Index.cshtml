@@ -19,7 +19,11 @@
                 <td>@item.OrderIndex</td>
                 <td>
                     <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">Sửa</a>
-                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">Xóa</a>
+                    <form asp-action="Delete" asp-route-id="@item.Id" method="post" style="display:inline-block;"
+                          onsubmit="return confirm('Bạn có chắc chắn muốn xóa phần thi: @item.Name không? Hành động này không thể hoàn tác.');">
+
+                        <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
+                    </form>
                 </td>
             </tr>
         }

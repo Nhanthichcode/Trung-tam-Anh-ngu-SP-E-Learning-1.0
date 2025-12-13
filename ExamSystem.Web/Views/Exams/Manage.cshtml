@@ -1,76 +1,467 @@
-﻿@model ExamSystem.Core.Entities.Exam
+﻿@using ExamSystem.Core.Enums
+@model ExamSystem.Core.Entities.Exam
 @{
     ViewData["Title"] = "Soạn Đề thi: " + Model.Title;
 }
 
-<div class="d-flex justify-content-between mb-3">
-    <h2>Soạn đề: @Model.Title</h2>
+<div class="d-flex justify-content-between mb-3 align-items-center">
+    <div>
+        <h2 class="fw-bold text-primary mb-0">@Model.Title</h2>
+        <span class="text-muted">Cấu trúc: @Model.ExamParts.Count phần thi nhỏ</span>
+    </div>
     <a asp-action="Index" class="btn btn-secondary">Quay lại danh sách</a>
 </div>
 
-@foreach (var part in Model.ExamParts.OrderBy(p => p.OrderIndex))
-{
-    <div class="card mb-4 border-primary">
-        <div class="card-header bg-primary text-white d-flex justify-content-between">
-            <h5 class="mb-0">@part.Name</h5>
-            <small>Thứ tự: @part.OrderIndex</small>
-        </div>
-        <div class="card-body">
-            <table class="table table-sm table-bordered">
-                <thead class="table-light">
-                    <tr>
-                        <th>Câu hỏi</th>
-                        <th width="100">Điểm</th>
-                        <th width="80">Xóa</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var eq in part.ExamQuestions)
-                    {
-                        <tr>
-                            <td>@eq.Question?.Content</td>
-                            <td>@eq.Score</td>
-                            <td>
-                                <form asp-action="RemoveQuestionFromPart" method="post">
-                                    <input type="hidden" name="examId" value="@Model.Id" />
-                                    <input type="hidden" name="examQuestionId" value="@eq.Id" />
-                                    <button type="submit" class="btn btn-danger btn-sm">X</button>
-                                </form>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+<ul class="nav nav-tabs mb-4" id="examTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active fw-bold" id="listening-tab" data-bs-toggle="tab" data-bs-target="#listening" type="button" role="tab">
+            <i class="bi bi-headphones"></i> Listening
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link fw-bold" id="reading-tab" data-bs-toggle="tab" data-bs-target="#reading" type="button" role="tab">
+            <i class="bi bi-book"></i> Reading
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link fw-bold" id="writing-tab" data-bs-toggle="tab" data-bs-target="#writing" type="button" role="tab">
+            <i class="bi bi-pen"></i> Writing
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link fw-bold" id="speaking-tab" data-bs-toggle="tab" data-bs-target="#speaking" type="button" role="tab">
+            <i class="bi bi-mic"></i> Speaking
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link fw-bold" id="other-tab" data-bs-toggle="tab" data-bs-target="#other" type="button" role="tab">
+            <i class="bi bi-three-dots"></i> Khác
+        </button>
+    </li>
+</ul>
 
-            <hr />
-            <form asp-action="AddQuestionToPart" method="post" class="row g-2 align-items-center">
-                <input type="hidden" name="examId" value="@Model.Id" />
-                <input type="hidden" name="partId" value="@part.Id" />
+<div class="tab-content" id="examTabsContent">
+    @{
+        // Hàm helper render danh sách
+        async Task RenderParts(ExamSystem.Core.Enums.ExamSkill skill)
+        {
+            var parts = Model.ExamParts.Where(p => p.SkillType == skill).OrderBy(p => p.OrderIndex).ToList();
 
-                <div class="col-auto">
-                    <label class="col-form-label fw-bold">Thêm câu hỏi:</label>
+            // 1. Render danh sách các Part đã có
+            if (parts.Any())
+            {
+                foreach (var part in parts)
+                {
+                    <div class="card mb-3 shadow-sm border">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center py-2">
+                            <div>
+                                <h6 class="mb-0 fw-bold text-primary">@part.Name</h6>
+                                <small class="text-muted">Thứ tự: #@part.OrderIndex</small>
+                            </div>
+
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-outline-warning border-0" onclick="clearPartData(@part.Id)" title="Xóa hết câu hỏi trong phần này">
+                                    <i class="bi bi-eraser-fill"></i> Clear
+                                </button>
+
+                                <button class="btn btn-sm btn-outline-danger border-0" onclick="deletePartAjax(@part.Id)" title="Xóa phần thi này">
+                                    <i class="bi bi-trash-fill"></i> Xóa
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card-body p-0">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light small">
+                                    <tr>
+                                        <th width="40" class="text-center">#</th>
+                                        <th>Nội dung câu hỏi</th>
+                                        <th width="80" class="text-center">Điểm</th>
+                                        <th width="50" class="text-center">Xóa</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (part.ExamQuestions.Any())
+                                    {
+                                        @foreach (var eq in part.ExamQuestions.OrderBy(x => x.SortOrder))
+                                        {
+                                            <tr>
+                                                <td class="text-center">@eq.SortOrder</td>
+                                                <td>
+                                                    <div class="text-truncate" style="max-width: 500px;" title="@eq.Question?.Content">@eq.Question?.Content</div>
+                                                    @if (eq.Question?.ReadingPassage != null)
+                                                    {
+                                                        <span class="badge bg-info text-dark border">Bài: @eq.Question.ReadingPassage.Title</span>
+                                                    }
+                                                    @if (eq.Question?.ListeningResource != null)
+                                                    {
+                                                        <span class="badge bg-warning text-dark border">Bài: @eq.Question.ListeningResource.Title</span>
+                                                    }
+                                                </td>
+                                                <td class="text-center fw-bold text-success">@eq.Score</td>
+                                                <td class="text-center">
+                                                    <form asp-action="RemoveQuestionFromPart" method="post" onsubmit="return confirm('Xóa?');">
+                                                        <input type="hidden" name="examId" value="@Model.Id" />
+                                                        <input type="hidden" name="examQuestionId" value="@eq.Id" />
+                                                        <button class="btn btn-link text-danger p-0"><i class="bi bi-x-circle-fill"></i></button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <tr><td colspan="4" class="text-center text-muted py-3 small">Chưa có câu hỏi nào.</td></tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="card-footer bg-white">
+                            @if (!part.ExamQuestions.Any())
+                            {
+                                // Nút thêm câu hỏi (Logic cũ của bạn)
+                                <div class="d-flex gap-2">
+                                    @if (skill == ExamSystem.Core.Enums.ExamSkill.Listening)
+                                    {
+                                        <button class="btn btn-warning btn-sm" onclick="openAddModal(@part.Id, 'Listening', @((int)skill))"><i class="bi bi-headphones"></i> Chọn Bài Nghe</button>
+                                    }
+                                    else if (skill == ExamSystem.Core.Enums.ExamSkill.Reading)
+                                    {
+                                        <button class="btn btn-info btn-sm text-white" onclick="openAddModal(@part.Id, 'Reading', @((int)skill))"><i class="bi bi-book"></i> Chọn Bài Đọc</button>
+                                    }
+                                    else if (skill == ExamSystem.Core.Enums.ExamSkill.Writing)
+                                    {
+                                        <button class="btn btn-danger btn-sm text-white" onclick="openAddModal(@part.Id, 'Independent', @((int)skill))"><i class="bi bi-pen"></i> Chọn Đề Viết</button>
+                                    }
+                                    else if (skill == ExamSystem.Core.Enums.ExamSkill.Speaking)
+                                    {
+                                        <button class="btn btn-success btn-sm text-white" onclick="openAddModal(@part.Id, 'Independent', @((int)skill))"><i class="bi bi-mic"></i> Chọn Đề Nói</button>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn btn-primary btn-sm" onclick="openAddModal(@part.Id, 'Independent', @((int)skill))"><i class="bi bi-plus-circle"></i> Thêm Câu hỏi</button>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="alert alert-warning py-1 small mb-0"><i class="bi bi-info-circle"></i> Đã chọn đủ câu hỏi.</div>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="text-center py-4 text-muted border border-dashed rounded mb-3">
+                    <i class="bi bi-inbox fs-3 d-block"></i> Chưa có phần thi nào.
                 </div>
-                <div class="col-6">
-                    <select name="questionId" class="form-select">
-                        @foreach (var q in (List<ExamSystem.Core.Entities.Question>)ViewBag.AllQuestions)
-                        {
-                            <option value="@q.Id">ID @q.Id: @(q.Content.Length > 50 ? q.Content.Substring(0, 40) + "..." : q.Content)</option>
-                        }
-                    </select>
-                </div>
-                <div class="col-auto">
-                    <input type="number" name="score" class="form-control" placeholder="Điểm" value="5" step="0.5" style="width: 80px;" />
-                </div>
-                <div class="col-auto">
-                    <button type="submit" class="btn btn-success">Thêm</button>
-                </div>
-            </form>
+            }
+
+            // 2. NÚT THÊM PART MỚI (NẰM CUỐI DANH SÁCH CỦA MỖI TAB)
+            <div class="d-grid gap-2 mb-4">
+                <button class="btn btn-outline-primary border-dashed py-2" onclick="openCreatePartModal(@((int)skill))">
+                    <i class="bi bi-plus-circle-fill"></i> Thêm Phần thi @skill.ToString() Mới
+                </button>
+            </div>
+        }
+    }
+
+    <div class="tab-pane fade show active" id="listening" role="tabpanel">
+        @{
+            await RenderParts(ExamSystem.Core.Enums.ExamSkill.Listening);
+        }
+    </div>
+    <div class="tab-pane fade" id="reading" role="tabpanel">
+        @{
+            await RenderParts(ExamSystem.Core.Enums.ExamSkill.Reading);
+        }
+    </div>
+    <div class="tab-pane fade" id="writing" role="tabpanel">
+        @{
+            await RenderParts(ExamSystem.Core.Enums.ExamSkill.Writing);
+        }
+    </div>
+    <div class="tab-pane fade" id="speaking" role="tabpanel">
+        @{
+            await RenderParts(ExamSystem.Core.Enums.ExamSkill.Speaking);
+        }
+    </div>
+    <div class="tab-pane fade" id="other" role="tabpanel">
+        @{
+            // Logic cho tab Khác
+            var otherParts = Model.ExamParts.Where(p =>
+            p.SkillType != ExamSystem.Core.Enums.ExamSkill.Listening &&
+            p.SkillType != ExamSystem.Core.Enums.ExamSkill.Reading &&
+            p.SkillType != ExamSystem.Core.Enums.ExamSkill.Writing &&
+            p.SkillType != ExamSystem.Core.Enums.ExamSkill.Speaking
+            ).OrderBy(p => p.OrderIndex).ToList();
+
+            // Render Other Parts (Copy logic tương tự hoặc viết hàm riêng)
+            if (otherParts.Any())
+            {
+                foreach (var part in otherParts)
+                {
+                    <div class="card mb-3 shadow-sm border">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center py-2">
+                            <h6 class="mb-0 fw-bold text-primary">@part.Name</h6>
+                            <form asp-controller="ExamParts" asp-action="Delete" asp-route-id="@part.Id" method="post" onsubmit="return confirm('Xóa phần này?');">
+                                <button class="btn btn-sm btn-outline-danger border-0"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </div>
+                        <div class="card-footer bg-white">
+                            @if (!part.ExamQuestions.Any())
+                            {
+                                <button class="btn btn-secondary btn-sm" onclick="openAddModal(@part.Id, 'Independent', @((int)part.SkillType))"><i class="bi bi-plus-circle"></i> Thêm Câu hỏi</button>
+                            }
+                            else
+                            {
+
+                                <div class="alert alert-warning py-1 small mb-0">Đã chọn đủ.</div>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+
+            // Nút thêm cho tab Khác
+            <div class="d-grid gap-2 mb-4">
+                <button class="btn btn-outline-secondary border-dashed py-2" onclick="openCreatePartModal(5)">
+                    <i class="bi bi-plus-circle-fill"></i> Thêm Phần thi Khác Mới
+                </button>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="modal fade" id="createPartModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="bi bi-folder-plus"></i> Tạo Phần thi Mới</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createPartForm">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Tên Phần thi <span class="text-danger">*</span></label>
+                        <input type="text" id="newPartName" class="form-control" placeholder="VD: Part 1" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Kỹ năng</label>
+                        <select id="newPartSkill" class="form-select">
+                            <option value="1">🎧 Listening (Nghe)</option>
+                            <option value="2">📖 Reading (Đọc)</option>
+                            <option value="3">✍️ Writing (Viết)</option>
+                            <option value="4">🗣️ Speaking (Nói)</option>
+                            <option value="5">🔤 Grammar/Vocab (Khác)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Mô tả</label>
+                        <textarea id="newPartDesc" class="form-control" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" onclick="submitNewPart()">Lưu và Tạo</button>
+            </div>
         </div>
     </div>
-}
-
-<div class="text-center">
-    <a href="/ExamParts/Create?examId=@Model.Id" class="btn btn-outline-primary btn-lg border-dashed">
-        + Thêm Phần thi mới (Part)
-    </a>
 </div>
+
+<div class="modal fade" id="addQuestionModal" tabindex="-1" aria-labelledby="addQuestionLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="addQuestionLabel"><i class="bi bi-database-add"></i> Chọn dữ liệu từ Ngân hàng</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="modalLoading" class="text-center py-5">
+                    <div class="spinner-border text-success" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Đang tải dữ liệu...</p>
+                </div>
+
+                <div id="modalContent" class="d-none">
+                    <input type="hidden" id="currentPartId" />
+                    <input type="hidden" id="currentType" />
+
+                    <div class="alert alert-info py-2 small d-flex align-items-center">
+                        <i class="bi bi-info-circle-fill me-2 fs-5"></i>
+                        <span id="modalHint">Hệ thống sẽ lọc câu hỏi phù hợp với kỹ năng bạn chọn.</span>
+                    </div>
+
+                    <div class="d-flex align-items-center mb-3 bg-light p-2 rounded border">
+                        <label class="me-2 fw-bold text-nowrap">Điểm cho mỗi câu:</label>
+                        <input type="number" id="defaultScore" value="5" step="0.5" min="0" class="form-control form-control-sm" style="width: 100px;">
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover table-bordered align-middle">
+                            <thead class="table-light sticky-top" style="top: 0">
+                                <tr>
+                                    <th>Nội dung / Tiêu đề</th>
+                                    <th width="150" class="text-center">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="modalTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var examId = @Model.Id;
+
+        // 1. MỞ MODAL TẠO PART (TỰ CHỌN SKILL DỰA VÀO TAB)
+        function openCreatePartModal(skillId) {
+            // Reset form
+            $('#newPartName').val('');
+            $('#newPartDesc').val('');
+
+            // Tự động chọn kỹ năng tương ứng với Tab đang đứng
+            $('#newPartSkill').val(skillId);
+
+            $('#createPartModal').modal('show');
+            setTimeout(() => $('#newPartName').focus(), 500);
+        }
+
+        // 2. GỬI API TẠO PART
+        function submitNewPart() {
+            var name = $('#newPartName').val();
+            var skill = $('#newPartSkill').val();
+            var desc = $('#newPartDesc').val();
+
+            if (!name) { alert("Nhập tên!"); return; }
+
+            var btn = event.target;
+            btn.disabled = true; btn.innerText = "Đang tạo...";
+
+            $.post('/Exams/QuickAddPart', {
+                examId: examId, name: name, skill: skill, description: desc
+            }, function(res) {
+                if (res.success) window.location.reload();
+                else { alert(res.message); btn.disabled = false; btn.innerText = "Lưu và Tạo"; }
+            });
+        }
+
+        function openAddModal(partId, type, skillType) {
+            $('#currentPartId').val(partId);
+            $('#currentType').val(type);
+            $('#addQuestionModal').modal('show');
+            $('#modalLoading').removeClass('d-none');
+            $('#modalContent').addClass('d-none');
+
+            $.get('/Exams/GetAvailableQuestions?examId=' + examId + '&type=' + type + '&skillType=' + skillType, function(data) {
+                renderTable(data, type);
+                $('#modalLoading').addClass('d-none');
+                $('#modalContent').removeClass('d-none');
+            });
+        }
+
+        function renderTable(data, type) {
+            var html = '';
+            if (!data || data.length === 0) {
+                html = '<tr><td colspan="2" class="text-center text-muted py-4"><i class="bi bi-inbox fs-1 d-block mb-2"></i>Không tìm thấy dữ liệu phù hợp.</td></tr>';
+            } else {
+                data.forEach(item => {
+                    var btn = item.isSelected
+                        ? '<button disabled class="btn btn-secondary btn-sm"><i class="bi bi-check2"></i> Đã chọn</button>'
+                        : `<button class="btn btn-success btn-sm" onclick="addItem(${item.id})"><i class="bi bi-plus-lg"></i> Thêm</button>`;
+
+                    // Hiển thị nội dung tùy loại
+                    var content = type === 'Independent'
+                        ? `<div>${item.content}</div><small class="text-muted">Level: ${item.level}</small>`
+                        : `<div class="fw-bold">${item.title}</div><small class="text-muted">${item.questionCount} câu hỏi</small>`;
+
+                    html += `<tr><td>${content}</td><td class="text-center">${btn}</td></tr>`;
+                });
+            }
+            // Gán HTML vào tbody
+            $('#modalTableBody').html(html);
+
+            // Cập nhật câu gợi ý
+            if(type === 'Independent') $('#modalHint').text('Chọn câu hỏi lẻ để thêm vào phần thi này.');
+            else $('#modalHint').text('Chọn bài đọc/nghe để thêm toàn bộ câu hỏi của bài đó.');
+        }
+        function addItem(itemId) {
+            var partId = $('#currentPartId').val();
+            var type = $('#currentType').val();
+            var score = $('#defaultScore').val();
+            var url = type === 'Independent' ? '/Exams/AddSingleQuestion' : '/Exams/AddResourceGroup';
+            var data = type === 'Independent'
+                ? { examPartId: partId, questionId: itemId, score: score }
+                : { examPartId: partId, resourceId: itemId, type: type, scorePerQuestion: score };
+
+            postForm(url, data);
+        }
+
+        function postForm(path, params) {
+            var form = document.createElement("form");
+            form.setAttribute("method", "post");
+            form.setAttribute("action", path);
+            for(var key in params) {
+                var hiddenField = document.createElement("input");
+                hiddenField.setAttribute("type", "hidden");
+                hiddenField.setAttribute("name", key);
+                hiddenField.setAttribute("value", params[key]);
+                form.appendChild(hiddenField);
+            }
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+                function deletePartAjax(partId) {
+            if (!confirm('CẢNH BÁO: Bạn chắc chắn muốn xóa vĩnh viễn phần thi này?')) return;
+
+            // Hiệu ứng mờ dần để người dùng biết đang xử lý
+            const card = document.getElementById('part-card-' + partId);
+            card.style.opacity = '0.5';
+
+            $.post('/ExamParts/DeletePartAjax', { id: partId }, function(res) {
+                if (res.success) {
+                    // Thành công: Xóa element khỏi giao diện ngay lập tức
+                    $(card).fadeOut(300, function() { $(this).remove(); });
+                } else {
+                    alert(res.message);
+                    card.style.opacity = '1'; // Khôi phục nếu lỗi
+                }
+            }).fail(function() {
+                alert("Lỗi kết nối server!");
+                card.style.opacity = '1';
+            });
+        }
+
+        // 2. Clear dữ liệu câu hỏi (Cần reload để hiện lại nút thêm câu hỏi)
+        function clearPartData(partId) {
+            if (!confirm('Bạn muốn gỡ bỏ tất cả câu hỏi trong phần này (Giữ lại cấu trúc Part)?')) return;
+
+            $.post('/ExamParts/ClearPartQuestionsAjax', { id: partId }, function(res) {
+                if (res.success) {
+                    // Vì cấu trúc nút bấm "Thêm câu hỏi" phụ thuộc vào việc Part có trống hay không
+                    // Nên ta reload trang để logic @@if (!part.ExamQuestions.Any()) chạy lại
+                    window.location.reload();
+                } else {
+                    alert(res.message);
+                }
+            }).fail(function() {
+                alert("Lỗi kết nối server!");
+            });
+        }
+    </script>
+}

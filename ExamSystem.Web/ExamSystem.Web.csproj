@@ -23,7 +23,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Views\Admin\" />
     <Folder Include="wwwroot\uploads\audio\" />
     <Folder Include="wwwroot\uploads\images\" />
   </ItemGroup>

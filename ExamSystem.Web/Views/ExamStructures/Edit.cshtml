@@ -1,0 +1,430 @@
+﻿@using ExamSystem.Core.Enums
+@model ExamSystem.Core.Entities.ExamStructure
+@{
+    ViewData["Title"] = "Chỉnh sửa Cấu trúc";
+}
+
+<style>
+    .save-status {
+        font-size: 1.2rem;
+        cursor: help;
+    }
+</style>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i> @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="d-flex justify-content-between mb-3 align-items-center">
+    <h3>✏️ Chỉnh sửa: @Model.Name</h3>
+    <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header bg-light fw-bold">Thông tin chung</div>
+            <div class="card-body">
+                <form asp-action="Edit">
+                    <input type="hidden" asp-for="Id" />
+
+                    <div class="mb-3">
+                        <label asp-for="Name" class="form-label">Tên Cấu trúc</label>
+                        <input asp-for="Name" class="form-control fw-bold" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label">Mô tả</label>
+                        <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Lưu Thông tin</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card border-primary">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <span class="fw-bold">Danh sách các Phần thi (Parts)</span>
+                <span class="badge bg-white text-primary">@Model.Parts.Count phần</span>
+            </div>
+
+            <div class="card-body bg-light border-bottom py-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="fw-bold text-muted text-uppercase"><i class="bi bi-lightning-charge-fill text-warning"></i> Công cụ nhanh:</small>
+
+                    <div class="d-flex gap-2">
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-magic"></i> Tạo mẫu chuẩn
+                            </button>
+                            <ul class="dropdown-menu shadow">
+                                <li><h6 class="dropdown-header">Chọn kỹ năng để sinh Part mẫu:</h6></li>
+                                <li><button class="dropdown-item" onclick="generateSkill(1)">🎧 Tạo mẫu Listening (4 Parts)</button></li>
+                                <li><button class="dropdown-item" onclick="generateSkill(2)">📖 Tạo mẫu Reading (3 Parts)</button></li>
+                                <li><button class="dropdown-item" onclick="generateSkill(3)">✍️ Tạo mẫu Writing (2 Tasks)</button></li>
+                                <li><button class="dropdown-item" onclick="generateSkill(4)">🗣️ Tạo mẫu Speaking (3 Parts)</button></li>
+                            </ul>
+                        </div>
+
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-danger dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-eraser-fill"></i> Xóa theo nhóm
+                            </button>
+                            <ul class="dropdown-menu shadow">
+                                <li><h6 class="dropdown-header text-danger">⚠️ Chọn nhóm để XÓA SẠCH:</h6></li>
+                                <li><button class="dropdown-item text-danger" onclick="clearSkill(1)">🗑️ Xóa hết Listening</button></li>
+                                <li><button class="dropdown-item text-danger" onclick="clearSkill(2)">🗑️ Xóa hết Reading</button></li>
+                                <li><button class="dropdown-item text-danger" onclick="clearSkill(3)">🗑️ Xóa hết Writing</button></li>
+                                <li><button class="dropdown-item text-danger" onclick="clearSkill(4)">🗑️ Xóa hết Speaking</button></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><button class="dropdown-item text-secondary" onclick="clearSkill(5)">🗑️ Xóa hết Grammar/Other</button></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0 align-middle" id="partsTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="80" class="text-center">Thứ tự</th>
+                            <th width="150">Kỹ năng (Skill)</th>
+                            <th>Tên Phần thi</th>
+                            <th>Mô tả / Ghi chú</th>
+                            <th width="50" class="text-center">Lưu</th>
+                            <th width="50" class="text-center">Xóa</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Parts.Any())
+                        {
+                            @foreach (var part in Model.Parts)
+                            {
+                                <tr id="row-@part.Id" data-id="@part.Id">
+                                    <td>
+                                        <input type="number" name="orderIndex" value="@part.OrderIndex"
+                                               class="form-control form-control-sm text-center fw-bold auto-save-input"
+                                               data-field="orderIndex" required />
+                                    </td>
+                                    <td>
+                                        <select name="skillType" class="form-select form-select-sm auto-save-input" data-field="skillType">
+                                            <option value="1" selected="@(part.SkillType == ExamSystem.Core.Enums.ExamSkill.Listening)">🎧 Listening</option>
+                                            <option value="2" selected="@(part.SkillType == ExamSystem.Core.Enums.ExamSkill.Reading)">📖 Reading</option>
+                                            <option value="3" selected="@(part.SkillType == ExamSystem.Core.Enums.ExamSkill.Writing)">✍️ Writing</option>
+                                            <option value="4" selected="@(part.SkillType == ExamSystem.Core.Enums.ExamSkill.Speaking)">🗣️ Speaking</option>
+                                            <option value="5" selected="@(part.SkillType == ExamSystem.Core.Enums.ExamSkill.Grammar)">🔤 Grammar</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input type="text" name="name" value="@part.Name"
+                                               class="form-control form-control-sm fw-bold auto-save-input"
+                                               data-field="name" required />
+                                    </td>
+                                    <td>
+                                        <input type="text" name="description" value="@part.Description"
+                                               class="form-control form-control-sm text-muted auto-save-input"
+                                               data-field="description" />
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="save-status text-muted" title="Đã đồng bộ">
+                                            <i class="bi bi-check-all"></i>
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <form asp-action="DeletePart" method="post" onsubmit="return confirm('Bạn chắc chắn muốn xóa phần thi này?');">
+                                            <input type="hidden" name="partId" value="@part.Id" />
+                                            <button type="submit" class="btn btn-sm btn-link text-danger p-0">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr><td colspan="6" class="text-center text-muted py-4">Chưa có phần thi nào.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card-footer bg-light" id="addPartSection">
+                <h6 class="fw-bold text-success mb-3"><i class="bi bi-plus-circle"></i> Thêm Phần thi con mới:</h6>
+
+                <div id="add-error-msg" class="alert alert-danger py-1 px-2 mb-2 d-none" style="font-size: 0.9rem;"></div>
+
+                <form id="addPartForm" class="row g-2 align-items-end">
+                    <input type="hidden" id="add_structureId" value="@Model.Id" />
+
+                    <div class="col-md-1">
+                        <label class="small fw-bold">Thứ tự <span class="text-danger">*</span></label>
+                        <input type="number" id="add_orderIndex" class="form-control form-control-sm"
+                               value="@(Model.Parts.Count > 0 ? Model.Parts.Max(p => p.OrderIndex) + 1 : 1)" />
+                    </div>
+                    <div class="col-md-2">
+                        <label class="small fw-bold">Kỹ năng <span class="text-danger">*</span></label>
+                        <select id="add_skillType" class="form-select form-select-sm">
+                            <option value="1">🎧 Listening</option>
+                            <option value="2">📖 Reading</option>
+                            <option value="3">✍️ Writing</option>
+                            <option value="4">🗣️ Speaking</option>
+                            <option value="5">🔤 Grammar</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="small fw-bold">Tên Phần thi <span class="text-danger">*</span></label>
+                        <input type="text" id="add_name" class="form-control form-control-sm" placeholder="VD: Part 1" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="small">Mô tả</label>
+                        <input type="text" id="add_description" class="form-control form-control-sm" placeholder="VD: 10 câu hỏi..." />
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" class="btn btn-success btn-sm w-100 fw-bold" onclick="addNewPart(this)">
+                            <i class="bi bi-plus-lg"></i> Thêm ngay
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // 1. BIẾN TOÀN CỤC (Lưu giá trị cũ để so sánh)
+        let previousValues = {};
+
+        // 2. KHỞI TẠO (DOMContentLoaded)
+        document.addEventListener("DOMContentLoaded", function() {
+            const inputs = document.querySelectorAll('.auto-save-input');
+
+            inputs.forEach(input => {
+                // Lưu giá trị ban đầu
+                const rowId = input.closest('tr').getAttribute('data-id');
+                const field = input.getAttribute('data-field');
+                const key = `${rowId}_${field}`;
+                previousValues[key] = input.value;
+
+                // Cập nhật lại khi focus
+                input.addEventListener('focus', function() {
+                    previousValues[key] = this.value;
+                });
+
+                // Sự kiện Auto Save
+                input.addEventListener('blur', function() { handleAutoSave(this); });
+                if (input.tagName === 'SELECT') {
+                    input.addEventListener('change', function() { handleAutoSave(this); });
+                }
+
+                // Xóa lỗi khi gõ lại
+                input.addEventListener('input', function() {
+                    this.classList.remove('is-invalid');
+                });
+            });
+        });
+
+        // 3. HÀM XỬ LÝ LƯU (AUTO SAVE) - SỬA LẠI ĐỂ HIỆN THÔNG BÁO LỖI
+        function handleAutoSave(element) {
+            const row = element.closest('tr');
+            const partId = row.getAttribute('data-id');
+            const statusSpan = row.querySelector('.save-status');
+
+            const orderInput = row.querySelector('[data-field="orderIndex"]');
+            const skillInput = row.querySelector('[data-field="skillType"]');
+            const nameInput = row.querySelector('[data-field="name"]');
+            const descInput = row.querySelector('[data-field="description"]');
+
+            // Dirty Check
+            const currentVal = element.value;
+            const fieldName = element.getAttribute('data-field');
+            const key = `${partId}_${fieldName}`;
+            if (previousValues[key] === currentVal) return; // Không đổi -> Không làm gì
+
+            // Validate Client
+            let isValid = true;
+            nameInput.classList.remove('is-invalid');
+            orderInput.classList.remove('is-invalid');
+
+            if (!nameInput.value.trim()) { nameInput.classList.add('is-invalid'); isValid = false; }
+            if (orderInput.value <= 0) { orderInput.classList.add('is-invalid'); isValid = false; }
+
+            if (!isValid) {
+                statusSpan.innerHTML = '<i class="bi bi-exclamation-circle text-danger"></i>';
+                return;
+            }
+
+            statusSpan.innerHTML = '<div class="spinner-border spinner-border-sm text-primary"></div>';
+
+            const formData = new FormData();
+            formData.append('partId', partId);
+            formData.append('orderIndex', orderInput.value);
+            formData.append('skillType', skillInput.value);
+            formData.append('name', nameInput.value.trim());
+            formData.append('description', descInput.value);
+
+            fetch('/ExamStructures/UpdatePartAjax', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Cập nhật giá trị cũ
+                    previousValues[`${partId}_orderIndex`] = orderInput.value;
+                    previousValues[`${partId}_skillType`] = skillInput.value;
+                    previousValues[`${partId}_name`] = nameInput.value;
+                    previousValues[`${partId}_description`] = descInput.value;
+
+                    setTimeout(() => {
+                        statusSpan.innerHTML = '<i class="bi bi-check-lg text-success fw-bold"></i>';
+                        statusSpan.title = "Đã lưu";
+                        row.classList.add('bg-success-subtle');
+                        setTimeout(() => row.classList.remove('bg-success-subtle'), 500);
+                    }, 400);
+                } else {
+                    // LỖI: BẬT ALERT ĐỂ NGƯỜI DÙNG BIẾT TẠI SAO LỖI
+                    statusSpan.innerHTML = '<i class="bi bi-exclamation-triangle text-danger"></i>';
+                    statusSpan.title = data.message;
+
+                    alert("Lỗi lưu dữ liệu: " + data.message); // <--- QUAN TRỌNG: Hiện thông báo lỗi
+
+                    if(data.message.includes("Thứ tự")) orderInput.classList.add('is-invalid');
+                    if(data.message.includes("Tên")) nameInput.classList.add('is-invalid');
+                }
+            })
+            .catch(error => {
+                console.error(error);
+                statusSpan.innerHTML = '<i class="bi bi-wifi-off text-danger"></i>';
+            });
+        }
+
+        // 4. HÀM THÊM MỚI (ADD NEW)
+        function addNewPart(btnElement) {
+            const structureId = document.getElementById('add_structureId').value;
+            const orderInput = document.getElementById('add_orderIndex');
+            const skillInput = document.getElementById('add_skillType');
+            const nameInput = document.getElementById('add_name');
+            const descInput = document.getElementById('add_description');
+            const errorBox = document.getElementById('add-error-msg');
+
+            errorBox.classList.add('d-none');
+            orderInput.classList.remove('is-invalid');
+            nameInput.classList.remove('is-invalid');
+
+            if (!nameInput.value.trim()) {
+                nameInput.classList.add('is-invalid');
+                nameInput.focus();
+                return;
+            }
+            if (orderInput.value <= 0) {
+                orderInput.classList.add('is-invalid');
+                orderInput.focus();
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('structureId', structureId);
+            formData.append('orderIndex', orderInput.value);
+            formData.append('skillType', skillInput.value);
+            formData.append('name', nameInput.value.trim());
+            formData.append('description', descInput.value);
+
+            const originalText = btnElement.innerHTML;
+            btnElement.disabled = true;
+            btnElement.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang thêm...';
+
+            fetch('/ExamStructures/AddPartAjax', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    btnElement.disabled = false;
+                    btnElement.innerHTML = originalText;
+
+                    errorBox.textContent = "Lỗi: " + data.message;
+                    errorBox.classList.remove('d-none');
+
+                    if(data.message.includes("Thứ tự")) orderInput.classList.add('is-invalid');
+                    if(data.message.includes("Tên")) nameInput.classList.add('is-invalid');
+                }
+            })
+            .catch(error => {
+                console.error(error);
+                btnElement.disabled = false;
+                btnElement.innerHTML = originalText;
+                alert("Lỗi kết nối server!");
+            });
+        }
+        // =========================================================
+        // 5. CÔNG CỤ: TẠO MẪU NHANH (GENERATE)
+        // =========================================================
+        function generateSkill(skillType) {
+            const structureId = document.getElementById('add_structureId').value;
+
+            // Hiệu ứng loading đơn giản (block UI)
+            if(!confirm("Hệ thống sẽ tự động thêm các phần thi mẫu vào cuối danh sách. Tiếp tục?")) return;
+
+            const formData = new FormData();
+            formData.append('structureId', structureId);
+            formData.append('skillType', skillType);
+
+            fetch('/ExamStructures/GenerateStructureAjax', { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    window.location.reload();
+                } else {
+                    alert("Lỗi: " + data.message);
+                }
+            })
+            .catch(err => alert("Lỗi kết nối server!"));
+        }
+
+        // =========================================================
+        // 6. CÔNG CỤ: XÓA NHANH THEO NHÓM (CLEAR)
+        // =========================================================
+        function clearSkill(skillType) {
+            const structureId = document.getElementById('add_structureId').value;
+
+            if(!confirm("CẢNH BÁO: Hành động này sẽ XÓA TẤT CẢ các phần thi thuộc kỹ năng bạn chọn.\n\nDữ liệu không thể khôi phục. Bạn có chắc chắn không?")) return;
+
+            const formData = new FormData();
+            formData.append('structureId', structureId);
+            formData.append('skillType', skillType);
+
+            fetch('/ExamStructures/ClearStructureAjax', { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    window.location.reload();
+                } else {
+                    alert("Lỗi: " + data.message);
+                }
+            })
+            .catch(err => alert("Lỗi kết nối server!"));
+        }
+    </script>
+}

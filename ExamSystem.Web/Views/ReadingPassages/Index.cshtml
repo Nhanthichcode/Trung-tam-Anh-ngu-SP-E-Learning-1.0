@@ -18,7 +18,11 @@
                 <td>@(item.Content.Length > 50 ? item.Content.Substring(0, 50) + "..." : item.Content)</td>
                 <td>
                     <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning btn-sm">Sửa</a>
-                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger btn-sm">Xóa</a>
+                    <form asp-action="Delete" asp-route-id="@item.Id" method="post" style="display:inline-block;"
+                          onsubmit="return confirm('Bạn có chắc chắn muốn xóa bài đọc: @item.Title không? Hành động này không thể hoàn tác.');">
+
+                        <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
+                    </form>
                 </td>
             </tr>
         }

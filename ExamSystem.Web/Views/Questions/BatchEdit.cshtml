@@ -1,0 +1,263 @@
+﻿@model ExamSystem.Web.Models.BatchEditViewModel
+@{
+    ViewData["Title"] = "Sửa bài " + Model.ResourceType;
+}
+<style>
+    .btn-dashed {
+        border: 2px dashed #dee2e6;
+        color: #6c757d;
+        background: #f8f9fa;
+    }
+
+        .btn-dashed:hover {
+            border-color: #0d6efd;
+            color: #0d6efd;
+            background: #fff;
+        }
+</style>
+<form asp-action="BatchEdit" enctype="multipart/form-data" id="batchEditForm">
+    <input type="hidden" asp-for="ResourceId" />
+    <input type="hidden" asp-for="ResourceType" />
+    <input type="hidden" asp-for="DeletedQuestionIds" id="DeletedIdsInput" />
+
+    <div class="sticky-top bg-white border-bottom py-3 mb-4 shadow-sm" style="z-index: 100;">
+        <div class="container d-flex justify-content-between">
+            <h4 class="text-primary m-0"><i class="bi bi-pencil-square"></i> Chỉnh sửa @Model.ResourceType</h4>
+            <div>
+                <a asp-action="Index" class="btn btn-outline-secondary me-2">Hủy</a>
+                <button type="button" class="btn btn-primary" onclick="submitForm()"><i class="bi bi-save"></i> LƯU THAY ĐỔI</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="error-alert" class="alert alert-danger d-none sticky-top" style="top: 80px; z-index: 99;">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> <span id="error-message"></span>
+        </div>
+
+        <div class="card mb-4 border-primary">
+            <div class="card-header bg-primary text-white fw-bold">1. Thông tin Bài @Model.ResourceType</div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="fw-bold">Tiêu đề <span class="text-danger">*</span>:</label>
+                    <input asp-for="Title" class="form-control fw-bold" id="ResourceTitle" />
+                </div>
+
+                @if (Model.ResourceType == "Reading")
+                {
+                    <div class="mb-3">
+                        <label class="fw-bold">Nội dung bài đọc <span class="text-danger">*</span>:</label>
+                        <textarea asp-for="Content" class="form-control" rows="10" style="font-family: Arial;" id="ResourceContent"></textarea>
+                    </div>
+                }
+                else
+                {
+                    <div class="mb-3">
+                        <label class="fw-bold">File Audio hiện tại:</label>
+                        <div class="d-flex align-items-center mb-2">
+                            <audio controls src="@Model.CurrentAudioUrl" class="me-3"></audio>
+                            <span class="text-muted small">@Model.CurrentAudioUrl</span>
+                        </div>
+                        <label class="small text-danger">Thay file mới (nếu cần):</label>
+                        <input asp-for="NewAudioFile" type="file" class="form-control" accept="audio/*" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="fw-bold">Transcript / Bản dịch <span class="text-danger">*</span>:</label>
+                        <textarea asp-for="Content" class="form-control" rows="5" id="ResourceContent"></textarea>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <h5 class="mb-3 text-secondary">2. Danh sách câu hỏi con</h5>
+        <div id="questions-container">
+            @for (int i = 0; i < Model.Questions.Count; i++)
+            {
+                <div class="card mb-3 shadow-sm q-item" data-id="@Model.Questions[i].Id">
+                    <input type="hidden" name="Questions[@i].Id" value="@Model.Questions[i].Id" />
+
+                    <div class="card-header d-flex justify-content-between bg-white py-2">
+                        <span class="fw-bold text-primary">Câu hỏi #@(i + 1)</span>
+                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="markDelete(this, @Model.Questions[i].Id)">
+                            <i class="bi bi-trash"></i> Xóa
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-7">
+                                <label class="small text-muted">Nội dung câu hỏi <span class="text-danger">*</span>:</label>
+                                <textarea name="Questions[@i].Content" class="form-control mb-2 fw-bold q-content-input" rows="2">@Model.Questions[i].Content</textarea>
+
+                                <label class="small text-muted">Giải thích:</label>
+                                <textarea name="Questions[@i].Explaination" class="form-control form-control-sm" rows="1">@Model.Questions[i].Explaination</textarea>
+
+                                <div class="row mt-2">
+                                    <div class="col-4">
+                                        <label class="small">Level:</label>
+                                        <select name="Questions[@i].Level" class="form-select form-select-sm">
+                                            <option value="1" selected="@(Model.Questions[i].Level == 1)">Dễ</option>
+                                            <option value="2" selected="@(Model.Questions[i].Level == 2)">TB</option>
+                                            <option value="3" selected="@(Model.Questions[i].Level == 3)">Khó</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-5 bg-light p-2 rounded border">
+                                <label class="small fw-bold text-success mb-2">Đáp án trắc nghiệm:</label>
+                                @for (int ans = 0; ans < 4; ans++)
+                                {
+                                    string val = "";
+                                    if (ans == 0) val = Model.Questions[i].AnswerA;
+                                    if (ans == 1) val = Model.Questions[i].AnswerB;
+                                    if (ans == 2) val = Model.Questions[i].AnswerC;
+                                    if (ans == 3) val = Model.Questions[i].AnswerD;
+
+                                    <div class="input-group input-group-sm mb-1">
+                                        <div class="input-group-text">
+                                            <input type="radio" name="Questions[@i].CorrectAnswerIndex" value="@ans" @(Model.Questions[i].CorrectAnswerIndex == ans ? "checked" : "")>
+                                        </div>
+                                        <input type="text" name="Questions[@i].Answer@(Convert.ToChar(65 + ans))" class="form-control" value="@val">
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <button type="button" class="btn btn-dashed w-100 py-3 mt-3" onclick="addBlankQuestion()">
+            <i class="bi bi-plus-circle"></i> Thêm câu hỏi mới vào bài này
+        </button>
+    </div>
+</form>
+
+<template id="new-q-template">
+    <div class="card mb-3 shadow-sm q-item border-success">
+        <input type="hidden" name="Questions[{INDEX}].Id" value="0" />
+        <div class="card-header bg-success-subtle d-flex justify-content-between py-2">
+            <span class="fw-bold text-success">Câu hỏi Mới (Chưa lưu)</span>
+            <button type="button" class="btn btn-sm btn-danger" onclick="this.closest('.q-item').remove()">Hủy</button>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-7">
+                    <textarea name="Questions[{INDEX}].Content" class="form-control mb-2 fw-bold q-content-input" placeholder="Nhập nội dung câu hỏi (Bắt buộc)..."></textarea>
+                    <textarea name="Questions[{INDEX}].Explaination" class="form-control form-control-sm" placeholder="Giải thích..."></textarea>
+                </div>
+                <div class="col-md-5 bg-light p-2 rounded">
+                    @for (int k = 0; k < 4; k++)
+                    {
+                        <div class="input-group input-group-sm mb-1">
+                            <div class="input-group-text"><input type="radio" name="Questions[{INDEX}].CorrectAnswerIndex" value="@k" @(k == 0 ? "checked" : "")></div>
+                            <input type="text" name="Questions[{INDEX}].Answer@(Convert.ToChar(65 + k))" class="form-control" placeholder="Đáp án @(Convert.ToChar(65 + k))">
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>        
+    var currentIndex = @Model.Questions.Count;
+    var deletedIds = [];
+
+    // --- 1. LOGIC XÓA (GIỮ NGUYÊN) ---
+    function markDelete(btn, id) {
+        if(confirm("Bạn muốn xóa câu hỏi này khỏi bài?")) {
+            deletedIds.push(id);
+            document.getElementById('DeletedIdsInput').value = deletedIds.join(',');
+            $(btn).closest('.q-item').fadeOut(300, function() { $(this).remove(); });
+        }
+    }
+
+    // --- 2. LOGIC THÊM MỚI (GIỮ NGUYÊN) ---
+    function addBlankQuestion() {
+        var template = document.getElementById('new-q-template').innerHTML;
+        var html = template.replace(/{INDEX}/g, currentIndex);
+        document.getElementById('questions-container').insertAdjacentHTML('beforeend', html);
+        currentIndex++;
+    }
+
+    // --- 3. LOGIC VALIDATE (KIỂM TRA LỖI) ---
+    function showError(element, message) {
+        // 1. Hiển thị thông báo chung
+        var errorAlert = document.getElementById('error-alert');
+        document.getElementById('error-message').innerText = message;
+        errorAlert.classList.remove('d-none');
+
+        // 2. Focus và highlight ô lỗi
+        if(element) {
+            element.classList.add('is-invalid'); // Viền đỏ (Bootstrap class)
+            element.focus();
+
+            // Scroll đến ô đó (trừ đi chiều cao header để không bị che)
+            var headerOffset = 150;
+            var elementPosition = element.getBoundingClientRect().top;
+            var offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+            window.scrollTo({
+                 top: offsetPosition,
+                 behavior: "smooth"
+            });
+
+            // Xóa lỗi khi người dùng bắt đầu nhập lại
+            element.oninput = function() {
+                element.classList.remove('is-invalid');
+                errorAlert.classList.add('d-none');
+            };
+        }
+    }
+
+    function submitForm() {
+        // Reset trạng thái cũ
+        document.getElementById('error-alert').classList.add('d-none');
+        document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+
+        // 1. Kiểm tra Tiêu đề bài
+        var title = document.getElementById('ResourceTitle');
+        if (!title.value.trim()) {
+            showError(title, "Vui lòng nhập Tiêu đề bài!");
+            return;
+        }
+
+        // 2. Kiểm tra Nội dung/Transcript
+        var content = document.getElementById('ResourceContent');
+        if (content && !content.value.trim()) { // Chỉ kiểm tra nếu input tồn tại
+            showError(content, "Vui lòng nhập Nội dung hoặc Transcript!");
+            return;
+        }
+
+        // 3. Kiểm tra từng câu hỏi
+        var questions = document.querySelectorAll('.q-item');
+        if (questions.length === 0) {
+            showError(null, "Bài này chưa có câu hỏi nào. Vui lòng thêm ít nhất 1 câu hỏi!");
+            return;
+        }
+
+        var isValidQuestions = true;
+        // Duyệt qua từng câu hỏi đang hiển thị (bỏ qua những câu đã ẩn/xóa)
+        for (var i = 0; i < questions.length; i++) {
+            if(questions[i].style.display === 'none') continue; // Bỏ qua câu đã xóa
+
+            // Tìm ô nội dung câu hỏi trong card đó
+            var qContent = questions[i].querySelector('.q-content-input');
+            if (!qContent || !qContent.value.trim()) {
+                showError(qContent, "Nội dung câu hỏi không được để trống!");
+                isValidQuestions = false;
+                break; // Dừng vòng lặp, focus vào lỗi đầu tiên tìm thấy
+            }
+        }
+
+        // 4. Nếu tất cả OK -> Submit form
+        if (isValidQuestions) {
+            document.getElementById('batchEditForm').submit();
+        }
+    }        
+    </script>
+}

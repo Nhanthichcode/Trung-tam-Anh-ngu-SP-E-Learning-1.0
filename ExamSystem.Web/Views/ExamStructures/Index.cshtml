@@ -1,0 +1,34 @@
+﻿@model IEnumerable<ExamSystem.Core.Entities.ExamStructure>
+@{
+    ViewData["Title"] = "Quản lý Cấu trúc Đề thi";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>📂 Cấu trúc Đề thi Mẫu</h3>
+    <a asp-action="Create" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Tạo Cấu trúc Mới</a>
+</div>
+
+<table class="table table-bordered table-hover">
+    <thead class="table-light">
+        <tr>
+            <th>Tên Cấu trúc</th>
+            <th>Mô tả</th>
+            <th>Số phần thi</th>
+            <th width="150">Thao tác</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td class="fw-bold text-primary">@item.Name</td>
+                <td>@item.Description</td>
+                <td><span class="badge bg-secondary">@item.Parts.Count phần</span></td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">Sửa</a>
+                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">Xóa</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

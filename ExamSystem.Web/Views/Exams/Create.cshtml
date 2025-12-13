@@ -1,54 +1,62 @@
 ﻿@model ExamSystem.Core.Entities.Exam
-
 @{
-    ViewData["Title"] = "Tạo Đề thi mới";
+    ViewData["Title"] = "Tạo Đề thi Mới";
 }
 
-<div class="card shadow-sm">
-    <div class="card-header bg-primary text-white">
-        <h4 class="mb-0">Tạo Đề thi mới</h4>
-    </div>
-    <div class="card-body">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
-            <div class="mb-3">
-                <label asp-for="Title" class="form-label">Tên đề thi (*)</label>
-                <input asp-for="Title" class="form-control" placeholder="Ví dụ: Thi cuối kỳ môn Toán" />
-                <span asp-validation-for="Title" class="text-danger"></span>
-            </div>
-
-            <div class="mb-3">
-                <label asp-for="Description" class="form-label">Mô tả</label>
-                <textarea asp-for="Description" class="form-control" rows="3"></textarea>
-                <span asp-validation-for="Description" class="text-danger"></span>
-            </div>
-
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label asp-for="DurationMinutes" class="form-label">Thời gian làm bài (phút)</label>
-                    <input asp-for="DurationMinutes" class="form-control" type="number" min="1" value="60" />
-                    <span asp-validation-for="DurationMinutes" class="text-danger"></span>
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-plus-circle"></i> Khởi tạo Đề thi Mới</h4>
                 </div>
-                <div class="col-md-6 mb-3">
-                    <label asp-for="StartDate" class="form-label">Ngày bắt đầu</label>
-                    <input asp-for="StartDate" class="form-control" type="datetime-local" value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" />
-                    <span asp-validation-for="StartDate" class="text-danger"></span>
+                <div class="card-body p-4">
+                    <form asp-action="Create">
+
+                        <div class="mb-3">
+                            <label asp-for="Title" class="form-label fw-bold">Tên đề thi</label>
+                            <input asp-for="Title" class="form-control form-control-lg" placeholder="VD: Đề thi thử VSTEP tháng 12..." />
+                            <span asp-validation-for="Title" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="DurationMinutes" class="form-label fw-bold">Thời gian (phút)</label>
+                                <input asp-for="DurationMinutes" class="form-control" value="180" />
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="Description" class="form-label">Mô tả / Ghi chú</label>
+                            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                        </div>
+
+                        <hr class="my-4 border-secondary opacity-25">
+
+                        <div class="bg-light p-3 rounded border border-dashed mb-4">
+                            <h5 class="text-primary fw-bold"><i class="bi bi-diagram-3"></i> Cấu trúc đề thi</h5>
+                            <p class="text-muted small">Chọn mẫu cấu trúc để hệ thống tự động tạo các Phần thi (Parts) cho bạn.</p>
+
+                            <select name="selectedStructureId" class="form-select form-select-lg border-primary">
+                                <option value="">-- Không dùng mẫu (Tạo thủ công) --</option>
+                                @if (ViewBag.Structures != null)
+                                {
+                                    foreach (var s in (List<ExamSystem.Core.Entities.ExamStructure>)ViewBag.Structures)
+                                    {
+                                        <option value="@s.Id">📌 @s.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a asp-action="Index" class="btn btn-secondary">Hủy bỏ</a>
+                            <button type="submit" class="btn btn-primary fw-bold px-4">Tạo & Soạn đề ngay</button>
+                        </div>
+                    </form>
                 </div>
             </div>
-
-            <div class="mb-3 form-check">
-                <input class="form-check-input" asp-for="IsActive" checked />
-                <label class="form-check-label" asp-for="IsActive">
-                    Kích hoạt đề thi này ngay lập tức
-                </label>
-            </div>
-
-            <div class="d-flex gap-2">
-                <button type="submit" class="btn btn-success">Lưu lại</button>
-                <a asp-action="Index" class="btn btn-secondary">Quay lại danh sách</a>
-            </div>
-        </form>
+        </div>
     </div>
 </div>
 

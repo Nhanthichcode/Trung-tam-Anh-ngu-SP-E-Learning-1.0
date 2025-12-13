@@ -11,6 +11,7 @@
 }
 
 <style>
+    /* Style Tabs */
     .nav-tabs .nav-link {
         color: #495057;
         border: none;
@@ -58,10 +59,17 @@
     .btn-toggle-collapse {
         transition: transform 0.3s ease;
     }
-
+        /* Khi đang đóng (collapsed) thì xoay mũi tên */
         .btn-toggle-collapse.collapsed {
             transform: rotate(-90deg);
         }
+
+    /* Font nội dung */
+    .q-content {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 0.95rem;
+        color: #212529;
+    }
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -145,26 +153,22 @@
 {
     @foreach (var group in Model)
     {
-        // 1. Tạo ID duy nhất cho việc Collapse (dùng GUID)
+        // 1. Tạo ID duy nhất cho việc Collapse
         var collapseId = "collapse-" + Guid.NewGuid();
 
-        // 2. Logic: Kiểm tra xem trong nhóm này CÓ BẤT KỲ câu nào có ảnh không?
-        bool showImageCol = group.Questions.Any(q => !string.IsNullOrEmpty(q.MediaUrl));
+        // 2. Logic Ẩn/Hiện Cột Ảnh: Kiểm tra xem nhóm này có ảnh không?
+        bool showImageCol = group.Questions != null && group.Questions.Any(q => !string.IsNullOrEmpty(q.MediaUrl));
 
-        // 3. Phân loại màu sắc và Controller
+        // 3. Phân loại màu sắc
         var groupCss = group.GroupType switch
         {
             "Reading" => "Reading",
             "Listening" => "Listening",
             _ => "Independent"
         };
-        var manageController = group.GroupType switch
-        {
-            "Reading" => "ReadingPassages",
-            "Listening" => "ListeningResources",
-            _ => null
-        };
-        var resourceId = group.GroupId;
+
+        // 4. Kiểm tra xem có phải là Bài đọc/Nghe để hiện nút Sửa Gộp không
+        bool isResourceGroup = (group.GroupType == "Reading" || group.GroupType == "Listening") && group.GroupId.HasValue;
 
         <div class="card shadow-sm mb-4 group-card @groupCss">
             <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
@@ -173,7 +177,7 @@
                         <i class="bi bi-chevron-down fs-5"></i>
                     </button>
 
-                    <h5 class="mb-0 fw-bold text-dark text-truncate cursor-pointer" data-bs-toggle="collapse" data-bs-target="#@collapseId">
+                    <h5 class="mb-0 fw-bold text-dark text-truncate cursor-pointer" data-bs-toggle="collapse" data-bs-target="#@collapseId" title="Bấm để mở rộng/thu gọn">
                         @if (group.GroupType == "Reading")
                         {
                             <span class="text-info"><i class="bi bi-book-half"></i> [READING]</span>
@@ -183,10 +187,20 @@
 
                             <span class="text-warning"><i class="bi bi-volume-up-fill"></i> [LISTENING]</span>
                         }
+                        else if (group.GroupType == "Writing")
+                        {
+
+                            <span class="text-warning"><i class="bi bi-pen"></i> [Writing]</span>
+                        }
+                        else if (group.GroupType == "Speaking")
+                        {
+
+                            <span class="text-warning"><i class="bi bi-mic"></i> [Speaking]</span>
+                        }
                         else
                         {
 
-                            <span class="text-secondary"><i class="bi bi-lightning-charge"></i> [ĐỘC LẬP]</span>
+                            <span class="text-secondary"><i class="bi bi-spellcheck"></i> [Grammar]</span>
                         }
 
                         <span class="ms-2">@group.GroupTitle</span>
@@ -195,13 +209,49 @@
                 </div>
 
                 <div class="btn-group">
-                    @if (resourceId.HasValue && manageController != null)
+                    @{
+                        // LOGIC XÁC ĐỊNH LOẠI NÚT BẤM
+                        string actionName = "";
+                        string controllerName = "Questions"; // Mặc định về controller câu hỏi
+                        object routeId = null;
+                        string btnTitle = "";
+
+                        if (group.GroupType == "Reading" || group.GroupType == "Listening")
+                        {
+                            // Bài Đọc/Nghe -> Vào trang Sửa Hàng Loạt (BatchEdit)
+                            actionName = "BatchEdit";
+                            routeId = group.GroupId; // ID của Bài Đọc/Nghe
+                            btnTitle = "Sửa toàn bộ bài và câu hỏi con";
+                        }
+                        else
+                        {
+                            // Câu lẻ (Speaking/Writing) -> Vào trang Sửa Đơn Lẻ (Edit)
+                            actionName = "Edit";
+                            routeId = group.Questions.FirstOrDefault()?.Id; // ID của câu hỏi
+                            btnTitle = "Sửa câu hỏi này";
+                        }
+                    }
+
+                    @if (routeId != null)
                     {
-                        <a asp-controller="@manageController" asp-action="Edit" asp-route-id="@resourceId" class="btn btn-sm btn-outline-primary">
+                        <a asp-controller="@controllerName"
+                           asp-action="@actionName"
+                           asp-route-id="@routeId"
+                           asp-route-type="@group.GroupType"
+                           class="btn btn-sm btn-outline-primary shadow-sm"
+                           title="@btnTitle">
                             <i class="bi bi-pencil-square"></i> Sửa Bài
                         </a>
-                        <a asp-controller="@manageController" asp-action="Delete" asp-route-id="@resourceId" class="btn btn-sm btn-outline-danger">
-                            <i class="bi bi-trash"></i> Xóa Bài
+
+                        if (group.GroupType == "Reading") { controllerName = "ReadingPassages"; routeId = group.GroupId; }
+                        else if (group.GroupType == "Listening") { controllerName = "ListeningResources"; routeId = group.GroupId; }
+                        else { controllerName = "Questions"; routeId = group.Questions.FirstOrDefault()?.Id; }
+
+                        <a asp-controller="@controllerName"
+                           asp-action="Delete"
+                           asp-route-id="@routeId"
+                           class="btn btn-sm btn-outline-danger shadow-sm ms-1">
+                            <i class="bi bi-trash"></i>
                         </a>
                     }
                 </div>
@@ -220,8 +270,6 @@
                                     {
                                         <th style="width: 15%; text-align:center;">Hình ảnh</th>
                                     }
-
-                                    <th style="width: 15%; text-align:center;">Thao tác</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -231,7 +279,7 @@
                                     <tr>
                                         <td class="text-center text-muted fw-bold">@(item.i + 1)</td>
                                         <td style="padding-right: 20px;">
-                                            <div style="font-family: Arial, sans-serif; font-size: 0.95rem; color: #212529;" title="@q.Content">
+                                            <div class="q-content text-truncate-2" title="@q.Content">
                                                 @if (q.Content.Length > 150)
                                                 {
                                                     @Html.Raw(q.Content.Substring(0, 150) + "...")
@@ -258,19 +306,11 @@
                                                 }
                                                 else
                                                 {
-                                                    <span class="text-muted small">-</span>
+                                                    <span class="text-muted small text-opacity-25">-</span>
                                                 }
                                             </td>
                                         }
 
-                                        <td class="text-center">
-                                            <a asp-action="Edit" asp-route-id="@q.Id" class="btn btn-sm btn-light text-primary border" title="Sửa câu này">
-                                                <i class="bi bi-pencil-fill"></i>
-                                            </a>
-                                            <a asp-action="Delete" asp-route-id="@q.Id" class="btn btn-sm btn-light text-danger border" title="Xóa câu này">
-                                                <i class="bi bi-trash-fill"></i>
-                                            </a>
-                                        </td>
                                     </tr>
                                 }
                             </tbody>
@@ -278,10 +318,13 @@
                     </div>
                 </div>
 
-                @if (group.GroupId.HasValue)
+                @if (isResourceGroup)
                 {
                     <div class="card-footer bg-white border-top-0 text-center py-2">
-                        <a asp-action="Create" class="btn btn-sm btn-link text-decoration-none fw-bold">
+                        <a asp-controller="Questions" asp-action="BatchEdit"
+                           asp-route-id="@group.GroupId"
+                           asp-route-type="@group.GroupType"
+                           class="btn btn-sm btn-link text-decoration-none fw-bold">
                             <i class="bi bi-plus-circle"></i> Thêm câu hỏi vào bài này
                         </a>
                     </div>

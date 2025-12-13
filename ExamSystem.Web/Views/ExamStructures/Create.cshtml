@@ -1,0 +1,28 @@
+﻿@model ExamSystem.Core.Entities.ExamStructure
+@{
+    ViewData["Title"] = "Tạo Cấu trúc Mới";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">Tạo Cấu trúc Đề thi</div>
+            <div class="card-body">
+                <form asp-action="Create">
+                    <div class="mb-3">
+                        <label asp-for="Name" class="form-label fw-bold">Tên Cấu trúc</label>
+                        <input asp-for="Name" class="form-control" placeholder="VD: TOEIC Reading & Listening" required />
+                    </div>                   
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label">Mô tả</label>
+                        <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Lưu và Tiếp tục thêm Phần thi</button>
+                        <a asp-action="Index" class="btn btn-secondary">Hủy</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
