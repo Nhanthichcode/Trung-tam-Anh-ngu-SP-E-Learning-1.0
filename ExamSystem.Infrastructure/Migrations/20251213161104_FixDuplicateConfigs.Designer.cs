@@ -4,6 +4,7 @@ using ExamSystem.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ExamSystem.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251213161104_FixDuplicateConfigs")]
+    partial class FixDuplicateConfigs
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -173,9 +176,6 @@ namespace ExamSystem.Infrastructure.Migrations
                     b.Property<int>("OrderIndex")
                         .HasColumnType("int");
 
-                    b.Property<int>("SkillType")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
                     b.HasIndex("ExamId");
@@ -210,27 +210,6 @@ namespace ExamSystem.Infrastructure.Migrations
                     b.HasIndex("QuestionId");
 
                     b.ToTable("ExamQuestions");
-                });
-
-            modelBuilder.Entity("ExamSystem.Core.Entities.ExamStructure", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ExamStructures");
                 });
 
             modelBuilder.Entity("ExamSystem.Core.Entities.ListeningResource", b =>
@@ -319,38 +298,6 @@ namespace ExamSystem.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("ReadingPassages");
-                });
-
-            modelBuilder.Entity("ExamSystem.Core.Entities.StructurePart", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("ExamStructureId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("OrderIndex")
-                        .HasColumnType("int");
-
-                    b.Property<int>("SkillType")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ExamStructureId");
-
-                    b.ToTable("StructureParts");
                 });
 
             modelBuilder.Entity("ExamSystem.Core.Entities.TestAttempt", b =>
@@ -624,17 +571,6 @@ namespace ExamSystem.Infrastructure.Migrations
                     b.Navigation("ReadingPassage");
                 });
 
-            modelBuilder.Entity("ExamSystem.Core.Entities.StructurePart", b =>
-                {
-                    b.HasOne("ExamSystem.Core.Entities.ExamStructure", "ExamStructure")
-                        .WithMany("Parts")
-                        .HasForeignKey("ExamStructureId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ExamStructure");
-                });
-
             modelBuilder.Entity("ExamSystem.Core.Entities.TestAttempt", b =>
                 {
                     b.HasOne("ExamSystem.Core.Entities.Exam", "Exam")
@@ -732,11 +668,6 @@ namespace ExamSystem.Infrastructure.Migrations
             modelBuilder.Entity("ExamSystem.Core.Entities.ExamPart", b =>
                 {
                     b.Navigation("ExamQuestions");
-                });
-
-            modelBuilder.Entity("ExamSystem.Core.Entities.ExamStructure", b =>
-                {
-                    b.Navigation("Parts");
                 });
 
             modelBuilder.Entity("ExamSystem.Core.Entities.ListeningResource", b =>
