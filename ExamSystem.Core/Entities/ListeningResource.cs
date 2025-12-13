@@ -10,5 +10,6 @@ namespace ExamSystem.Core.Entities
         [Required]
         public string AudioUrl { get; set; } = string.Empty;
         public string? Transcript { get; set; }
+        public ICollection<Question> Questions { get; set; } = new List<Question>();
     }
 }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ExamSystem.Core.Enums;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -14,7 +15,7 @@ namespace ExamSystem.Core.Entities
         [Required]
         public string Name { get; set; } = string.Empty;
         public int OrderIndex { get; set; }
-
+        public ExamSkill SkillType { get; set; }
         public int ExamId { get; set; }
         [ForeignKey("ExamId")]
         public Exam? Exam { get; set; } = null!;

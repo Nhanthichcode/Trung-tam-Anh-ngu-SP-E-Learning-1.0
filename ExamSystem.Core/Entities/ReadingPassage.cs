@@ -9,6 +9,6 @@ namespace ExamSystem.Core.Entities
         public string? Title { get; set; }
         [Required]
         public string Content { get; set; } = string.Empty;
-
+        public ICollection<Question> Questions { get; set; } = new List<Question>();
     }
 }
