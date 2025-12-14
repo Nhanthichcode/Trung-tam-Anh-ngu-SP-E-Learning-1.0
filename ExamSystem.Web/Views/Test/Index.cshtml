@@ -1,0 +1,62 @@
+﻿@model IEnumerable<ExamSystem.Core.Entities.Exam>
+
+@{
+    ViewData["Title"] = "Danh sách Đề thi";
+}
+
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <h1 class="fw-bold text-primary">DANH SÁCH ĐỀ THI</h1>
+        <p class="text-muted">Chọn một đề thi bên dưới để bắt đầu làm bài</p>
+    </div>
+
+    <div class="row">
+        @foreach (var item in Model)
+        {
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm hover-shadow transition-all">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title fw-bold text-primary">@item.Title</h5>
+                            <span class="badge bg-info text-dark">@item.DurationMinutes phút</span>
+                        </div>
+
+                        <p class="card-text text-muted small">
+                            @(item.Description ?? "Không có mô tả.")
+                        </p>
+
+                        <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                            <span class="small text-secondary">
+                                <i class="bi bi-layers"></i> @item.ExamParts.Count phần thi
+                            </span>
+
+                            <a asp-action="Take" asp-route-id="@item.Id" class="btn btn-primary btn-sm rounded-pill px-3">
+                                <i class="bi bi-play-circle-fill"></i> Bắt đầu
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (!Model.Any())
+        {
+            <div class="col-12 text-center text-muted py-5">
+                <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+                Chưa có đề thi nào được mở.
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    /* Hiệu ứng hover nhẹ cho thẻ card */
+    .hover-shadow:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15) !important;
+    }
+
+    .transition-all {
+        transition: all 0.3s ease;
+    }
+</style>

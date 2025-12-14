@@ -6,7 +6,7 @@
 
 <div class="card shadow">
     <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
-        <h4 class="mb-0">Chỉnh sửa câu hỏi</h4>
+        <h4 class="mb-0"><i class="bi bi-pencil-square"></i> Chỉnh sửa câu hỏi</h4>
     </div>
     <div class="card-body">
         <form asp-action="Edit" enctype="multipart/form-data">
@@ -15,12 +15,16 @@
             <input type="hidden" asp-for="Id" />
             <input type="hidden" asp-for="MediaUrl" />
 
-            <div class="p-3 mb-4 bg-light border rounded border-warning">
-                <label asp-for="SkillType" class="form-label fw-bold text-uppercase text-dark">Loại kỹ năng</label>
-                <select asp-for="SkillType" class="form-select form-select-lg" id="SkillTypeSelect"
-                        asp-items="Html.GetEnumSelectList<ExamSystem.Core.Enums.ExamSkill>()">
-                </select>
-                <div class="form-text">Thay đổi kỹ năng sẽ làm thay đổi giao diện nhập liệu bên dưới.</div>
+            <input type="hidden" asp-for="SkillType" id="SkillTypeHidden" value="@((int)Model.SkillType)" />
+
+            <div class="p-3 mb-4 bg-light border rounded border-secondary d-flex align-items-center">
+                <div class="me-3 fw-bold text-uppercase text-dark">Loại kỹ năng:</div>
+                <span class="badge bg-primary fs-5 px-4 py-2">
+                    @Model.SkillType.ToString()
+                </span>
+                <small class="text-muted ms-3 border-start ps-3">
+                    <i class="bi bi-lock-fill"></i> Không thể thay đổi loại kỹ năng khi đang chỉnh sửa.
+                </small>
             </div>
 
             <div class="row">
@@ -41,18 +45,40 @@
                     </div>
 
                     <div id="block-image" class="mb-3 p-3 bg-white border rounded" style="display:none;">
-                        <label class="form-label fw-bold text-success"><i class="bi bi-image"></i> Hình ảnh đính kèm</label>
+                        <label class="form-label fw-bold text-success"><i class="bi bi-image"></i> Hình ảnh minh họa (Bài Nói/Viết)</label>
 
-                        @if (!string.IsNullOrEmpty(Model.MediaUrl))
-                        {
-                            <div class="mb-2 text-center bg-light p-2 rounded">
-                                <img src="@Model.MediaUrl" class="img-thumbnail" style="max-height: 200px;" />
-                                <div class="small text-muted mt-1">Ảnh hiện tại</div>
+                        <input type="hidden" id="deleteImageFlag" name="DeleteImageFlag" value="false" />
+
+                        <div class="row">
+                            <div class="col-md-6 text-center" id="current-image-container">
+                                @if (!string.IsNullOrEmpty(Model.MediaUrl))
+                                {
+                                    <div class="mb-2 p-2 border rounded" id="current-image-wrapper">
+                                        <img src="@Model.MediaUrl" class="img-thumbnail" style="max-height: 150px;" id="current-image-tag" />
+                                        <div class="small text-muted mt-1">Ảnh hiện tại</div>
+
+                                        <button type="button" class="btn btn-sm btn-danger mt-2" onclick="deleteCurrentMedia()">
+                                            <i class="bi bi-trash"></i> Xóa ảnh
+                                        </button>
+
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="text-muted small py-4 border rounded bg-light" id="no-image-placeholder">Chưa có ảnh</div>
+                                }
                             </div>
-                        }
 
-                        <label>Thay đổi ảnh (Nếu cần):</label>
-                        <input type="file" name="imageFile" class="form-control" accept="image/*" />
+                            <div class="col-md-6 text-center">
+                                <div class="mb-2 p-2 border rounded d-none" id="preview-container">
+                                    <img id="img-preview" src="#" class="img-thumbnail" style="max-height: 150px;" />
+                                    <div class="small text-success fw-bold mt-1">Ảnh mới sẽ thay thế</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <label class="mt-2 fw-bold">Tải lên ảnh mới:</label>
+                        <input type="file" name="imageFile" id="imageInput" class="form-control" accept="image/*" />
                     </div>
 
                     <div class="mb-3">
@@ -81,7 +107,7 @@
                 <div class="col-md-5 bg-light p-3">
 
                     <div id="block-answers">
-                        <h5 class="text-success">Các lựa chọn trả lời</h5>
+                        <h5 class="text-success border-bottom pb-2">Các lựa chọn trả lời</h5>
 
                         @for (int i = 0; i < Model.Answers.Count; i++)
                         {
@@ -101,17 +127,17 @@
                         }
                     </div>
 
-                    <div id="block-no-answers" class="alert alert-info text-center" style="display:none;">
-                        <i class="bi bi-info-circle-fill"></i><br />
-                        Kỹ năng này là tự luận (Nói/Viết).<br />
-                        Phần trắc nghiệm sẽ bị ẩn và không được lưu.
+                    <div id="block-no-answers" class="alert alert-info text-center mt-3" style="display:none;">
+                        <i class="bi bi-info-circle-fill fs-4"></i><br />
+                        <strong>Kỹ năng Tự luận (Nói/Viết)</strong><br />
+                        Hệ thống sẽ không lưu các đáp án trắc nghiệm ở trên.
                     </div>
 
                 </div>
             </div>
 
-            <div class="mt-4 text-center">
-                <button type="submit" class="btn btn-warning btn-lg px-5">Cập nhật thay đổi</button>
+            <div class="mt-4 text-center border-top pt-3">
+                <button type="submit" class="btn btn-warning btn-lg px-5"><i class="bi bi-check-lg"></i> Cập nhật thay đổi</button>
                 <a asp-action="Index" class="btn btn-secondary btn-lg">Hủy</a>
             </div>
         </form>
@@ -125,38 +151,78 @@
 
     <script>
         $(document).ready(function () {
-            // Logic Javascript y hệt trang Create
-            function toggleFields() {
-                var skill = $("#SkillTypeSelect").val();
 
-                // Reset
+            // 1. Logic Ẩn/Hiện theo Skill
+           function toggleFields() {
+                // SỬA: Lấy giá trị từ Input Hidden thay vì Select
+                var skill = $("#SkillTypeHidden").val();
+
+                // Reset giao diện (Ẩn hết trước)
                 $("#block-reading").hide();
                 $("#block-listening").hide();
                 $("#block-image").hide();
-                $("#block-answers").show();
+                $("#block-answers").show(); // Mặc định hiện trắc nghiệm
                 $("#block-no-answers").hide();
 
-                // Logic hiển thị
+                // Logic hiển thị (Giữ nguyên như cũ)
+                // Lưu ý: Kiểm tra lại Enum trong C# của bạn:
+                // Ví dụ: 1=Listening, 2=Reading, 3=Writing, 4=Speaking
+
                 if (skill == "1") { // Listening
                     $("#block-listening").show();
                 }
                 else if (skill == "2") { // Reading
                     $("#block-reading").show();
+                }else if (skill == "3") { // Writing                   
+                    $("#block-answers").hide();
+                    $("#block-no-answers").show();
                 }
-                else if (skill == "3" || skill == "4") { // Writing / Speaking
+                else if (skill == "3" || skill == "4") { // Speaking
                     $("#block-image").show();
                     $("#block-answers").hide();
                     $("#block-no-answers").show();
                 }
             }
+            
 
-            // 1. Chạy ngay khi trang vừa tải xong để hiển thị đúng theo dữ liệu cũ
-            toggleFields();
+            // Chạy 1 lần duy nhất khi trang vừa tải xong
+            toggleFields(); 
+            
 
-            // 2. Chạy mỗi khi người dùng đổi dropdown
-            $("#SkillTypeSelect").change(function () {
-                toggleFields();
+            // 2. Logic Xem trước ảnh (Live Preview)
+            $("#imageInput").change(function () {
+                var file = this.files[0];
+                if (file) {
+                    var reader = new FileReader();
+                    reader.onload = function (e) {
+                        $("#img-preview").attr("src", e.target.result);
+                        $("#preview-container").removeClass("d-none"); // Hiện khung xem trước
+                    }
+                    reader.readAsDataURL(file);
+                } else {
+                    $("#preview-container").addClass("d-none"); // Ẩn nếu bỏ chọn
+        
+                }
             });
         });
+
+        // 3. HÀM XỬ LÝ XÓA ẢNH HIỆN TẠI (CLIENT-SIDE)
+        function deleteCurrentMedia() {
+            if (confirm("Bạn có chắc chắn muốn xóa ảnh này? Thay đổi sẽ được lưu sau khi cập nhật.")) {
+                // Đánh dấu cờ xóa để Controller xử lý
+                $("#deleteImageFlag").val("true");
+
+                // Cập nhật MediaUrl trong Form thành rỗng
+                $("#MediaUrl").val("");
+
+                // Ẩn ảnh cũ và hiện placeholder
+                $("#current-image-wrapper").remove();
+                $("#current-image-container").append('<div class="text-muted small py-4 border rounded bg-light" id="no-image-placeholder">Đã xóa ảnh</div>');
+
+                // Xóa nội dung input file (để không gửi ảnh mới nếu lỡ chọn)
+                $("#imageInput").val('');
+                $("#preview-container").addClass("d-none");
+            }
+        }
     </script>
 }
