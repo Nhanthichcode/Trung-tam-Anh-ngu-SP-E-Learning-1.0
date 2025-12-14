@@ -1,3 +1,14 @@
+﻿/* ======================================= */
+/* 2. NAVIGATION (Đảm bảo Navbar Co giãn) */
+/* ======================================= */
+/* Đảm bảo nút Toggle xuất hiện và menu ẩn trên mobile */
+@media (max-width: 991.98px) {
+    .navbar-collapse {
+        background-color: white;
+        border-top: 1px solid #eee;
+    }
+}
+
 html {
   font-size: 14px;
 }
@@ -19,4 +30,40 @@ html {
 
 body {
   margin-bottom: 60px;
+}
+
+@media (max-width: 768px) {
+    /* 1. Kích thước Font & Padding */
+    .container, .container-fluid {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+    h2 {
+        font-size: 1.5rem;
+    }
+
+    .card {
+        margin-bottom: 15px !important;
+    }
+
+    /* 2. Tối ưu Bảng (RẤT QUAN TRỌNG cho trang quản lý) */
+    .table-responsive {
+        /* Đảm bảo khối cha cho phép cuộn ngang */
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch; /* Hỗ trợ cuộn mượt trên iOS */
+    }
+
+    .table {
+        /* Đặt độ rộng tối thiểu để nội dung không bị nén quá mức */
+        min-width: 800px; /* Tăng độ rộng tối thiểu để bảng không bị vỡ */
+    }
+
+    /* 3. Nút bấm: Giảm kích thước nút lớn */
+    .btn {
+        padding: 0.4rem 0.8rem !important;
+        font-size: 0.85rem !important;
+    }
 }

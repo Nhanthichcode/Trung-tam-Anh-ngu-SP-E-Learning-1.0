@@ -27,6 +27,18 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 .AddEntityFrameworkStores<AppDbContext>()
 .AddDefaultTokenProviders();
 
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("Admin", policy =>
+       policy.RequireRole("Admin"));
+
+    options.AddPolicy("AdminAndTeacher", policy =>
+        policy.RequireRole("Admin", "Teacher"));
+
+    // 2. Quyền tự do (Vào thi)
+    options.AddPolicy("Freedom", policy =>
+        policy.RequireRole("Admin", "Student", "Teacher"));
+});
 builder.Services.AddTransient<Microsoft.AspNetCore.Identity.UI.Services.IEmailSender, ExamSystem.Web.Services.EmailSender>();
 
 // Add services to the container.

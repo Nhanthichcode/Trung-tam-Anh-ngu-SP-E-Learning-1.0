@@ -29,6 +29,9 @@ namespace ExamSystem.Infrastructure.Seeding
             if (!await roleManager.RoleExistsAsync("Admin"))
                 await roleManager.CreateAsync(new IdentityRole("Admin"));
 
+            if (!await roleManager.RoleExistsAsync("Teacher"))
+                await roleManager.CreateAsync(new IdentityRole("Teacher"));
+
             if (!await roleManager.RoleExistsAsync("Student"))
                 await roleManager.CreateAsync(new IdentityRole("Student"));
 
@@ -43,28 +46,47 @@ namespace ExamSystem.Infrastructure.Seeding
                     FullName = "Quản trị viên hệ thống",
                     EmailConfirmed = true,
                     DateOfBirth = new DateTime(1990, 1, 1),
-                  //  IsActive = true // Giả sử bạn có trường này
+                    //  IsActive = true // Giả sử bạn có trường này
                 };
                 // Password phải có: Hoa, thường, số, ký tự đặc biệt
                 await userManager.CreateAsync(adminUser, "Admin@123");
                 await userManager.AddToRoleAsync(adminUser, "Admin");
             }
 
-            // --- TẠO STUDENT ---
-            var studentEmail = "student@example.com";
-            if (await userManager.FindByEmailAsync(studentEmail) == null)
+            var teacherUser = await userManager.FindByEmailAsync("teacher@gmail.com");
+            if (teacherUser == null)
             {
-                var studentUser = new AppUser
+                var newTeacher = new AppUser
                 {
-                    UserName = studentEmail,
-                    Email = studentEmail,
-                    FullName = "Nguyễn Văn Sinh Viên",
-                    EmailConfirmed = true,
-                    DateOfBirth = new DateTime(2000, 5, 15),
-                  //  IsActive = true
+                    UserName = "teacher@gmail.com",
+                    Email = "teacher@gmail.com",
+                    FullName = "Cô Giáo Thảo",
+                    EmailConfirmed = true
                 };
-                await userManager.CreateAsync(studentUser, "Student@123");
-                await userManager.AddToRoleAsync(studentUser, "Student");
+                // Mật khẩu mẫu: Teacher@123
+                var result = await userManager.CreateAsync(newTeacher, "Teacher@123");
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(newTeacher, "Teacher");
+                    // Nếu giáo viên cũng được quyền viết bài, thêm dòng dưới:
+                    await userManager.AddToRoleAsync(newTeacher, "Author");
+                }
+                // --- TẠO STUDENT ---
+                var studentEmail = "student@example.com";
+                if (await userManager.FindByEmailAsync(studentEmail) == null)
+                {
+                    var studentUser = new AppUser
+                    {
+                        UserName = studentEmail,
+                        Email = studentEmail,
+                        FullName = "Nguyễn Văn Sinh Viên",
+                        EmailConfirmed = true,
+                        DateOfBirth = new DateTime(2000, 5, 15),
+                        //  IsActive = true
+                    };
+                    await userManager.CreateAsync(studentUser, "Student@123");
+                    await userManager.AddToRoleAsync(studentUser, "Student");
+                }
             }
         }
 

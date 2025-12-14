@@ -1,0 +1,355 @@
+﻿@using ExamSystem.Core.Enums
+@using Microsoft.AspNetCore.Identity
+@using ExamSystem.Core.Entities
+@inject UserManager<AppUser> UserManager
+@model ExamSystem.Core.Entities.Exam
+@{
+    Layout = null;
+    int globalIndex = 1;
+    var currentUser = await UserManager.GetUserAsync(User);
+    string studentName = currentUser?.FullName ?? User.Identity?.Name ?? "Thí sinh tự do";
+
+    // Sắp xếp: Listening -> Reading -> Writing -> Speaking
+    var orderedParts = Model.ExamParts.OrderBy(p => p.SkillType).ThenBy(p => p.OrderIndex).ToList();
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@Model.Title - Computer Based Test</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="~/css/pages/exam-take.css" asp-append-version="true" />
+</head>
+<body>
+
+    <header class="exam-header">
+        <div class="d-flex align-items-center gap-2">
+            <div class="bg-danger rounded-circle p-2 text-white lh-1"><i class="bi bi-mic-fill"></i></div>
+            <div class="fw-bold text-dark">@studentName</div>
+        </div>
+        <div class="timer-box shadow-sm">
+            <span class="timer-text small me-2 opacity-75">TIME LEFT</span> <span id="countdown">00:00</span>
+        </div>
+        <button onclick="submitExam()" class="btn btn-primary px-4 fw-bold rounded-pill">Nộp bài</button>
+    </header>
+
+    <form id="examForm" asp-action="Submit" method="post" enctype="multipart/form-data" class="exam-body">
+        <input type="hidden" name="examId" value="@Model.Id" />
+
+        <div class="question-paper">
+            <div class="scroll-area">
+                @for (int i = 0; i < orderedParts.Count; i++)
+                {
+                    var part = orderedParts[i];
+                    <div class="exam-section" id="section-@i">
+
+                        <div class="mb-3 border-bottom pb-2">
+                            <h5 class="fw-bold text-primary m-0">@part.SkillType - @part.Name</h5>
+                        </div>
+
+                        @* 1. LISTENING *@
+                        @if (part.SkillType == ExamSkill.Listening)
+                        {
+                            var audio = part.ExamQuestions.FirstOrDefault()?.Question?.ListeningResource;
+                            if (audio != null)
+                            {
+                                <div class="audio-container">
+                                    <i class="bi bi-play-circle-fill fs-2 me-3"></i>
+                                    <div class="flex-grow-1">
+                                        <div class="fw-bold mb-1">Audio Track</div>
+                                        <audio controls controlsList="nodownload"><source src="@audio.AudioUrl"></audio>
+                                    </div>
+                                </div>
+                            }
+                            foreach (var eq in part.ExamQuestions)
+                            {
+
+                                @RenderSingleQuestion(eq, part.SkillType)
+                            }
+                        }
+
+                        @* 2. READING *@
+                        else if (part.SkillType == ExamSkill.Reading)
+                        {
+                            var passage = part.ExamQuestions.FirstOrDefault()?.Question?.ReadingPassage;
+                            <div class="reading-layout">
+                                <div class="reading-text">
+                                    @if (passage != null)
+                                    {
+                                        <h5 class="fw-bold text-center mb-3">@passage.Title</h5> 
+                                        @Html.Raw(passage.Content)
+                                    }
+                                </div>
+                                <div class="reading-questions">
+                                    @foreach (var eq in part.ExamQuestions)
+                                    {
+                                        @RenderSingleQuestion(eq, part.SkillType)
+                                    }
+                                </div>
+                            </div>
+                        }
+
+                        @* 3. SPEAKING *@
+                        else if (part.SkillType == ExamSkill.Speaking)
+                        {
+                            foreach (var eq in part.ExamQuestions)
+                            {
+                                int currentIdx = globalIndex++;
+                                bool hasImage = !string.IsNullOrEmpty(eq.Question.MediaUrl);
+
+                                if (hasImage)
+                                {
+                                    @* CÓ ẢNH: ẢNH LỚN + CÂU HỎI BÊN DƯỚI (Cột Trái 80%) | GHI ÂM (Cột Phải 20%) *@
+                                    <div class="speaking-layout-img mb-4" style="height: 70vh;">
+                                        <div class="speaking-image-col shadow-sm">
+                                            <img src="@eq.Question.MediaUrl" class="speaking-img" />
+
+                                            <div class="speaking-question-text">
+                                                <h5 class="fw-bold text-primary mb-2">Câu hỏi @currentIdx:</h5>
+                                                <div class="fs-5">@eq.Question.Content</div>
+                                            </div>
+                                        </div>
+
+                                        <div class="speaking-control-col">
+                                            <div class="card border-0 shadow-sm w-100">
+                                                <div class="card-body">
+                                                    @RenderRecorderUI(eq.QuestionId)
+                                                    <textarea class="form-control mt-3 small bg-light" rows="4" placeholder="Ghi chú nháp..."></textarea>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    @* KHÔNG CÓ ẢNH: Giao diện thường *@
+                                    <div class="question-block">
+                                        <div class="q-title">QUESTION @currentIdx: @eq.Question.Content</div>
+                                        @RenderRecorderUI(eq.QuestionId)
+                                        <textarea class="form-control mt-3 w-100" rows="3" placeholder="Ghi chú nháp (không chấm điểm)..."></textarea>
+                                    </div>
+                                }
+                            }
+                        }
+
+                        @* 4. WRITING (VÀ CÁC DẠNG KHÁC) *@
+                        else
+                        {
+                            foreach (var eq in part.ExamQuestions)
+                            {
+                                @RenderSingleQuestion(eq, part.SkillType)
+                            }
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </form>
+
+    <footer class="exam-footer">
+        <button class="btn btn-outline-secondary rounded-pill px-4 me-2" id="btn-prev" onclick="navStep(-1)"><i class="bi bi-arrow-left"></i> Quay lại</button>
+        <div class="d-flex gap-2 overflow-auto" style="max-width: 60%;">
+            @for (int i = 0; i < orderedParts.Count; i++)
+            {
+                <button type="button" class="part-nav-btn @(i == 0 ? "active" : "")" onclick="goToSection(@i)" id="nav-btn-@i">Part @(i + 1) <div style="font-size:0.7em;opacity:0.8">@orderedParts[i].SkillType</div></button>
+            }
+        </div>
+        <button class="btn btn-success rounded-pill px-4 ms-2" id="btn-next" onclick="navStep(1)">Tiếp tục <i class="bi bi-arrow-right"></i></button>
+    </footer>
+
+    @* --- HELPER 1: RENDER CÂU HỎI THƯỜNG (WRITING CÓ NÂNG CẤP) --- *@
+    @{
+        Microsoft.AspNetCore.Html.IHtmlContent RenderSingleQuestion(ExamSystem.Core.Entities.ExamQuestion eq, ExamSkill skill)
+        {
+            var sb = new System.IO.StringWriter();
+            var qIdx = globalIndex++;
+
+            if (skill == ExamSkill.Writing)
+            {
+                // WRITING: Đề bài nổi bật
+                sb.Write($"<div class='mb-4' id='q-wrapper-{qIdx}'>");
+
+                // Khung đề bài Writing nổi bật
+                sb.Write($"<div class='writing-prompt-box'>");
+                sb.Write($"<h6 class='fw-bold text-primary mb-2'><i class='bi bi-pencil-square'></i> QUESTION {qIdx}:</h6>");
+                sb.Write($"<div class='writing-content'>{eq.Question.Content}</div>");
+                sb.Write($"</div>");
+
+                // Textarea
+                sb.Write($"<textarea class='form-control' rows='12' name='essayAnswers[{eq.QuestionId}]' placeholder='Nhập bài làm của bạn vào đây...' style='border-bottom-left-radius:0; border-bottom-right-radius:0;' onkeyup=\"countWords(this, 'wc-{qIdx}')\"></textarea>");
+
+                // Footer đếm từ
+                sb.Write($"<div class='word-count-footer'>");
+                sb.Write($"<span id='wc-{qIdx}'><i class='bi bi-fonts'></i> Số từ: 0</span>");
+                sb.Write($"<span><i class='bi bi-keyboard'></i> Trình soạn thảo văn bản</span>");
+                sb.Write($"</div>");
+
+                sb.Write("</div>");
+            }
+            else if (skill != ExamSkill.Speaking) // Trắc nghiệm
+            {
+                sb.Write($"<div class='question-block' id='q-wrapper-{qIdx}'>");
+                sb.Write($"<div class='q-title'>QUESTION {qIdx}: {eq.Question.Content}</div>");
+                if (eq.Question.Answers != null)
+                {
+                    foreach (var ans in eq.Question.Answers)
+                    {
+                        sb.Write($"<div class='form-check mb-2'><input class='form-check-input' type='radio' name='answers[{eq.QuestionId}]' value='{ans.Id}' id='ans_{ans.Id}'><label class='form-check-label' for='ans_{ans.Id}'>{ans.Content}</label></div>");
+                    }
+                }
+                sb.Write("</div>");
+            }
+            return Html.Raw(sb.ToString());
+        }
+    }
+
+    @* --- HELPER 2: RENDER GIAO DIỆN GHI ÂM (Dùng chung) --- *@
+    @{
+        Microsoft.AspNetCore.Html.IHtmlContent RenderRecorderUI(int questionId)
+        {
+            var sb = new System.IO.StringWriter();
+            sb.Write($"<div class='recorder-container' id='recorder-{questionId}'>");
+            sb.Write($"<button type='button' class='btn-record start' onclick='toggleRecording({questionId})'><i class='bi bi-mic-fill'></i></button>");
+            sb.Write($"<div class='recorder-info'>");
+            sb.Write($"<div class='d-flex justify-content-between align-items-center mb-1'>");
+            sb.Write($"<span class='status-text fw-bold text-muted'>Nhấn Mic để nói</span>");
+            sb.Write($"<span class='recording-pulse' id='pulse-{questionId}'></span>");
+            sb.Write($"</div>");
+            sb.Write($"<div class='small text-secondary' id='timer-{questionId}'>00:00</div>");
+            sb.Write($"<audio id='playback-{questionId}' controls class='w-100 mt-2 d-none' style='height:30px'></audio>");
+            sb.Write($"<input type='file' name='audioAnswers[{questionId}]' id='file-input-{questionId}' class='d-none' accept='audio/*' />");
+            sb.Write($"</div>");
+            sb.Write("</div>");
+            return Html.Raw(sb.ToString());
+        }
+    }
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script>
+        // --- 1. COUNT WORDS (WRITING) ---
+        function countWords(textarea, displayId) {
+            let text = textarea.value.trim();
+            let count = text.length === 0 ? 0 : text.split(/\s+/).length;
+            document.getElementById(displayId).innerHTML = `<i class='bi bi-fonts'></i> Số từ: ${count}`;
+        }
+
+        // --- 2. NAVIGATION ---
+        let currentIndex = 0;
+        const totalSections = @orderedParts.Count;
+
+        function goToSection(index) {
+            document.querySelectorAll('.exam-section').forEach(el => el.classList.remove('active'));
+            document.getElementById('section-' + index).classList.add('active');
+            document.querySelectorAll('.part-nav-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById('nav-btn-' + index).classList.add('active');
+
+            document.getElementById('btn-prev').disabled = (index === 0);
+            if(index === totalSections - 1) {
+                document.getElementById('btn-next').innerText = "Hoàn thành";
+                document.getElementById('btn-next').classList.replace('btn-success', 'btn-primary');
+                document.getElementById('btn-next').onclick = function() { submitExam(); };
+            } else {
+                document.getElementById('btn-next').innerHTML = 'Tiếp tục <i class="bi bi-arrow-right"></i>';
+                document.getElementById('btn-next').classList.replace('btn-primary', 'btn-success');
+                document.getElementById('btn-next').onclick = function() { navStep(1); };
+            }
+            currentIndex = index;
+        }
+
+        function navStep(step) {
+            let newIndex = currentIndex + step;
+            if (newIndex >= 0 && newIndex < totalSections) goToSection(newIndex);
+        }
+
+        // --- 3. TIMER ---
+        let timeLeft = @Model.DurationMinutes * 60;
+        setInterval(() => {
+            if (timeLeft <= 0) { submitExam(); return; }
+            let m = Math.floor(timeLeft / 60);
+            let s = timeLeft % 60;
+            document.getElementById('countdown').innerText = `${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
+            timeLeft--;
+        }, 1000);
+
+        // --- 4. RECORDING ---
+        let recorders = {};
+        let chunks = {};
+
+        async function toggleRecording(qId) {
+            const ui = document.getElementById(`recorder-${qId}`);
+            const btn = ui.querySelector('.btn-record');
+            const pulse = document.getElementById(`pulse-${qId}`);
+            const timerEl = document.getElementById(`timer-${qId}`);
+            const statusText = ui.querySelector('.status-text');
+            const fileInput = document.getElementById(`file-input-${qId}`);
+
+            if (recorders[qId] && recorders[qId].state === "recording") {
+                recorders[qId].stop();
+                clearInterval(ui.dataset.timer);
+                return;
+            }
+
+            if (fileInput.files.length > 0 && !confirm("Ghi âm lại sẽ xóa bản cũ?")) return;
+            fileInput.files = new DataTransfer().files;
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const mediaRecorder = new MediaRecorder(stream);
+                recorders[qId] = mediaRecorder;
+                chunks[qId] = [];
+
+                mediaRecorder.ondataavailable = e => { if (e.data.size > 0) chunks[qId].push(e.data); };
+
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(chunks[qId], { type: 'audio/webm' });
+                    const audioUrl = URL.createObjectURL(blob);
+                    const file = new File([blob], `ans_${qId}.webm`, { type: "audio/webm" });
+                    const container = new DataTransfer();
+                    container.items.add(file);
+                    fileInput.files = container.files;
+
+                    document.getElementById(`playback-${qId}`).src = audioUrl;
+                    document.getElementById(`playback-${qId}`).classList.remove('d-none');
+
+                    btn.classList.remove('stop'); btn.classList.add('start');
+                    btn.innerHTML = '<i class="bi bi-arrow-counterclockwise"></i>';
+                    pulse.style.display = 'none';
+                    ui.classList.remove('recording');
+                    statusText.innerText = "Đã lưu.";
+                    statusText.classList.add('text-success');
+                    stream.getTracks().forEach(track => track.stop());
+                };
+
+                mediaRecorder.start();
+                ui.classList.add('recording');
+                btn.classList.remove('start'); btn.classList.add('stop');
+                btn.innerHTML = '<i class="bi bi-stop-fill"></i>';
+                pulse.style.display = 'inline-block';
+                statusText.innerText = "Đang ghi âm...";
+                statusText.classList.remove('text-success');
+
+                let recTime = 0;
+                timerEl.innerText = "00:00";
+                ui.dataset.timer = setInterval(() => {
+                    recTime++;
+                    let rm = Math.floor(recTime / 60);
+                    let rs = recTime % 60;
+                    timerEl.innerText = `${rm < 10 ? '0'+rm : rm}:${rs < 10 ? '0'+rs : rs}`;
+                }, 1000);
+
+            } catch (err) { alert("Lỗi Micro: " + err); }
+        }
+
+        function submitExam() {
+            if(confirm("Nộp bài ngay?")) {
+                document.body.style.opacity = '0.5';
+                document.body.style.pointerEvents = 'none';
+                document.getElementById('examForm').submit();
+            }
+        }
+    </script>
+</body>
+</html>

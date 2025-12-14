@@ -5,73 +5,13 @@
 @{
     ViewData["Title"] = "Ngân hàng Câu hỏi";
 
-    var currentSkill = (ExamSkill?)ViewData["CurrentSkill"] ?? ExamSkill.None;
-    var currentLevel = (int?)ViewData["CurrentLevel"] ?? 0;
-    var skills = Enum.GetValues(typeof(ExamSkill)).Cast<ExamSkill>().Where(s => s != ExamSkill.None);
+    var currentSkill = (ExamSkill?)(ViewData["CurrentSkill"] ?? ExamSystem.Core.Enums.ExamSkill.None);
+    var currentLevel = (int?)(ViewData["CurrentLevel"] ?? 0);
 }
 
-<style>
-    /* Style Tabs */
-    .nav-tabs .nav-link {
-        color: #495057;
-        border: none;
-        font-weight: 500;
-    }
-
-        .nav-tabs .nav-link.active {
-            font-weight: bold;
-            color: #0d6efd !important;
-            border-bottom: 3px solid #0d6efd;
-            background: transparent;
-        }
-
-        .nav-tabs .nav-link:hover {
-            color: #0d6efd;
-        }
-
-    .level-filter {
-        width: 160px;
-    }
-
-    /* Style Group Card */
-    .group-card {
-        border-left: 5px solid #6c757d;
-        transition: all 0.2s;
-    }
-
-        .group-card:hover {
-            box-shadow: 0 .5rem 1rem rgba(0,0,0,.1) !important;
-        }
-
-        .group-card.Reading {
-            border-color: #0dcaf0;
-        }
-
-        .group-card.Listening {
-            border-color: #ffc107;
-        }
-
-        .group-card.Independent {
-            border-color: #adb5bd;
-        }
-
-    /* Nút Toggle Collapse */
-    .btn-toggle-collapse {
-        transition: transform 0.3s ease;
-    }
-        /* Khi đang đóng (collapsed) thì xoay mũi tên */
-        .btn-toggle-collapse.collapsed {
-            transform: rotate(-90deg);
-        }
-
-    /* Font nội dung */
-    .q-content {
-        font-family: Arial, Helvetica, sans-serif;
-        font-size: 0.95rem;
-        color: #212529;
-    }
-</style>
-
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/question-index.css" asp-append-version="true" />
+}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h2 class="fw-bold text-primary m-0"><i class="bi bi-collection"></i> Ngân hàng Câu hỏi</h2>
@@ -92,41 +32,23 @@
         <form asp-action="Index" method="get" id="filterForm" class="d-flex justify-content-between align-items-center flex-wrap">
             <input type="hidden" name="skillType" id="skillTypeHidden" value="@currentSkill" />
 
-            <ul class="nav nav-tabs border-0" role="tablist">
+            <ul class="nav nav-pills mb-4">
                 <li class="nav-item">
                     <a class="nav-link @(currentSkill == ExamSkill.None ? "active" : "")"
                        href="?skillType=@((int)ExamSkill.None)&level=@currentLevel">
                         <i class="bi bi-grid-fill"></i> Tất cả
                     </a>
                 </li>
-                @foreach (var skill in skills)
+
+                @foreach (ExamSkill skill in Enum.GetValues(typeof(ExamSkill)))
                 {
+                    // Bỏ qua giá trị None
+                    if (skill == ExamSkill.None) continue;
+
                     <li class="nav-item">
                         <a class="nav-link @(currentSkill == skill ? "active" : "")"
                            href="?skillType=@((int)skill)&level=@currentLevel">
-                            @switch (skill)
-                            {
-                                case ExamSkill.Listening:
-                                    <i class="bi bi-headphones"></i>
-                                    break;
-                                case ExamSkill.Reading:
-
-                                    <i class="bi bi-book"></i>
-                                    break;
-                                case ExamSkill.Writing:
-
-                                    <i class="bi bi-pen"></i>
-                                    break;
-                                case ExamSkill.Speaking:
-
-                                    <i class="bi bi-mic"></i>
-                                    break;
-                                case ExamSkill.Grammar:
-
-                                    <i class="bi bi-spellcheck"></i>
-                                    break;
-                            }
-                            @skill.ToString()
+                            <i class="bi bi-@((skill == ExamSkill.Reading ? "book" : (skill == ExamSkill.Listening ? "headphones" : (skill == ExamSkill.Writing ? "pencil-square" : "mic"))))"></i> @skill.ToString()
                         </a>
                     </li>
                 }
