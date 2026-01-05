@@ -62,11 +62,16 @@ app.UseRouting();
 app.UseAuthentication(); // Bắt buộc có dòng này để đăng nhập
 app.UseAuthorization();  // Bắt buộc có dòng này để phân quyền
 
-// --- ĐÂY LÀ PHẦN BẠN ĐANG THIẾU ---
-// Dòng này chỉ định: Nếu không gõ gì cả, hãy vào Home Controller -> trang Index
+// Route cho Area Admin
+app.MapControllerRoute(
+    name: "areas",
+    pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
+
+// Route mặc định (User)
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
 app.MapRazorPages();
 
 using (var scope = app.Services.CreateScope())

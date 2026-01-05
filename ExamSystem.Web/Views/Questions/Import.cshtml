@@ -1,19 +1,294 @@
 ﻿@{
-    ViewData["Title"] = "Import Câu hỏi từ Excel";
+    ViewData["Title"] = "Import Dữ Liệu";
 }
 
-<h2>Import Câu hỏi hàng loạt</h2>
-<div class="alert alert-info">
-    <strong>Cấu trúc file Excel (Không cần tiêu đề):</strong><br>
-    Cột A: Nội dung câu hỏi | Cột B: Kỹ năng (1=Nghe, 2=Đọc) | Cột C: Độ khó (1-3)<br>
-    Cột D: Đáp án A | Cột E: Đáp án B | Cột F: Đáp án C | Cột G: Đáp án D<br>
-    Cột H: Vị trí đúng (1, 2, 3, hoặc 4)
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <h2 class="fw-bold text-primary"><i class="fa fa-cloud-upload me-2"></i>Import Dữ Liệu Từ Excel</h2>
+        <p class="text-muted">Hệ thống hỗ trợ nhập câu hỏi Grammar, Reading, Listening và Writing.</p>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-5 mb-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white py-3 border-bottom-0">
+                    <h5 class="fw-bold text-primary mb-0"><i class="fa fa-upload me-2"></i>Tải file lên</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form id="uploadForm">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-dark">Chọn file Excel (.xlsx)</label>
+                            <div class="input-group input-group-lg">
+                                <input type="file" id="fileInput" name="file" class="form-control" accept=".xlsx" required onchange="resetState()" />
+                            </div>
+                            <div class="form-text mt-2"><i class="fa fa-info-circle text-info"></i> Hệ thống tự nhận diện loại câu hỏi qua ô <strong>A6</strong>.</div>
+                        </div>
+
+                        <div class="d-grid gap-3">
+                            <button type="button" onclick="submitAjax('check')" class="btn btn-warning btn-lg fw-bold text-dark shadow-sm hover-up">
+                                <i class="fa fa-stethoscope me-2"></i> KIỂM TRA LỖI
+                            </button>
+
+                            <button type="button" id="btnSave" onclick="submitAjax('save')" class="btn btn-secondary btn-lg fw-bold shadow-sm" disabled>
+                                <i class="fa fa-save me-2"></i> NHẬP DỮ LIỆU
+                            </button>
+                        </div>
+                    </form>
+
+                    <hr class="my-4 opacity-25">
+
+                    <div>
+                        <h6 class="fw-bold text-secondary mb-3"><i class="fa fa-download me-1"></i> Tải file mẫu chuẩn:</h6>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <a href="@Url.Action("DownloadTemplate", new { type = "Grammar" })" class="btn btn-outline-secondary w-100 text-start btn-sm">
+                                    <i class="fa fa-font me-2 text-primary"></i> Grammar
+                                </a>
+                            </div>
+                            <div class="col-6">
+                                <a href="@Url.Action("DownloadTemplate", new { type = "Reading" })" class="btn btn-outline-secondary w-100 text-start btn-sm">
+                                    <i class="fa fa-book me-2 text-warning"></i> Reading
+                                </a>
+                            </div>
+                            <div class="col-6">
+                                <a href="@Url.Action("DownloadTemplate", new { type = "Listening" })" class="btn btn-outline-secondary w-100 text-start btn-sm">
+                                    <i class="fa fa-headphones me-2 text-danger"></i> Listening
+                                </a>
+                            </div>
+                            <div class="col-6">
+                                <a href="@Url.Action("DownloadTemplate", new { type = "Writing" })" class="btn btn-outline-secondary w-100 text-start btn-sm">
+                                    <i class="fa fa-pencil me-2 text-success"></i> Writing
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7 mb-4">
+            <div id="loadingArea" class="text-center py-5 d-none bg-white rounded shadow-sm h-100 d-flex flex-column justify-content-center align-items-center">
+                <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status"></div>
+                <h5 class="mt-3 fw-bold text-primary">Đang phân tích dữ liệu...</h5>
+                <p class="text-muted">Vui lòng đợi trong giây lát.</p>
+            </div>
+
+            <div id="resultArea" class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white py-3 border-bottom-0 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold text-dark mb-0"><i class="fa fa-file-text-o me-2"></i>Kết quả phân tích</h5>
+                    <span id="statusBadge" class="badge bg-secondary rounded-pill px-3">Chờ xử lý</span>
+                </div>
+
+                <div class="card-body p-0 position-relative">
+                    <div id="emptyState" class="text-center py-5 px-4 h-100 d-flex flex-column justify-content-center">
+                        <i class="fa fa-arrow-circle-left text-muted fa-4x mb-3 opacity-25"></i>
+                        <h5 class="text-secondary fw-bold">Chưa có dữ liệu</h5>
+                        <p class="text-muted small">Vui lòng chọn file và bấm nút "Kiểm tra lỗi" để bắt đầu.</p>
+                    </div>
+
+                    <div id="contentState" class="p-4 d-none">
+                        <div id="messageBox" class="alert d-none mb-4 shadow-sm"></div>
+
+                        <div id="checkSuccessArea" class="text-center py-4 d-none">
+                            <div class="mb-3">
+                                <i class="fa fa-check-circle text-success fa-5x shadow rounded-circle"></i>
+                            </div>
+                            <h3 class="fw-bold text-success mb-2">File Hợp Lệ 100%!</h3>
+                            <p id="successDetailText" class="text-muted fs-5">Dữ liệu chuẩn.</p>
+                            <hr class="w-50 mx-auto my-4 opacity-25">
+                            <button type="button" onclick="submitAjax('save')" class="btn btn-success btn-lg px-5 shadow fw-bold hover-up animate__animated animate__pulse animate__infinite">
+                                <i class="fa fa-cloud-upload me-2"></i> NHẬP NGAY
+                            </button>
+                        </div>
+
+                        <div id="errorArea" class="d-none">
+                            <div class="row g-3 mb-4 text-center">
+                                <div class="col-6">
+                                    <div class="p-3 bg-danger bg-opacity-10 border border-danger border-opacity-25 rounded-3">
+                                        <h2 class="text-danger fw-bold m-0" id="invalidCount">0</h2>
+                                        <small class="text-danger fw-bold text-uppercase">Dòng Lỗi</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="p-3 bg-success bg-opacity-10 border border-success border-opacity-25 rounded-3">
+                                        <h2 class="text-success fw-bold m-0" id="validCount">0</h2>
+                                        <small class="text-success fw-bold text-uppercase">Dòng Hợp Lệ</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="fw-bold text-danger m-0"><i class="fa fa-exclamation-triangle me-1"></i> Chi tiết lỗi:</h6>
+                            </div>
+
+                            <div class="table-responsive border rounded shadow-sm" style="max-height: 350px; overflow-y: auto;">
+                                <table class="table table-hover table-striped mb-0 align-middle">
+                                    <thead class="table-light sticky-top">
+                                        <tr>
+                                            <th class="text-center bg-light border-bottom" width="80">Dòng</th>
+                                            <th class="bg-light border-bottom">Nội dung lỗi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="errorTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
-<form asp-action="Import" enctype="multipart/form-data" method="post">
-    <div class="mb-3">
-        <label>Chọn file Excel (.xlsx)</label>
-        <input type="file" name="file" class="form-control" accept=".xlsx" required />
-    </div>
-    <button type="submit" class="btn btn-success">Upload và Lưu</button>
-</form>
+@section Scripts {
+    <script>
+        // Hàm reset giao diện khi chọn file mới
+        function resetState() {
+            // 1. Ẩn kết quả cũ
+            document.getElementById('contentState').classList.add('d-none');
+            document.getElementById('emptyState').classList.remove('d-none');
+
+            // 2. Khóa nút Save
+            var btnSave = document.getElementById('btnSave');
+            btnSave.disabled = true;
+            btnSave.classList.remove('btn-success', 'animate__animated', 'animate__pulse');
+            btnSave.classList.add('btn-secondary');
+
+            // 3. Reset Badge
+            var badge = document.getElementById('statusBadge');
+            badge.className = "badge bg-secondary rounded-pill px-3";
+            badge.innerText = "Chờ xử lý";
+        }
+
+        function submitAjax(mode) {
+            var fileInput = document.getElementById('fileInput');
+            if (fileInput.files.length === 0) {
+                alert("Vui lòng chọn file Excel trước!");
+                return;
+            }
+
+            if (mode === 'save' && !confirm("Bạn có chắc chắn muốn lưu dữ liệu này vào hệ thống?")) return;
+
+            var formData = new FormData();
+            formData.append("file", fileInput.files[0]);
+            formData.append("mode", mode);
+
+            // CSRF
+            var token = document.querySelector('input[name="__RequestVerificationToken"]');
+            if (token) formData.append("__RequestVerificationToken", token.value);
+
+            // UI Loading
+            document.getElementById('loadingArea').classList.remove('d-none');
+            document.getElementById('resultArea').classList.add('d-none');
+
+            fetch('@Url.Action("Import")', { method: 'POST', body: formData })
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('loadingArea').classList.add('d-none');
+                document.getElementById('resultArea').classList.remove('d-none');
+                renderResult(data, mode);
+            })
+            .catch(err => {
+                alert("Lỗi kết nối: " + err);
+                document.getElementById('loadingArea').classList.add('d-none');
+                document.getElementById('resultArea').classList.remove('d-none');
+            });
+        }
+
+        function renderResult(data, mode) {
+            if (mode === 'save' && data.redirectUrl) {
+                alert(data.message);
+                window.location.href = data.redirectUrl;
+                return;
+            }
+
+            var isSuccess = data.isSuccess || data.IsSuccess || false;
+            var message = data.message || data.Message || "";
+            var errors = data.errors || data.Errors || [];
+            var validCount = data.validCount || data.ValidCount || 0;
+            var invalidCount = data.invalidCount || data.InvalidCount || 0;
+
+            // UI Elements
+            var btnSave = document.getElementById('btnSave');
+            var badge = document.getElementById('statusBadge');
+
+            // Hiện vùng kết quả
+            document.getElementById('emptyState').classList.add('d-none');
+            document.getElementById('contentState').classList.remove('d-none');
+            document.getElementById('messageBox').classList.add('d-none');
+            document.getElementById('checkSuccessArea').classList.add('d-none');
+            document.getElementById('errorArea').classList.add('d-none');
+
+            // --- LOGIC MỞ KHÓA NÚT SAVE ---
+            if (isSuccess && mode === 'check') {
+                // 1. Nếu kiểm tra thành công -> Mở khóa nút
+                btnSave.disabled = false;
+                btnSave.classList.remove('btn-secondary');
+                btnSave.classList.add('btn-success', 'animate__animated', 'animate__pulse'); // Thêm hiệu ứng
+
+                // Badge
+                badge.className = "badge bg-success rounded-pill px-3";
+                badge.innerText = "Hợp Lệ";
+
+                // Show Success Area
+                var successArea = document.getElementById('checkSuccessArea');
+                successArea.classList.remove('d-none');
+                document.getElementById('successDetailText').innerText = message;
+            }
+            else {
+                // 2. Nếu có lỗi hoặc file rỗng -> Khóa nút
+                btnSave.disabled = true;
+                btnSave.classList.remove('btn-success', 'animate__animated', 'animate__pulse');
+                btnSave.classList.add('btn-secondary');
+
+                if (errors.length > 0) {
+                    badge.className = "badge bg-danger rounded-pill px-3";
+                    badge.innerText = "Có Lỗi";
+
+                    document.getElementById('errorArea').classList.remove('d-none');
+                    document.getElementById('validCount').innerText = validCount;
+                    document.getElementById('invalidCount').innerText = invalidCount;
+
+                    var msgBox = document.getElementById('messageBox');
+                    msgBox.className = "alert alert-danger border-danger border-opacity-25 d-flex align-items-center";
+                    msgBox.innerHTML = '<i class="fa fa-times-circle me-2 fs-4"></i><div>' + message + '</div>';
+                    msgBox.classList.remove('d-none');
+
+                    var tbody = document.getElementById('errorTableBody');
+                    tbody.innerHTML = "";
+                    errors.forEach(err => {
+                        var r = err.row || err.Row;
+                        var m = err.errorMessage || err.ErrorMessage;
+                        tbody.innerHTML += `<tr>
+                            <td class="text-center fw-bold text-danger border-end">${r}</td>
+                            <td class="text-danger"><i class="fa fa-bug me-2 opacity-50"></i>${m}</td>
+                        </tr>`;
+                    });
+                } else {
+                    badge.className = "badge bg-warning text-dark rounded-pill px-3";
+                    badge.innerText = "Cảnh báo";
+                    var msgBox = document.getElementById('messageBox');
+                    msgBox.className = "alert alert-warning border-warning border-opacity-25 d-flex align-items-center";
+                    msgBox.innerHTML = '<i class="fa fa-exclamation-triangle me-2 fs-4"></i><div>' + message + '</div>';
+                    msgBox.classList.remove('d-none');
+                }
+            }
+        }
+    </script>
+    <style>
+        .hover-up {
+            transition: transform 0.2s;
+        }
+
+            .hover-up:hover {
+                transform: translateY(-3px);
+            }
+        /* Style cho nút bị disable */
+        .btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+    </style>
+}

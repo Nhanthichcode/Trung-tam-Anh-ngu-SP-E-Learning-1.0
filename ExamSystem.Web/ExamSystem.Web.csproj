@@ -25,6 +25,7 @@
   <ItemGroup>
     <Folder Include="wwwroot\uploads\audio\" />
     <Folder Include="wwwroot\uploads\images\" />
+    <Folder Include="wwwroot\uploads\templates\" />
     <Folder Include="wwwroot\uploads\test\" />
   </ItemGroup>
 
