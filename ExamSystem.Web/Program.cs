@@ -8,7 +8,8 @@ using System;
 OfficeOpenXml.ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
 
 var builder = WebApplication.CreateBuilder(args);
-
+var clientId = builder.Configuration["Client_ID"];
+var clientsecret = builder.Configuration["Client_secret"];
 // 1. Cấu hình kết nối SQL Server
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -40,6 +41,13 @@ builder.Services.AddAuthorization(options =>
         policy.RequireRole("Admin", "Student", "Teacher"));
 });
 builder.Services.AddTransient<Microsoft.AspNetCore.Identity.UI.Services.IEmailSender, ExamSystem.Web.Services.EmailSender>();
+
+builder.Services.AddAuthentication()
+    .AddGoogle(options =>
+    {
+        options.ClientId = clientId;
+        options.ClientSecret = clientsecret;
+    });
 
 // Add services to the container.
 builder.Services.AddRazorPages();

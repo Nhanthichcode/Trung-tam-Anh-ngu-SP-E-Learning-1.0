@@ -8,8 +8,10 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
 
-namespace ExamSystem.Web.Controllers
+namespace ExamSystem.Web.Areas.Admin.Controllers
 {
+    [Area("Admin")] // 2. Thêm Attribute này
+    // [Authorize(Roles = "Admin" || "Teacher")]
     public class QuestionsController : Controller
     {
         private readonly AppDbContext _context;
@@ -788,7 +790,7 @@ namespace ExamSystem.Web.Controllers
                             q.Answers.Add(new Answer { Content = ans, IsCorrect = (i + 1) == correctIdx });
                         }
                     }
-                    _context.Questions.Add(q);
+                   _context.Questions.Add(q);
                 }
                 count++;
             }

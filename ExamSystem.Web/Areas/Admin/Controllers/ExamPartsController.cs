@@ -4,8 +4,10 @@ using Microsoft.EntityFrameworkCore;
 using ExamSystem.Infrastructure.Data;
 using ExamSystem.Core.Entities;
 
-namespace ExamSystem.Web.Controllers
+namespace ExamSystem.Web.Areas.Admin.Controllers
 {
+    [Area("Admin")] // 2. Thêm Attribute này
+    // [Authorize(Roles = "Admin" || "Teacher")]
     public class ExamPartsController : Controller
     {
         private readonly AppDbContext _context;
