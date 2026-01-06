@@ -1,0 +1,238 @@
+Client ID
+11172346146-h5a6dvbh7mjnq8ptj4j71fm16lnj9es3.apps.googleusercontent.com
+Client secret
+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
+
+Folder PATH listing for volume Trí Nhàn
+Volume serial number is F61F-AF20
+D:.
+?   appsettings.Development.json
+?   appsettings.json
+?   cay_da_chinh_sua.txt
+?   cay_thu_muc.txt
+?   ExamSystem.Web.csproj
+?   ExamSystem.Web.csproj.user
+?   Program.cs
+?   
+????Areas
+?   ????Admin
+?   ?   ????Controllers
+?   ?   ?       ExamPartsController.cs
+?   ?   ?       ExamQuestionsController.cs
+?   ?   ?       ExamsController.cs
+?   ?   ?       ExamStructuresController.cs
+?   ?   ?       HomeController.cs
+?   ?   ?       ListeningResourcesController.cs
+?   ?   ?       QuestionsController.cs
+?   ?   ?       ReadingPassagesController.cs
+?   ?   ?       
+?   ?   ????Views
+?   ?       ?   _ViewStart.cshtml
+?   ?       ?   
+?   ?       ????ExamParts
+?   ?       ?       Create.cshtml
+?   ?       ?       Edit.cshtml
+?   ?       ?       Index.cshtml
+?   ?       ?       
+?   ?       ????Exams
+?   ?       ?       Create.cshtml
+?   ?       ?       Delete.cshtml
+?   ?       ?       Edit.cshtml
+?   ?       ?       Index.cshtml
+?   ?       ?       Manage.cshtml
+?   ?       ?       
+?   ?       ????ExamStructures
+?   ?       ?       Create.cshtml
+?   ?       ?       Edit.cshtml
+?   ?       ?       Index.cshtml
+?   ?       ?       
+?   ?       ????Home
+?   ?       ????ListeningResources
+?   ?       ?       Create.cshtml
+?   ?       ?       Edit.cshtml
+?   ?       ?       Index.cshtml
+?   ?       ?       
+?   ?       ????Questions
+?   ?       ?       BatchEdit.cshtml
+?   ?       ?       Create.cshtml
+?   ?       ?       Delete.cshtml
+?   ?       ?       Edit.cshtml
+?   ?       ?       Import.cshtml
+?   ?       ?       Index.cshtml
+?   ?       ?       
+?   ?       ????ReadingPassages
+?   ?       ?       Create.cshtml
+?   ?       ?       Edit.cshtml
+?   ?       ?       Index.cshtml
+?   ?       ?       
+?   ?       ????Shared
+?   ?               _AdminLayout.cshtml
+?   ?               
+?   ????Student
+?       ????Controllers
+?       ?       HomeController.cs
+?       ?       TestController.cs
+?       ?       TestResultsController.cs
+?       ?       
+?       ????Views
+?           ?   _ViewStart.cshtml
+?           ?   
+?           ????Shared
+?           ?       _StudentLayout.cshtml
+?           ?       
+?           ????Test
+?           ?       History.cshtml
+?           ?       Index.cshtml
+?           ?       Result.cshtml
+?           ?       Take.cshtml
+?           ?       
+?           ????TestAttempts
+?                   Details.cshtml
+?                   Index.cshtml
+?                   
+????Controllers
+?       AccountController.cs
+?       HomeController.cs
+?       
+????Models
+?       BatchEditViewModel.cs
+?       GroupedQuestionViewModel.cs
+?       ImportResultViewModel.cs
+?       LoginVM.cs
+?       RegisterVM.cs
+?       UnifiedCreateViewModel.cs
+?       
+????Properties
+?       launchSettings.json
+?       
+????Services
+?       EmailSender.cs
+?       
+????Views
+?   ?   _ViewImports.cshtml
+?   ?   _ViewStart.cshtml
+?   ?   
+?   ????Account
+?   ?       Login.cshtml
+?   ?       Register.cshtml
+?   ?       
+?   ????Home
+?   ?       Index.cshtml
+?   ?       
+?   ????Shared
+?           _Layout.cshtml
+?           _ValidationScriptsPartial.cshtml
+?           
+????wwwroot
+    ?   favicon.ico
+    ?   
+    ????css
+    ?   ?   site.css
+    ?   ?   
+    ?   ????pages
+    ?           exam-result.css
+    ?           exam-take.css
+    ?           question-index.css
+    ?           
+    ????js
+    ?       question-editor.js
+    ?       site.js
+    ?       
+    ????lib
+    ?   ????bootstrap
+    ?   ?   ?   LICENSE
+    ?   ?   ?   
+    ?   ?   ????dist
+    ?   ?       ????css
+    ?   ?       ?       bootstrap-grid.css
+    ?   ?       ?       bootstrap-grid.css.map
+    ?   ?       ?       bootstrap-grid.min.css
+    ?   ?       ?       bootstrap-grid.min.css.map
+    ?   ?       ?       bootstrap-grid.rtl.css
+    ?   ?       ?       bootstrap-grid.rtl.css.map
+    ?   ?       ?       bootstrap-grid.rtl.min.css
+    ?   ?       ?       bootstrap-grid.rtl.min.css.map
+    ?   ?       ?       bootstrap-reboot.css
+    ?   ?       ?       bootstrap-reboot.css.map
+    ?   ?       ?       bootstrap-reboot.min.css
+    ?   ?       ?       bootstrap-reboot.min.css.map
+    ?   ?       ?       bootstrap-reboot.rtl.css
+    ?   ?       ?       bootstrap-reboot.rtl.css.map
+    ?   ?       ?       bootstrap-reboot.rtl.min.css
+    ?   ?       ?       bootstrap-reboot.rtl.min.css.map
+    ?   ?       ?       bootstrap-utilities.css
+    ?   ?       ?       bootstrap-utilities.css.map
+    ?   ?       ?       bootstrap-utilities.min.css
+    ?   ?       ?       bootstrap-utilities.min.css.map
+    ?   ?       ?       bootstrap-utilities.rtl.css
+    ?   ?       ?       bootstrap-utilities.rtl.css.map
+    ?   ?       ?       bootstrap-utilities.rtl.min.css
+    ?   ?       ?       bootstrap-utilities.rtl.min.css.map
+    ?   ?       ?       bootstrap.css
+    ?   ?       ?       bootstrap.css.map
+    ?   ?       ?       bootstrap.min.css
+    ?   ?       ?       bootstrap.min.css.map
+    ?   ?       ?       bootstrap.rtl.css
+    ?   ?       ?       bootstrap.rtl.css.map
+    ?   ?       ?       bootstrap.rtl.min.css
+    ?   ?       ?       bootstrap.rtl.min.css.map
+    ?   ?       ?       
+    ?   ?       ????js
+    ?   ?               bootstrap.bundle.js
+    ?   ?               bootstrap.bundle.js.map
+    ?   ?               bootstrap.bundle.min.js
+    ?   ?               bootstrap.bundle.min.js.map
+    ?   ?               bootstrap.esm.js
+    ?   ?               bootstrap.esm.js.map
+    ?   ?               bootstrap.esm.min.js
+    ?   ?               bootstrap.esm.min.js.map
+    ?   ?               bootstrap.js
+    ?   ?               bootstrap.js.map
+    ?   ?               bootstrap.min.js
+    ?   ?               bootstrap.min.js.map
+    ?   ?               
+    ?   ????jquery
+    ?   ?   ?   LICENSE.txt
+    ?   ?   ?   
+    ?   ?   ????dist
+    ?   ?           jquery.js
+    ?   ?           jquery.min.js
+    ?   ?           jquery.min.map
+    ?   ?           
+    ?   ????jquery-validation
+    ?   ?   ?   LICENSE.md
+    ?   ?   ?   
+    ?   ?   ????dist
+    ?   ?           additional-methods.js
+    ?   ?           additional-methods.min.js
+    ?   ?           jquery.validate.js
+    ?   ?           jquery.validate.min.js
+    ?   ?           
+    ?   ????jquery-validation-unobtrusive
+    ?           jquery.validate.unobtrusive.js
+    ?           jquery.validate.unobtrusive.min.js
+    ?           LICENSE.txt
+    ?           
+    ????uploads
+        ????audio
+        ?       639013261064353727.mp3
+        ?       639013261592756801.mp3
+        ?       639013279982582453.mp3
+        ?       639013280036847318.mp3
+        ?       639032375150033205.mp3
+        ?       
+        ????images
+        ?       639013268585141621.png
+        ?       639013268585657131.png
+        ?       639013270098332218.png
+        ?       639013270181325325.png
+        ?       639013270326038257.png
+        ?       
+        ????templates
+        ????test
+            ????770d5f3b-c526-441e-98b3-011b5ff24c77
+                ????8_639013290686342555
+                ????8_639013316124210664
+                        q_36_67c0c212.webm
+                        q_40_b65c84f9.webm
+                        

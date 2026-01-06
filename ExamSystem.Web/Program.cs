@@ -8,7 +8,8 @@ using System;
 OfficeOpenXml.ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
 
 var builder = WebApplication.CreateBuilder(args);
-
+var clientId = builder.Configuration["Client_ID"];
+var clientsecret = builder.Configuration["Client_secret"];
 // 1. Cấu hình kết nối SQL Server
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -41,6 +42,13 @@ builder.Services.AddAuthorization(options =>
 });
 builder.Services.AddTransient<Microsoft.AspNetCore.Identity.UI.Services.IEmailSender, ExamSystem.Web.Services.EmailSender>();
 
+builder.Services.AddAuthentication()
+    .AddGoogle(options =>
+    {
+        options.ClientId = clientId;
+        options.ClientSecret = clientsecret;
+    });
+
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddControllersWithViews();
@@ -62,11 +70,16 @@ app.UseRouting();
 app.UseAuthentication(); // Bắt buộc có dòng này để đăng nhập
 app.UseAuthorization();  // Bắt buộc có dòng này để phân quyền
 
-// --- ĐÂY LÀ PHẦN BẠN ĐANG THIẾU ---
-// Dòng này chỉ định: Nếu không gõ gì cả, hãy vào Home Controller -> trang Index
+// Route cho Area Admin
+app.MapControllerRoute(
+    name: "areas",
+    pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
+
+// Route mặc định (User)
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
 app.MapRazorPages();
 
 using (var scope = app.Services.CreateScope())

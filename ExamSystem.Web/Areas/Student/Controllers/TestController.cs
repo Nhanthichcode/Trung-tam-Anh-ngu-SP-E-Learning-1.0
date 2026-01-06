@@ -6,8 +6,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
-namespace ExamSystem.Web.Controllers
+namespace ExamSystem.Web.Areas.Student.Controllers
 {
+    [Area("Student")] // 2. Thêm Attribute này
+    // [Authorize(Roles = "Student")]
     public class TestController : Controller
     {
         private readonly AppDbContext _context;

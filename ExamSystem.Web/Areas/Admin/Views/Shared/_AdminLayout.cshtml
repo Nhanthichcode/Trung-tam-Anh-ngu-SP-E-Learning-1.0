@@ -1,0 +1,153 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using ExamSystem.Core.Entities
+@inject SignInManager<AppUser> SignInManager
+@inject UserManager<AppUser> UserManager
+
+@{
+    // Lấy tên Controller hiện tại để set Active Menu
+    string currentController = ViewContext.RouteData.Values["Controller"]?.ToString();
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Admin Portal</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+
+    <div class="d-flex" id="wrapper">
+        <div id="sidebar-wrapper">
+            <div class="sidebar-heading text-uppercase">
+                <i class="bi bi-shield-lock-fill me-2 text-primary"></i> Exam Admin
+            </div>
+
+            <div class="list-group list-group-flush my-3">
+                <a asp-area="Admin" asp-controller="Home" asp-action="Index"
+                   class="list-group-item list-group-item-action @(currentController == "Home" ? "active" : "")">
+                    <i class="bi bi-speedometer2"></i> Tổng quan
+                </a>
+
+                @if (User.IsInRole("Admin") || User.IsInRole("Teacher"))
+                {
+                    <div class="sidebar-heading small text-muted py-2 ps-3 mt-2" style="font-size: 0.75rem; background: transparent; border:none;">QUẢN LÝ THI</div>
+
+                    <a asp-area="Admin" asp-controller="Questions" asp-action="Index"
+                       class="list-group-item list-group-item-action @(currentController == "Questions" ? "active" : "")">
+                        <i class="bi bi-collection"></i> Ngân hàng câu hỏi
+                    </a>
+
+                    <a asp-area="Admin" asp-controller="Exams" asp-action="Index"
+                       class="list-group-item list-group-item-action @(currentController == "Exams" ? "active" : "")">
+                        <i class="bi bi-file-earmark-text"></i> Đề thi
+                    </a>
+
+                    <div class="sidebar-heading small text-muted py-2 ps-3 mt-2" style="font-size: 0.75rem; background: transparent; border:none;">TÀI NGUYÊN</div>
+
+                    <a asp-area="Admin" asp-controller="ReadingPassages" asp-action="Index"
+                       class="list-group-item list-group-item-action @(currentController == "ReadingPassages" ? "active" : "")">
+                        <i class="bi bi-book"></i> Bài đọc (Reading)
+                    </a>
+
+                    <a asp-area="Admin" asp-controller="ListeningResources" asp-action="Index"
+                       class="list-group-item list-group-item-action @(currentController == "ListeningResources" ? "active" : "")">
+                        <i class="bi bi-headphones"></i> File nghe (Listening)
+                    </a>
+                }
+
+                @if (User.IsInRole("Admin"))
+                {
+                    <div class="sidebar-heading small text-muted py-2 ps-3 mt-2" style="font-size: 0.75rem; background: transparent; border:none;">HỆ THỐNG</div>
+
+                    <a asp-area="Admin" asp-controller="Users" asp-action="Index"
+                       class="list-group-item list-group-item-action @(currentController == "Users" ? "active" : "")">
+                        <i class="bi bi-people"></i> Quản lý Người dùng
+                    </a>
+
+                    <a asp-area="Admin" asp-controller="Settings" asp-action="Index"
+                       class="list-group-item list-group-item-action @(currentController == "Settings" ? "active" : "")">
+                        <i class="bi bi-gear"></i> Cấu hình
+                    </a>
+                }
+            </div>
+        </div>
+        <div id="page-content-wrapper">
+            <nav class="navbar navbar-expand-lg navbar-light navbar-admin border-bottom">
+                <div class="container-fluid">
+                    <button class="btn btn-outline-secondary btn-sm" id="menu-toggle">
+                        <i class="bi bi-list"></i>
+                    </button>
+
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+
+                    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                        <ul class="navbar-nav ms-auto mt-2 mt-lg-0 align-items-center">
+                            <li class="nav-item">
+                                <a class="nav-link text-secondary" href="/" target="_blank" title="Về trang chủ">
+                                    <i class="bi bi-box-arrow-up-right me-1"></i> Web View
+                                </a>
+                            </li>
+                            <li class="nav-item dropdown ms-3">
+                                <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                                    <div class="rounded-circle bg-primary text-white d-flex justify-content-center align-items-center me-2" style="width: 32px; height: 32px;">
+                                        @UserManager.GetUserName(User)?.Substring(0, 1).ToUpper()
+                                    </div>
+                                    <span class="small fw-bold">@UserManager.GetUserName(User)</span>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end border-0 shadow">
+                                    <li><a class="dropdown-item" href="/Account/Profile"><i class="bi bi-person me-2"></i>Hồ sơ</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                                            <button type="submit" class="dropdown-item text-danger"><i class="bi bi-power me-2"></i>Đăng xuất</button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+
+            <div class="admin-content">
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="bi bi-check-circle me-2"></i> @TempData["SuccessMessage"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                }
+
+                @RenderBody()
+            </div>
+
+            <footer class="bg-white text-center py-3 border-top mt-auto small text-muted">
+                &copy; 2025 Exam System Admin Portal.
+            </footer>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        var el = document.getElementById("wrapper");
+        var toggleButton = document.getElementById("menu-toggle");
+
+        toggleButton.onclick = function () {
+            el.classList.toggle("toggled");
+        };
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

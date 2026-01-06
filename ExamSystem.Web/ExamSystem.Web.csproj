@@ -4,10 +4,12 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>3e700ba3-c86e-4d30-b255-e4c63b5530e9</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
 	  <PackageReference Include="EPPlus" Version="7.0.1" />
+	  <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="9.0.0" />
 	  <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.0" />
 	  <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="9.0.0" />
 	  <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
@@ -25,6 +27,7 @@
   <ItemGroup>
     <Folder Include="wwwroot\uploads\audio\" />
     <Folder Include="wwwroot\uploads\images\" />
+    <Folder Include="wwwroot\uploads\templates\" />
     <Folder Include="wwwroot\uploads\test\" />
   </ItemGroup>
 
