@@ -6,6 +6,11 @@
 @{
     // Lấy tên Controller hiện tại để set Active Menu
     string currentController = ViewContext.RouteData.Values["Controller"]?.ToString();
+
+    // [MỚI] Lấy thông tin User hiện tại để hiển thị Avatar
+    var user = await UserManager.GetUserAsync(User);
+    var fullName = user?.FullName ?? User.Identity?.Name;
+    var avatarUrl = user?.AvatarUrl;
 }
 
 <!DOCTYPE html>
@@ -37,28 +42,46 @@
 
                 @if (User.IsInRole("Admin") || User.IsInRole("Teacher"))
                 {
-                    <div class="sidebar-heading small text-muted py-2 ps-3 mt-2" style="font-size: 0.75rem; background: transparent; border:none;">QUẢN LÝ THI</div>
-
-                    <a asp-area="Admin" asp-controller="Questions" asp-action="Index"
-                       class="list-group-item list-group-item-action @(currentController == "Questions" ? "active" : "")">
-                        <i class="bi bi-collection"></i> Ngân hàng câu hỏi
-                    </a>
+                    // --- NHÓM 1: QUẢN LÝ ĐỀ THI ---
+                    <div class="sidebar-heading small text-muted py-2 ps-3 mt-2 fw-bold" style="font-size: 0.75rem;">QUẢN LÝ ĐỀ THI</div>
 
                     <a asp-area="Admin" asp-controller="Exams" asp-action="Index"
                        class="list-group-item list-group-item-action @(currentController == "Exams" ? "active" : "")">
-                        <i class="bi bi-file-earmark-text"></i> Đề thi
+                        <i class="bi bi-file-earmark-text me-2"></i> Danh sách Đề thi
                     </a>
 
-                    <div class="sidebar-heading small text-muted py-2 ps-3 mt-2" style="font-size: 0.75rem; background: transparent; border:none;">TÀI NGUYÊN</div>
+                    <a asp-area="Admin" asp-controller="ExamStructures" asp-action="Index"
+                       class="list-group-item list-group-item-action @(currentController == "ExamStructures" ? "active" : "")">
+                        <i class="bi bi-diagram-3 me-2"></i> Cấu trúc đề (Matrix)
+                    </a>
+
+                    <a asp-area="Admin" asp-controller="ExamParts" asp-action="Index"
+                       class="list-group-item list-group-item-action @(currentController == "ExamParts" ? "active" : "")">
+                        <i class="bi bi-layers me-2"></i> Phần thi (Parts)
+                    </a>
+
+                    <a asp-area="Admin" asp-controller="ExamQuestions" asp-action="Index"
+                       class="list-group-item list-group-item-action @(currentController == "ExamQuestions" ? "active" : "")">
+                        <i class="bi bi-list-check me-2"></i> Chi tiết câu trong đề
+                    </a>
+
+
+                    // --- NHÓM 2: NGÂN HÀNG CÂU HỎI ---
+                    <div class="sidebar-heading small text-muted py-2 ps-3 mt-2 fw-bold" style="font-size: 0.75rem;">NGÂN HÀNG CÂU HỎI</div>
+
+                    <a asp-area="Admin" asp-controller="Questions" asp-action="Index"
+                       class="list-group-item list-group-item-action @(currentController == "Questions" ? "active" : "")">
+                        <i class="bi bi-collection me-2"></i> Tất cả câu hỏi
+                    </a>
 
                     <a asp-area="Admin" asp-controller="ReadingPassages" asp-action="Index"
                        class="list-group-item list-group-item-action @(currentController == "ReadingPassages" ? "active" : "")">
-                        <i class="bi bi-book"></i> Bài đọc (Reading)
+                        <i class="bi bi-book me-2"></i> Bài đọc (Reading)
                     </a>
 
                     <a asp-area="Admin" asp-controller="ListeningResources" asp-action="Index"
                        class="list-group-item list-group-item-action @(currentController == "ListeningResources" ? "active" : "")">
-                        <i class="bi bi-headphones"></i> File nghe (Listening)
+                        <i class="bi bi-headphones me-2"></i> File nghe (Listening)
                     </a>
                 }
 
@@ -69,6 +92,16 @@
                     <a asp-area="Admin" asp-controller="Users" asp-action="Index"
                        class="list-group-item list-group-item-action @(currentController == "Users" ? "active" : "")">
                         <i class="bi bi-people"></i> Quản lý Người dùng
+                    </a>
+
+                    <a asp-area="Admin" asp-controller="ExamResults" asp-action="Index"
+                       class="list-group-item list-group-item-action @(currentController == "Users" ? "active" : "")">
+                        <i class="bi bi-people"></i> Chấm điểm bài thi
+                    </a>
+
+                    <a asp-area="Admin" asp-controller="Media" asp-action="Index"
+                       class="list-group-item list-group-item-action @(currentController == "Users" ? "active" : "")">
+                        <i class="bi bi-people"></i> Quản lý nội dung số
                     </a>
 
                     <a asp-area="Admin" asp-controller="Settings" asp-action="Index"
@@ -96,19 +129,43 @@
                                     <i class="bi bi-box-arrow-up-right me-1"></i> Web View
                                 </a>
                             </li>
+
                             <li class="nav-item dropdown ms-3">
                                 <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                                    <div class="rounded-circle bg-primary text-white d-flex justify-content-center align-items-center me-2" style="width: 32px; height: 32px;">
-                                        @UserManager.GetUserName(User)?.Substring(0, 1).ToUpper()
-                                    </div>
-                                    <span class="small fw-bold">@UserManager.GetUserName(User)</span>
+
+                                    @* --- SỬA: Hiển thị Avatar thật --- *@
+                                    @if (!string.IsNullOrEmpty(avatarUrl))
+                                    {
+                                        <img src="@avatarUrl" alt="Avatar" class="rounded-circle me-2 border shadow-sm"
+                                             style="width: 32px; height: 32px; object-fit: cover;">
+                                    }
+                                    else
+                                    {
+                                        <div class="rounded-circle bg-primary text-white d-flex justify-content-center align-items-center me-2 shadow-sm"
+                                             style="width: 32px; height: 32px; font-size: 0.8rem;">
+                                            @(fullName?.Substring(0, 1).ToUpper() ?? "A")
+                                        </div>
+                                    }
+
+                                    @* --- SỬA: Hiển thị FullName thay vì UserName --- *@
+                                    <span class="small fw-bold">@fullName</span>
                                 </a>
+
                                 <ul class="dropdown-menu dropdown-menu-end border-0 shadow">
-                                    <li><a class="dropdown-item" href="/Account/Profile"><i class="bi bi-person me-2"></i>Hồ sơ</a></li>
+                                    <li>
+                                        <div class="px-3 py-2 text-center border-bottom mb-2">
+                                            <small class="text-muted d-block">Vai trò</small>
+                                            <span class="badge bg-primary">ADMINISTRATOR</span>
+                                        </div>
+                                    </li>
+                                    <li><a class="dropdown-item" href="/Account/Profile"><i class="bi bi-person me-2"></i>Hồ sơ cá nhân</a></li>
                                     <li><hr class="dropdown-divider"></li>
                                     <li>
-                                        <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
-                                            <button type="submit" class="dropdown-item text-danger"><i class="bi bi-power me-2"></i>Đăng xuất</button>
+                                        @* --- SỬA: Thêm xác nhận đăng xuất --- *@
+                                        <form id="logoutForm" asp-area="" asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                                            <button type="button" class="dropdown-item text-danger" onclick="confirmLogout()">
+                                                <i class="bi bi-power me-2"></i>Đăng xuất
+                                            </button>
                                         </form>
                                     </li>
                                 </ul>
@@ -138,7 +195,8 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
     <script>
         var el = document.getElementById("wrapper");
         var toggleButton = document.getElementById("menu-toggle");

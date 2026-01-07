@@ -1,0 +1,126 @@
+﻿@model ExamSystem.Web.Models.UserProfileVM
+@{
+    ViewData["Title"] = "Hồ sơ cá nhân";
+    // Kiểm tra nếu chưa có Avatar thì dùng ảnh mặc định online hoặc trong máy
+    var currentAvatar = string.IsNullOrEmpty(Model.AvatarUrl)
+                        ? "https://via.placeholder.com/150" // Hoặc đường dẫn "/images/default-user.png"
+                        : Model.AvatarUrl;
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card shadow-sm border-0 mt-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="bi bi-person-circle me-2"></i>Thông tin tài khoản</h4>
+            </div>
+            <div class="card-body p-4">
+
+                <form asp-action="Profile" method="post" enctype="multipart/form-data">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="row">
+                        <div class="col-md-4 text-center border-end">
+                            <div class="mb-3 mt-3 position-relative d-inline-block">
+                                <img id="imgPreview" src="@currentAvatar"
+                                     class="rounded-circle shadow-sm border"
+                                     style="width: 180px; height: 180px; object-fit: cover;"
+                                     alt="Avatar" />
+
+                                <label for="fileInput" class="position-absolute bottom-0 end-0 bg-white border rounded-circle p-2 shadow-sm"
+                                       style="cursor: pointer; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="bi bi-camera-fill text-primary"></i>
+                                </label>
+
+                                @if (!string.IsNullOrEmpty(Model.AvatarUrl))
+                                {
+                                    <button type="submit" asp-action="RemoveAvatar" formnovalidate
+                                            class="position-absolute top-0 end-0 btn btn-danger btn-sm rounded-circle shadow-sm"
+                                            style="width: 32px; height: 32px; transform: translate(20%, -20%); display: flex; align-items: center; justify-content: center;"
+                                            onclick="return confirm('Bạn có chắc chắn muốn xóa ảnh đại diện này không?');"
+                                            title="Xóa ảnh hiện tại">
+                                        <i class="bi bi-x-lg" style="font-size: 14px;"></i>
+                                    </button>
+                                }
+                            </div>
+
+                            <div class="mt-2">
+                                <p class="text-muted small">Nhấn vào biểu tượng máy ảnh để thay đổi</p>
+                                <input asp-for="AvatarUpload" type="file" id="fileInput" class="form-control d-none" accept="image/*" />
+                                <span asp-validation-for="AvatarUpload" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-8 ps-md-4">
+
+                            @if (TempData["SuccessMessage"] != null)
+                            {
+                                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                    <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            }
+
+                            <div class="mb-3">
+                                <label asp-for="Email" class="form-label fw-bold"></label>
+                                <input asp-for="Email" class="form-control bg-light" readonly />
+                                <small class="text-muted fst-italic">Email đăng nhập không thể thay đổi.</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="FullName" class="form-label fw-bold"></label>
+                                <input asp-for="FullName" class="form-control" placeholder="Nhập họ và tên của bạn" />
+                                <span asp-validation-for="FullName" class="text-danger"></span>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="PhoneNumber" class="form-label fw-bold"></label>
+                                    <input asp-for="PhoneNumber" class="form-control" placeholder="Nhập số điện thoại" />
+                                    <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="DateOfBirth" class="form-label fw-bold"></label>
+                                    <input asp-for="DateOfBirth" class="form-control" />
+                                </div>
+                            </div>
+
+                            <input asp-for="AvatarUrl" type="hidden" />
+
+                            <div class="d-flex justify-content-end mt-4 pt-3 border-top">
+                                <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary me-2">Quay lại</a>
+                                <button type="submit" class="btn btn-primary px-4">
+                                    <i class="bi bi-save me-1"></i> Lưu thay đổi
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        $(document).ready(function () {
+            // Khi người dùng chọn file mới
+            $("#fileInput").change(function () {
+                var file = this.files[0];
+                if (file) {
+                    var reader = new FileReader();
+
+                    // Khi đọc xong file thì gán vào thẻ img để xem trước
+                    reader.onload = function (e) {
+                        $("#imgPreview").attr("src", e.target.result);
+                    }
+
+                    reader.readAsDataURL(file);
+                }
+            });
+        });
+    </script>
+}

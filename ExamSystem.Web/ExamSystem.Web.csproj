@@ -27,8 +27,9 @@
   <ItemGroup>
     <Folder Include="wwwroot\uploads\audio\" />
     <Folder Include="wwwroot\uploads\images\" />
+    <Folder Include="wwwroot\uploads\user_avatars\" />
     <Folder Include="wwwroot\uploads\templates\" />
-    <Folder Include="wwwroot\uploads\test\" />
+    <Folder Include="wwwroot\uploads\student_exams\" />
   </ItemGroup>
 
 </Project>

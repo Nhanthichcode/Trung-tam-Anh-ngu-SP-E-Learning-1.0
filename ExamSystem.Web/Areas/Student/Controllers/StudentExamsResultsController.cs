@@ -1,44 +1,52 @@
-﻿using System;
+﻿using ExamSystem.Core.Entities;
+using ExamSystem.Infrastructure.Data;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc; // Dùng cho MVC
+using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc; // Dùng cho MVC
-using Microsoft.EntityFrameworkCore;
-using ExamSystem.Core.Entities;
-using ExamSystem.Infrastructure.Data;
 
 namespace ExamSystem.Web.Areas.Student.Controllers
 {
     [Area("Student")]
-    [Route("student/test-results")] // Đặt đường dẫn cứng để tránh xung đột với Admin
     // [Authorize(Roles = "Student")] // Bỏ comment khi bạn muốn bật chức năng đăng nhập
-    public class TestResultsController : Controller
+    public class StudentExamsResultsController : Controller
     {
         private readonly AppDbContext _context;
+        private readonly UserManager<AppUser> _userManager;
 
-        public TestResultsController(AppDbContext context)
+        public StudentExamsResultsController(AppDbContext context, UserManager<AppUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         // --- 1. Xem danh sách kết quả ---
         // URL: /student/test-results
-        [HttpGet("")]
         public async Task<IActionResult> Index()
         {
-            // Lấy danh sách kết quả (nên lọc theo User đang đăng nhập nếu cần)
-            var results = await _context.TestResults.ToListAsync();
-            return View(results); // Trả về View: Areas/Student/Views/TestResults/Index.cshtml
+            // 1. Lấy ID người dùng hiện tại
+            var userId = _userManager.GetUserId(User);
+
+            // 2. Lấy danh sách LƯỢT THI (TestAttempt) thay vì TestResult
+            var attempts = await _context.TestAttempts
+                .Include(ta => ta.Exam) // Để lấy tên đề thi
+                .Where(ta => ta.UserId == userId)
+                .OrderByDescending(ta => ta.SubmitTime)
+                .ToListAsync();
+
+            // 3. Gửi 'attempts' (kiểu List<TestAttempt>) sang View
+            return View(attempts);
         }
 
         // --- 2. Xem chi tiết một kết quả ---
-        // URL: /student/test-results/detail/5
-        [HttpGet("detail/{id}")]
         public async Task<IActionResult> Details(int id)
         {
             if (id == 0) return NotFound();
 
-            var testResult = await _context.TestResults
+            var testResult = await _context.TestAttempts
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (testResult == null) return NotFound();
@@ -49,8 +57,6 @@ namespace ExamSystem.Web.Areas.Student.Controllers
         // --- 3. Sửa kết quả (Lưu ý: Thường sinh viên không được sửa kết quả thi, nhưng mình vẫn convert theo code cũ của bạn) ---
 
         // GET: Hiển thị form sửa
-        // URL: /student/test-results/edit/5
-        [HttpGet("edit/{id}")]
         public async Task<IActionResult> Edit(int id)
         {
             var testResult = await _context.TestResults.FindAsync(id);
@@ -59,7 +65,6 @@ namespace ExamSystem.Web.Areas.Student.Controllers
         }
 
         // POST: Lưu dữ liệu sửa
-        [HttpPost("edit/{id}")]
         [ValidateAntiForgeryToken] // Bảo mật cho Web
         public async Task<IActionResult> Edit(int id, TestResult testResult)
         {

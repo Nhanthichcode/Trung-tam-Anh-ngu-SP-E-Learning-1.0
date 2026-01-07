@@ -1,7 +1,8 @@
 using ExamSystem.Core.Entities;
 using ExamSystem.Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using System;
 
 //Environment.SetEnvironmentVariable("EPPlusLicenseContext", "NonCommercial"); 
@@ -47,6 +48,10 @@ builder.Services.AddAuthentication()
     {
         options.ClientId = clientId;
         options.ClientSecret = clientsecret;
+        // 1. Yêu cầu Google trả về thông tin Profile (bao gồm ảnh)
+        options.Scope.Add("profile");
+        // 2. Map trường "picture" từ JSON của Google sang Claim tên là "urn:google:picture"
+        options.ClaimActions.MapJsonKey("urn:google:picture", "picture", "url");
     });
 
 // Add services to the container.

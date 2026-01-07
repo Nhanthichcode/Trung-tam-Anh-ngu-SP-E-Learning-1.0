@@ -1,0 +1,77 @@
+﻿@model ExamSystem.Web.Areas.Admin.Controllers.MediaManagerViewModel
+
+@{
+    ViewData["Title"] = "Quản lý Tệp tin";
+}
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="bi bi-folder2-open me-2"></i> /uploads/@Model.CurrentPath
+        </h5>
+        @if (!string.IsNullOrEmpty(Model.CurrentPath))
+        {
+            <a asp-action="Index" asp-route-path="@System.IO.Path.GetDirectoryName(Model.CurrentPath)" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-up"></i> Lên 1 cấp
+            </a>
+        }
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="bg-light">
+                    <tr>
+                        <th style="width: 50px;">Loại</th>
+                        <th>Tên</th>
+                        <th>Kích thước</th>
+                        <th class="text-end">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td class="text-center fs-5"><i class="bi @item.Icon"></i></td>
+                            <td>
+                                @if (item.IsDirectory)
+                                {
+                                    <a asp-action="Index" asp-route-path="@item.Path" class="text-decoration-none fw-bold text-dark">
+                                        @item.Name
+                                    </a>
+                                }
+                                else
+                                {
+                                    // Link để xem file (mở tab mới)
+                                    <a href="~/uploads/@item.Path" target="_blank" class="text-decoration-none text-secondary">
+                                        @item.Name
+                                    </a>
+                                }
+                            </td>
+                            <td>@item.SizeDisplay</td>
+                            <td class="text-end">
+                                @if (!item.IsDirectory) // Xem trước ảnh nhỏ
+                                {
+                                    if (item.Extension == ".jpg" || item.Extension == ".png" || item.Extension == ".jpeg")
+                                    {
+                                        <img src="~/uploads/@item.Path" height="30" class="me-2 border rounded" />
+                                    }
+                                }
+
+                                <form asp-action="Delete" asp-route-path="@item.Path" method="post" class="d-inline"
+                                      onsubmit="return confirm('Bạn có chắc chắn muốn xóa không? Hành động này không thể hoàn tác!');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger border-0">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                    @if (Model.Items.Count == 0)
+                    {
+                        <tr><td colspan="4" class="text-center text-muted py-4">Thư mục trống</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

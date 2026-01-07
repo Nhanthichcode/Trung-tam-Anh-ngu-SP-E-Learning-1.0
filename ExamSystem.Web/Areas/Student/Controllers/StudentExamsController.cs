@@ -10,12 +10,12 @@ namespace ExamSystem.Web.Areas.Student.Controllers
 {
     [Area("Student")] // 2. Thêm Attribute này
     // [Authorize(Roles = "Student")]
-    public class TestController : Controller
+    public class StudentExamsController : Controller
     {
         private readonly AppDbContext _context;
         private readonly IWebHostEnvironment _webHostEnvironment; // 1. Inject môi trường
         private readonly UserManager<AppUser> _userManager;
-        public TestController(
+        public StudentExamsController(
         AppDbContext context,
         IWebHostEnvironment webHostEnvironment,
         UserManager<AppUser> userManager) // <--- Thêm tham số này
@@ -159,7 +159,7 @@ namespace ExamSystem.Web.Areas.Student.Controllers
                         }
 
                         // Lưu DB
-                        string relativePath = Path.Combine("uploads", "test", userId, Path.GetFileName(uploadFolder), uniqueFileName).Replace("\\", "/");
+                        string relativePath = Path.Combine("uploads", "student_exams", userId, Path.GetFileName(uploadFolder), uniqueFileName).Replace("\\", "/");
                         result.AudioAnswerUrl = "/" + relativePath;
                         result.IsCorrect = null;
                         hasManualGrading = true;
