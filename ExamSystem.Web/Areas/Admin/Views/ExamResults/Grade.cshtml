@@ -1,0 +1,99 @@
+﻿@model ExamSystem.Core.Entities.TestAttempt
+
+@{
+    ViewData["Title"] = "Chấm bài thi";
+}
+
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mt-4 mb-3">
+        <h2 class="text-primary"><i class="bi bi-pen me-2"></i>Chấm bài: @Model.User.FullName</h2>
+        <a asp-action="Index" class="btn btn-outline-secondary">Quay lại danh sách</a>
+    </div>
+
+    <form asp-action="SaveGrades" method="post" id="gradeForm">
+        <input type="hidden" name="attemptId" value="@Model.Id" />
+
+        @foreach (var res in Model.TestResults.OrderBy(r => r.Question.SortOrder)) 
+        {
+            bool isAutoGraded = res.Question.QuestionType == ExamSystem.Core.Enums.QuestionType.MultipleChoice;
+
+            <div class="card mb-4 shadow-sm @(isAutoGraded ? "border-0 bg-light" : "border-primary")">
+                <div class="card-header d-flex justify-content-between align-items-center @(isAutoGraded ? "bg-transparent text-muted" : "bg-primary text-white")">
+                    <span class="fw-bold">Câu @res.Question.SortOrder: @res.Question.Content</span>
+                    
+                    @if(isAutoGraded) {
+                        <span class="badge bg-secondary"><i class="bi bi-cpu"></i> Trắc nghiệm (Máy chấm)</span>
+                    } else {
+                        <span class="badge bg-warning text-dark"><i class="bi bi-pencil"></i> Tự luận (Cần chấm)</span>
+                    }
+                </div>
+                
+                <div class="card-body">
+                    <div class="mb-3">
+                        @if (isAutoGraded)
+                        {
+                            <div class="d-flex align-items-center">
+                                <span class="me-2">Sinh viên chọn: <strong>@res.SelectedAnswerId</strong></span>
+                                @if(res.ScoreObtained > 0) { 
+                                    <i class="bi bi-check-circle-fill text-success"></i> <span class="text-success fw-bold ms-1">Đúng</span>
+                                } else { 
+                                    <i class="bi bi-x-circle-fill text-danger"></i> <span class="text-danger fw-bold ms-1">Sai</span>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            @if (!string.IsNullOrEmpty(res.TextAnswer)) {
+                                <div class="p-3 bg-white border rounded" style="font-family: serif; font-size: 1.1rem;">
+                                    @Html.Raw(res.TextAnswer.Replace("\n", "<br/>"))
+                                </div>
+                            }
+                            @if (!string.IsNullOrEmpty(res.AudioAnswerUrl)) {
+                                <audio controls class="mt-2 w-100"><source src="@res.AudioAnswerUrl"></audio>
+                            }
+                        }
+                    </div>
+
+                    <div class="row g-3 border-top pt-3">
+                        <div class="col-md-2">
+                            <label class="form-label fw-bold small text-uppercase">Điểm số</label>
+                            
+                            @if (isAutoGraded)
+                            {
+                                <div class="form-control-plaintext fw-bold fs-5 text-dark">
+                                    @res.ScoreObtained / @res.Question.Score
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="input-group">
+                                    <input type="number" name="scores[@res.Id]" 
+                                           value="@(res.ScoreObtained ?? 0)" 
+                                           step="0.1" min="0" max="@res.Question.Score"
+                                           class="form-control fw-bold text-primary" required />
+                                    <span class="input-group-text text-muted">/ @res.Question.Score</span>
+                                </div>
+                            }
+                        </div>
+                        
+                        <div class="col-md-10">
+                            <label class="form-label fw-bold small text-uppercase">Nhận xét</label>
+                            <input type="text" name="notes[@res.Id]" value="@res.Feedback" 
+                                   class="form-control" placeholder="Nhập nhận xét (tùy chọn)..." />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="fixed-bottom bg-white border-top shadow py-3">
+            <div class="container d-flex justify-content-end">
+                <a asp-action="Index" class="btn btn-secondary me-2">Hủy</a>
+                <button type="submit" class="btn btn-success px-4 fw-bold">
+                    <i class="bi bi-check-lg me-1"></i> Lưu & Công bố điểm
+                </button>
+            </div>
+        </div>
+        <div style="height: 80px;"></div>
+    </form>
+</div>
