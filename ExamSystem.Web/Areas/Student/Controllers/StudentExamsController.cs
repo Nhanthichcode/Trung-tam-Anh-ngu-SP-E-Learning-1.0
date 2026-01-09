@@ -102,7 +102,7 @@ namespace ExamSystem.Web.Areas.Student.Controllers
 
             // 4. CHUẨN BỊ THƯ MỤC UPLOAD
             // Chỉ tạo khi có file thực sự, nhưng ta cứ lấy đường dẫn trước
-            string uploadFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "test", userId, $"{examId}_{DateTime.Now.Ticks}");
+            string uploadFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "student_exams", userId, $"{examId}_{DateTime.Now.Ticks}");
 
             // ==========================================================================================
             // [FIX QUAN TRỌNG]: LẤY FILE THỦ CÔNG TỪ REQUEST
@@ -192,6 +192,7 @@ namespace ExamSystem.Web.Areas.Student.Controllers
 
             return RedirectToAction("Result", new { attemptId = attempt.Id });
         }
+
         [HttpGet]
         public async Task<IActionResult> Result(int attemptId)
         {

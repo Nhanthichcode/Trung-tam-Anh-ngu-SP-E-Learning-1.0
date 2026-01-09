@@ -44,7 +44,7 @@
                                 </div>
                             </td>
                             <td>@item.Exam?.Title</td>
-                            <td>@item.SubmitTime.(ToString("dd/MM/yyyy"))</td>
+                            <td>@item.SubmitTime</td>
                             <td>
                                 @if (item.Status == (int)ExamSystem.Core.Enums.TestStatus.Graded)
                                 {

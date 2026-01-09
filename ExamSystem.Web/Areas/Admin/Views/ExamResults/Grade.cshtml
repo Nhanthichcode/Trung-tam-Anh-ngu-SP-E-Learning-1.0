@@ -2,84 +2,131 @@
 
 @{
     ViewData["Title"] = "Chấm bài thi";
+    // Biến đếm số thứ tự câu hỏi
+    int questionIndex = 1;
+
+    // [FIX LỖI 1]: Xử lý TimeSpan? (thời gian làm bài)
+    TimeSpan duration = (Model.SubmitTime ?? DateTime.Now) - Model.StartTime;
+    var durationString = $"{(int)duration.TotalMinutes} phút {duration.Seconds} giây";
 }
 
 <div class="container-fluid px-4">
     <div class="d-flex justify-content-between align-items-center mt-4 mb-3">
-        <h2 class="text-primary"><i class="bi bi-pen me-2"></i>Chấm bài: @Model.User.FullName</h2>
-        <a asp-action="Index" class="btn btn-outline-secondary">Quay lại danh sách</a>
+        <h2 class="text-primary"><i class="bi bi-pen me-2"></i>Chấm bài thi</h2>
+        <a asp-action="Index" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i> Quay lại</a>
+    </div>
+
+    <div class="card shadow-sm border-start border-5 border-primary mb-4">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-5 border-end">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle bg-secondary text-white d-flex justify-content-center align-items-center fs-2" style="width: 60px; height: 60px;">
+                            @Model.User.FullName?.Substring(0, 1).ToUpper()
+                        </div>
+                        <div class="ms-3">
+                            <h5 class="mb-0 fw-bold">@Model.User.FullName</h5>
+                            <small class="text-muted">@Model.User.Email</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-7 ps-4">
+                    <h6 class="text-primary fw-bold">@Model.Exam.Title</h6>
+                    <div class="d-flex gap-4 small text-muted">
+                        <span><i class="bi bi-calendar-check me-1"></i> Nộp lúc: @(Model.SubmitTime.HasValue? Model.SubmitTime.Value.ToString("dd/MM/yyyy HH:mm") : "Chưa nộp")</span>
+                        <span><i class="bi bi-hourglass-split me-1"></i> Thời gian: @durationString</span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <form asp-action="SaveGrades" method="post" id="gradeForm">
         <input type="hidden" name="attemptId" value="@Model.Id" />
 
-        @foreach (var res in Model.TestResults.OrderBy(r => r.Question.SortOrder)) 
+        @foreach (var res in Model.TestResults.OrderBy(r => r.Id))
         {
             bool isAutoGraded = res.Question.QuestionType == ExamSystem.Core.Enums.QuestionType.MultipleChoice;
 
             <div class="card mb-4 shadow-sm @(isAutoGraded ? "border-0 bg-light" : "border-primary")">
+
                 <div class="card-header d-flex justify-content-between align-items-center @(isAutoGraded ? "bg-transparent text-muted" : "bg-primary text-white")">
-                    <span class="fw-bold">Câu @res.Question.SortOrder: @res.Question.Content</span>
-                    
-                    @if(isAutoGraded) {
-                        <span class="badge bg-secondary"><i class="bi bi-cpu"></i> Trắc nghiệm (Máy chấm)</span>
-                    } else {
-                        <span class="badge bg-warning text-dark"><i class="bi bi-pencil"></i> Tự luận (Cần chấm)</span>
+                    <span class="fw-bold">
+                        Câu @(questionIndex++): @Html.Raw(res.Question.Content)
+                    </span>
+
+                    @if (isAutoGraded)
+                    {
+                        <span class="badge bg-secondary"><i class="bi bi-cpu"></i> Trắc nghiệm</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-warning text-dark"><i class="bi bi-pencil"></i> Tự luận</span>
                     }
                 </div>
-                
+
                 <div class="card-body">
                     <div class="mb-3">
                         @if (isAutoGraded)
                         {
                             <div class="d-flex align-items-center">
-                                <span class="me-2">Sinh viên chọn: <strong>@res.SelectedAnswerId</strong></span>
-                                @if(res.ScoreObtained > 0) { 
-                                    <i class="bi bi-check-circle-fill text-success"></i> <span class="text-success fw-bold ms-1">Đúng</span>
-                                } else { 
-                                    <i class="bi bi-x-circle-fill text-danger"></i> <span class="text-danger fw-bold ms-1">Sai</span>
+                                <span class="me-2">Chọn đáp án ID: <strong>@res.SelectedAnswerId</strong></span>
+                                @if (res.ScoreObtained > 0)
+                                {
+                                    <span class="badge bg-success"><i class="bi bi-check"></i> Đúng</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger"><i class="bi bi-x"></i> Sai</span>
                                 }
                             </div>
                         }
                         else
                         {
-                            @if (!string.IsNullOrEmpty(res.TextAnswer)) {
-                                <div class="p-3 bg-white border rounded" style="font-family: serif; font-size: 1.1rem;">
+                            @if (!string.IsNullOrEmpty(res.TextAnswer))
+                            {
+                                <div class="p-3 bg-white border rounded" style="font-family: serif; font-size: 1.1rem; line-height: 1.6;">
                                     @Html.Raw(res.TextAnswer.Replace("\n", "<br/>"))
                                 </div>
                             }
-                            @if (!string.IsNullOrEmpty(res.AudioAnswerUrl)) {
-                                <audio controls class="mt-2 w-100"><source src="@res.AudioAnswerUrl"></audio>
+                            @if (!string.IsNullOrEmpty(res.AudioAnswerUrl))
+                            {
+                                <div class="mt-2 p-2 bg-white border rounded d-flex align-items-center">
+                                    <i class="bi bi-mic-fill text-danger me-2 fs-4"></i>
+                                    <audio controls class="w-100"><source src="@res.AudioAnswerUrl"></audio>
+                                </div>
                             }
                         }
                     </div>
 
                     <div class="row g-3 border-top pt-3">
                         <div class="col-md-2">
-                            <label class="form-label fw-bold small text-uppercase">Điểm số</label>
-                            
+                            <label class="form-label fw-bold small text-uppercase text-muted">Điểm số</label>
                             @if (isAutoGraded)
                             {
-                                <div class="form-control-plaintext fw-bold fs-5 text-dark">
-                                    @res.ScoreObtained / @res.Question.Score
+                                <div class="form-control-plaintext fw-bold fs-5">
+                                    @res.ScoreObtained <span class="text-muted fs-6 fw-normal">(Máy chấm)</span>
                                 </div>
                             }
                             else
                             {
                                 <div class="input-group">
-                                    <input type="number" name="scores[@res.Id]" 
-                                           value="@(res.ScoreObtained ?? 0)" 
-                                           step="0.1" min="0" max="@res.Question.Score"
-                                           class="form-control fw-bold text-primary" required />
-                                    <span class="input-group-text text-muted">/ @res.Question.Score</span>
+                                    <input type="number" name="scores[@res.Id]"
+                                           value="@(res.ScoreObtained)"
+                                           step="0.1" min="0"
+                                           class="form-control fw-bold text-primary fs-5" required />
+                                    <span class="input-group-text text-muted">điểm</span>
                                 </div>
                             }
                         </div>
-                        
+
                         <div class="col-md-10">
-                            <label class="form-label fw-bold small text-uppercase">Nhận xét</label>
-                            <input type="text" name="notes[@res.Id]" value="@res.Feedback" 
-                                   class="form-control" placeholder="Nhập nhận xét (tùy chọn)..." />
+                            <label class="form-label fw-bold small text-uppercase text-muted">Nhận xét của giáo viên</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white"><i class="bi bi-chat-left-text"></i></span>
+                                <input type="text" name="notes[@res.Id]" value="@res.Feedback"
+                                       class="form-control" placeholder="Nhập nhận xét..." />
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -87,11 +134,16 @@
         }
 
         <div class="fixed-bottom bg-white border-top shadow py-3">
-            <div class="container d-flex justify-content-end">
-                <a asp-action="Index" class="btn btn-secondary me-2">Hủy</a>
-                <button type="submit" class="btn btn-success px-4 fw-bold">
-                    <i class="bi bi-check-lg me-1"></i> Lưu & Công bố điểm
-                </button>
+            <div class="container d-flex justify-content-between align-items-center">
+                <div class="text-muted small">
+                    <i class="bi bi-info-circle me-1"></i> Kiểm tra kỹ trước khi lưu.
+                </div>
+                <div>
+                    <a asp-action="Index" class="btn btn-secondary me-2">Hủy bỏ</a>
+                    <button type="submit" class="btn btn-success px-4 fw-bold shadow-sm">
+                        <i class="bi bi-check-circle-fill me-2"></i> HOÀN TẤT CHẤM ĐIỂM
+                    </button>
+                </div>
             </div>
         </div>
         <div style="height: 80px;"></div>

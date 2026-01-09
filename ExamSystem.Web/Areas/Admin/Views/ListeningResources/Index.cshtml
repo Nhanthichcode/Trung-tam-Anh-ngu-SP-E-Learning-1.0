@@ -1,30 +1,86 @@
 ﻿@model IEnumerable<ExamSystem.Core.Entities.ListeningResource>
+
 @{
     ViewData["Title"] = "Quản lý File Nghe";
 }
 
-<h1>Danh sách File Nghe</h1>
-<p><a asp-action="Create" class="btn btn-primary">Thêm mới</a></p>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold text-warning m-0"><i class="bi bi-headphones"></i> Quản lý File Nghe</h2>
+        <span class="text-muted small">Kho tài nguyên bài nghe (Listening Resources)</span>
+    </div>
+    <a asp-action="Create" class="btn btn-primary shadow-sm fw-bold">
+        <i class="bi bi-plus-lg"></i> Thêm file nghe mới
+    </a>
+</div>
 
-<table class="table table-bordered">
-    <thead>
-        <tr><th>Tiêu đề</th><th>Link Audio</th><th>Thao tác</th></tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model)
-        {
-            <tr>
-                <td>@item.Title</td>
-                <td><audio controls src="@item.AudioUrl"></audio></td>
-                <td>
-                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">Sửa</a>
-                    <form asp-action="Delete" asp-route-id="@item.Id" method="post" style="display:inline-block;"
-                          onsubmit="return confirm('Bạn có chắc chắn muốn xóa bài nghe: @item.Title không? Hành động này không thể hoàn tác.');">
+<div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+        <div class="table-responsive" style="max-height: 600px; overflow-y: auto; overflow-x: auto;">
+            <table class="table table-hover mb-0 align-middle" style="min-width: 1000px;">
+                <thead class="bg-light text-secondary small text-uppercase" style="position: sticky; top: 0; z-index: 10;">
 
-                        <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
-                    </form>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+                    <tr>
+                        <th style="width: 25%;">Tiêu đề</th>
+                        <th style="width: 30%;">Nghe thử</th>
+                        <th style="width: 25%;">Transcript (Lời thoại)</th>
+                        <th style="width: 20%;" class="text-end">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="fw-bold text-dark">
+                                    <i class="bi bi-music-note-beamed text-muted me-1"></i> @item.Title
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(item.AudioUrl))
+                                    {
+                                        <audio controls src="@item.AudioUrl" class="w-100" style="height: 32px;"></audio>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning text-dark"><i class="bi bi-exclamation-triangle"></i> Chưa có file</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="text-muted small fst-italic text-truncate" style="max-width: 250px;">
+                                        @(string.IsNullOrEmpty(item.Transcript) ? "(Chưa có Transcript)" : item.Transcript)
+                                    </div>
+                                </td>
+                                <td class="text-end">
+                                    <div class="btn-group">
+                                      
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary" title="Sửa thông tin file">
+                                            <i class="bi bi-gear"></i> Sửa đề
+                                        </a>
+
+                                        <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline"
+                                              onsubmit="return confirm('CẢNH BÁO: Xóa bài nghe \n- @item.Title\n\nSẽ xóa toàn bộ câu hỏi đi kèm. Bạn có chắc chắn không?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger border-start-0 rounded-0 rounded-end">
+                                                <i class="bi bi-trash"></i> Xóa
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center py-5">
+                                <i class="bi bi-volume-mute text-muted" style="font-size: 3rem;"></i>
+                                <p class="text-muted mt-2">Chưa có file nghe nào.</p>
+                                <a asp-action="Create" class="btn btn-sm btn-primary">Tạo ngay</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

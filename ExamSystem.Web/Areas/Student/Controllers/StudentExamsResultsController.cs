@@ -41,17 +41,35 @@ namespace ExamSystem.Web.Areas.Student.Controllers
             return View(attempts);
         }
 
-        // --- 2. Xem chi tiết một kết quả ---
-        public async Task<IActionResult> Details(int id)
+        [HttpGet]
+        public async Task<IActionResult> Details(int attemptId)
         {
-            if (id == 0) return NotFound();
+            var attempt = await _context.TestAttempts
+         // 1. Load thông tin Đề thi và Cấu trúc đề (Parts -> Questions)
+         .Include(ta => ta.Exam)
+             .ThenInclude(e => e.ExamParts)
+                 .ThenInclude(ep => ep.ExamQuestions)
 
-            var testResult = await _context.TestAttempts
-                .FirstOrDefaultAsync(m => m.Id == id);
+         // 2. Load thông tin User
+         .Include(ta => ta.User)
 
-            if (testResult == null) return NotFound();
+         // 3. Load Kết quả làm bài
+         .Include(ta => ta.TestResults)
+             .ThenInclude(tr => tr.Question)
+                 .ThenInclude(q => q.Answers)
+         .Include(ta => ta.TestResults)
+             .ThenInclude(tr => tr.Question)
+                 .ThenInclude(q => q.ReadingPassage)
+         .Include(ta => ta.TestResults)
+             .ThenInclude(tr => tr.Question)
+                 .ThenInclude(q => q.ListeningResource)
+         .FirstOrDefaultAsync(ta => ta.Id == attemptId);
 
-            return View(testResult); // Trả về View: Areas/Student/Views/TestResults/Details.cshtml
+            if (attempt == null) return NotFound();
+
+            attempt.Exam.ExamParts = attempt.Exam.ExamParts.OrderBy(p => p.OrderIndex).ToList();
+
+            return View(attempt);
         }
 
         // --- 3. Sửa kết quả (Lưu ý: Thường sinh viên không được sửa kết quả thi, nhưng mình vẫn convert theo code cũ của bạn) ---

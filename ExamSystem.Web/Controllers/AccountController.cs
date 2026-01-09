@@ -70,6 +70,12 @@ public class AccountController : Controller
         return View(model);
     }
 
+    [HttpGet]
+    [AllowAnonymous] // Quan trọng: Cho phép truy cập ngay cả khi chưa đăng nhập
+    public IActionResult Lockout()
+    {
+        return View();
+    }
     // --- GOOGLE LOGIN ---
 
     [HttpPost]

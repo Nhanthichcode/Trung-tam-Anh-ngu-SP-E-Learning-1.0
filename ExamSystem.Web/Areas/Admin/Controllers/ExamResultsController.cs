@@ -1,4 +1,5 @@
-﻿using ExamSystem.Infrastructure.Data;
+﻿using ExamSystem.Core.Enums;
+using ExamSystem.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -22,7 +23,7 @@ namespace ExamSystem.Web.Areas.Admin.Controllers
             var attempts = await _context.TestAttempts
                 .Include(ta => ta.Exam)
                 .Include(ta => ta.User)
-                .OrderByDescending(ta => ta.StartTime)
+                .OrderByDescending(ta => ta.SubmitTime) 
                 .ToListAsync();
             return View(attempts);
         }
@@ -38,35 +39,56 @@ namespace ExamSystem.Web.Areas.Admin.Controllers
                 .FirstOrDefaultAsync(ta => ta.Id == id);
 
             if (attempt == null) return NotFound();
+
+            // LỌC DỮ LIỆU ĐỂ HIỂN THỊ:
+            // Chỉ giữ lại câu Tự luận (Essay) và Thu âm (SpeakingRecording)
+            // Để giáo viên tập trung chấm các câu này.
+            attempt.TestResults = attempt.TestResults
+                .Where(tr => tr.Question.QuestionType == QuestionType.Essay ||
+                             tr.Question.QuestionType == QuestionType.SpeakingRecording)
+                .OrderBy(tr => tr.Id) // Sắp xếp theo thứ tự xuất hiện trong bài làm
+                .ToList();
+
             return View(attempt);
         }
 
-        // Action xử lý lưu điểm
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SaveGrades(int attemptId, Dictionary<int, double> scores, Dictionary<int, string> notes)
         {
-            // Load cả câu hỏi để check loại câu hỏi (QuestionType)
-            var results = await _context.TestResults
+            // 1. Tải TOÀN BỘ kết quả (bao gồm cả Trắc nghiệm đã chấm tự động)
+            // Phải include Question để check QuestionType
+            var allResults = await _context.TestResults
                 .Include(tr => tr.Question)
                 .Where(tr => tr.TestAttemptId == attemptId)
                 .ToListAsync();
 
-            foreach (var result in results)
+            if (!allResults.Any()) return NotFound();
+
+            // 2. Duyệt qua từng câu hỏi và cập nhật điểm
+            foreach (var result in allResults)
             {
-                // CHỈ CẬP NHẬT ĐIỂM CHO CÂU TỰ LUẬN (WRITING / SPEAKING)
-                // Bỏ qua câu MultipleChoice (Trắc nghiệm) để bảo toàn điểm máy chấm
-                if (result.Question.QuestionType != ExamSystem.Core.Enums.QuestionType.MultipleChoice)
+                // [QUAN TRỌNG]: Chỉ cho phép sửa điểm nếu là câu Tự luận hoặc Nói
+                // Bỏ qua câu Trắc nghiệm (SingleChoice/MultipleChoice) để bảo toàn điểm máy chấm
+                if (result.Question.QuestionType == QuestionType.Essay ||
+                    result.Question.QuestionType == QuestionType.SpeakingRecording)
                 {
+                    // Kiểm tra xem giáo viên có gửi điểm cho câu này không
                     if (scores.ContainsKey(result.Id))
                     {
-                        result.ScoreObtained = scores[result.Id]; // Lưu điểm giáo viên chấm
-                        result.Feedback = notes.ContainsKey(result.Id) ? notes[result.Id] : "";
+                        result.ScoreObtained = scores[result.Id];
+
+                        // Lưu nhận xét (Feedback) nếu có
+                        if (notes.ContainsKey(result.Id))
+                        {
+                            result.Feedback = notes[result.Id];
+                        }
                     }
                 }
                 else
                 {
-                    // Với câu trắc nghiệm, nếu giáo viên có nhập Feedback thì vẫn lưu Feedback, nhưng KHÔNG sửa điểm
+                    // Với câu trắc nghiệm, vẫn cho phép lưu nhận xét (nếu giáo viên muốn góp ý thêm)
+                    // Nhưng KHÔNG cập nhật điểm số.
                     if (notes.ContainsKey(result.Id))
                     {
                         result.Feedback = notes[result.Id];
@@ -74,19 +96,24 @@ namespace ExamSystem.Web.Areas.Admin.Controllers
                 }
             }
 
-            // Cập nhật tổng điểm cho lượt thi (TestAttempt)
+            // 3. Tính toán lại Tổng điểm và Trạng thái
             var attempt = await _context.TestAttempts.FindAsync(attemptId);
             if (attempt != null)
             {
-                // Tổng điểm mới = Tổng điểm tất cả các câu cộng lại
-                attempt.Score = results.Sum(r => r.ScoreObtained ?? 0);
+                // Tổng điểm = Điểm trắc nghiệm (giữ nguyên) + Điểm tự luận (vừa chấm)
+                // Dùng ?? 0 để xử lý trường hợp null
+                attempt.Score = allResults.Sum(r => r.ScoreObtained);
 
-                // Cập nhật trạng thái: 2 = Graded (Đã chấm xong)
-                attempt.Status = (int)ExamSystem.Core.Enums.TestStatus.Graded;
+                // Cập nhật trạng thái
+                attempt.Status = (int)TestStatus.Graded;
+
+                // Kiểm tra lại tên thuộc tính trong Entity của bạn (IsGraded hay isGraded)
+                // attempt.IsGraded = true; 
             }
 
             await _context.SaveChangesAsync();
-            TempData["SuccessMessage"] = "Đã lưu kết quả chấm thi thành công!";
+
+            TempData["SuccessMessage"] = $"Đã chấm xong! Tổng điểm mới: {attempt?.Score}";
             return RedirectToAction(nameof(Index));
         }
     }

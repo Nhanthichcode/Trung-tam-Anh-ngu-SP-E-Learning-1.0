@@ -31,7 +31,9 @@
     <div class="d-flex" id="wrapper">
         <div id="sidebar-wrapper">
             <div class="sidebar-heading text-uppercase">
+                 <a asp-area="Admin" asp-controller="Exams" asp-action="Index">
                 <i class="bi bi-shield-lock-fill me-2 text-primary"></i> Exam Admin
+                </a>
             </div>
 
             <div class="list-group list-group-flush my-3">
@@ -55,15 +57,15 @@
                         <i class="bi bi-diagram-3 me-2"></i> Cấu trúc đề (Matrix)
                     </a>
 
-                    <a asp-area="Admin" asp-controller="ExamParts" asp-action="Index"
+                    @* <a asp-area="Admin" asp-controller="ExamParts" asp-action="Index"
                        class="list-group-item list-group-item-action @(currentController == "ExamParts" ? "active" : "")">
                         <i class="bi bi-layers me-2"></i> Phần thi (Parts)
-                    </a>
+                    </a> *@
 
-                    <a asp-area="Admin" asp-controller="ExamQuestions" asp-action="Index"
+                    @* <a asp-area="Admin" asp-controller="ExamQuestions" asp-action="Index"
                        class="list-group-item list-group-item-action @(currentController == "ExamQuestions" ? "active" : "")">
                         <i class="bi bi-list-check me-2"></i> Chi tiết câu trong đề
-                    </a>
+                    </a> *@
 
 
                     // --- NHÓM 2: NGÂN HÀNG CÂU HỎI ---
@@ -95,12 +97,12 @@
                     </a>
 
                     <a asp-area="Admin" asp-controller="ExamResults" asp-action="Index"
-                       class="list-group-item list-group-item-action @(currentController == "Users" ? "active" : "")">
+                       class="list-group-item list-group-item-action @(currentController == "ExamResults" ? "active" : "")">
                         <i class="bi bi-people"></i> Chấm điểm bài thi
                     </a>
 
                     <a asp-area="Admin" asp-controller="Media" asp-action="Index"
-                       class="list-group-item list-group-item-action @(currentController == "Users" ? "active" : "")">
+                       class="list-group-item list-group-item-action @(currentController == "Media" ? "active" : "")">
                         <i class="bi bi-people"></i> Quản lý nội dung số
                     </a>
 

@@ -23,7 +23,7 @@
                     {
                         <tr>
                             <td class="fw-bold">@item.Exam?.Title</td>
-                            <td>@item.SubmitTime.(ToString("dd/MM/yyyy HH:mm"))</td>
+                            <td>@item.SubmitTime</td>
                             <td>
                                 @if (item.Status == 2) // Giả sử 2 là Graded (Đã chấm)
                                 {

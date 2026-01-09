@@ -2,13 +2,48 @@
 
 @{
     ViewData["Title"] = "Quản lý Tệp tin";
+
+    // 1. Tách chuỗi đường dẫn thành mảng các thư mục
+    var pathParts = string.IsNullOrEmpty(Model.CurrentPath)
+        ? new string[] { }
+        : Model.CurrentPath.Split(new[] { '/', '\\' }, StringSplitOptions.RemoveEmptyEntries);
+
+    // Biến tạm để cộng dồn đường dẫn trong vòng lặp
+    string currentAccumulatedPath = "";
 }
 
 <div class="card shadow-sm">
     <div class="card-header bg-white d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">
-            <i class="bi bi-folder2-open me-2"></i> /uploads/@Model.CurrentPath
-        </h5>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0 align-items-center">
+                <li class="breadcrumb-item">
+                    <i class="bi bi-folder2-open me-2 text-primary"></i>
+                    <a asp-action="Index" asp-route-path="" class="text-decoration-none fw-bold">uploads</a>
+                </li>
+
+                @for (int i = 0; i < pathParts.Length; i++)
+                {
+                    // Cộng dồn đường dẫn: ví dụ vòng 1 là "images", vòng 2 là "images/2023"
+                    currentAccumulatedPath += (i == 0 ? "" : "/") + pathParts[i];
+
+                    // Nếu là phần tử cuối cùng (thư mục hiện tại) -> Chỉ hiện text, không link (hoặc link active)
+                    if (i == pathParts.Length - 1)
+                    {
+                        <li class="breadcrumb-item active text-dark" aria-current="page">@pathParts[i]</li>
+                    }
+                    else
+                    {
+                        // Các thư mục cha -> Hiện link để click quay lại
+                        <li class="breadcrumb-item">
+                            <a asp-action="Index" asp-route-path="@currentAccumulatedPath" class="text-decoration-none">
+                                @pathParts[i]
+                            </a>
+                        </li>
+                    }
+                }
+            </ol>
+        </nav>
+
         @if (!string.IsNullOrEmpty(Model.CurrentPath))
         {
             <a asp-action="Index" asp-route-path="@System.IO.Path.GetDirectoryName(Model.CurrentPath)" class="btn btn-sm btn-outline-secondary">
@@ -16,6 +51,7 @@
             </a>
         }
     </div>
+
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover mb-0 align-middle">
@@ -41,7 +77,6 @@
                                 }
                                 else
                                 {
-                                    // Link để xem file (mở tab mới)
                                     <a href="~/uploads/@item.Path" target="_blank" class="text-decoration-none text-secondary">
                                         @item.Name
                                     </a>
@@ -49,7 +84,7 @@
                             </td>
                             <td>@item.SizeDisplay</td>
                             <td class="text-end">
-                                @if (!item.IsDirectory) // Xem trước ảnh nhỏ
+                                @if (!item.IsDirectory)
                                 {
                                     if (item.Extension == ".jpg" || item.Extension == ".png" || item.Extension == ".jpeg")
                                     {

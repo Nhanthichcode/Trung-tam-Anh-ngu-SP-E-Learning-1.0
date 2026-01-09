@@ -1,30 +1,79 @@
 ﻿@model IEnumerable<ExamSystem.Core.Entities.ReadingPassage>
+
 @{
-    ViewData["Title"] = "Bài đọc hiểu";
+    ViewData["Title"] = "Quản lý Bài đọc";
 }
 
-<h1>Quản lý Bài đọc</h1>
-<a asp-action="Create" class="btn btn-primary mb-3">Thêm bài đọc</a>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold text-primary m-0"><i class="bi bi-book-half"></i> Quản lý Bài đọc</h2>
+        <span class="text-muted small">Danh sách các bài đọc hiểu (Reading Passages)</span>
+    </div>
+    <a asp-action="Create" class="btn btn-primary shadow-sm fw-bold">
+        <i class="bi bi-plus-lg"></i> Thêm bài đọc mới
+    </a>
+</div>
 
-<table class="table table-bordered">
-    <thead>
-        <tr><th>Tiêu đề</th><th>Nội dung (Preview)</th><th>Thao tác</th></tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model)
-        {
-            <tr>
-                <td>@item.Title</td>
-                <td>@(item.Content.Length > 50 ? item.Content.Substring(0, 50) + "..." : item.Content)</td>
-                <td>
-                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning btn-sm">Sửa</a>
-                    <form asp-action="Delete" asp-route-id="@item.Id" method="post" style="display:inline-block;"
-                          onsubmit="return confirm('Bạn có chắc chắn muốn xóa bài đọc: @item.Title không? Hành động này không thể hoàn tác.');">
+<div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+        <div class="table-responsive" style="max-height: 600px; overflow-y: auto; overflow-x: auto;">
+            <table class="table table-hover mb-0 align-middle" style="min-width: 1000px;">
+                <thead class="bg-light text-secondary small text-uppercase" style="position: sticky; top: 0; z-index: 10;">
+                    <tr>
+                        <th style="width: 25%;">Tiêu đề</th>
+                        <th style="width: 45%;">Nội dung (Preview)</th>
+                        <th style="width: 10%;" class="text-center">Câu hỏi</th>
+                        <th style="width: 20%;" class="text-end">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="fw-bold text-primary">@item.Title</td>
+                                <td>
+                                    <div class="text-muted small" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;">
+                                        @* Dùng Raw để hiển thị nếu nội dung có HTML, nhưng cẩn thận XSS *@
+                                        @Html.Raw(item.Content?.Length > 150 ? item.Content.Substring(0, 150) + "..." : item.Content)
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-info text-dark">
+                                        @(item.Questions?.Count ?? 0) câu
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <div class="btn-group">                                     
 
-                        <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
-                    </form>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary" title="Sửa thông tin bài đọc">
+                                            <i class="bi bi-gear"></i> Sửa đề
+                                        </a>
+
+                                        <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline"
+                                              onsubmit="return confirm('CẢNH BÁO: Xóa bài đọc \n- @item.Title\n\nSẽ xóa toàn bộ câu hỏi đi kèm. Bạn có chắc chắn không?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger border-start-0 rounded-0 rounded-end">
+                                                <i class="bi bi-trash"></i> Xóa
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center py-5">
+                                <i class="bi bi-journal-x text-muted" style="font-size: 3rem;"></i>
+                                <p class="text-muted mt-2">Chưa có bài đọc nào.</p>
+                                <a asp-action="Create" class="btn btn-sm btn-primary">Tạo ngay</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
