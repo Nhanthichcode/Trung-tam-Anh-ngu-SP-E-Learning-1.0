@@ -193,38 +193,6 @@ namespace ExamSystem.Web.Areas.Student.Controllers
             return RedirectToAction("Result", new { attemptId = attempt.Id });
         }
 
-        [HttpGet]
-        public async Task<IActionResult> Result(int attemptId)
-        {
-            var attempt = await _context.TestAttempts
-         // 1. Load thông tin Đề thi và Cấu trúc đề (Parts -> Questions)
-         .Include(ta => ta.Exam)
-             .ThenInclude(e => e.ExamParts)
-                 .ThenInclude(ep => ep.ExamQuestions)
-
-         // 2. Load thông tin User
-         .Include(ta => ta.User)
-
-         // 3. Load Kết quả làm bài
-         .Include(ta => ta.TestResults)
-             .ThenInclude(tr => tr.Question)
-                 .ThenInclude(q => q.Answers)
-         .Include(ta => ta.TestResults)
-             .ThenInclude(tr => tr.Question)
-                 .ThenInclude(q => q.ReadingPassage)
-         .Include(ta => ta.TestResults)
-             .ThenInclude(tr => tr.Question)
-                 .ThenInclude(q => q.ListeningResource)
-         .FirstOrDefaultAsync(ta => ta.Id == attemptId);
-
-            if (attempt == null) return NotFound();
-
-            attempt.Exam.ExamParts = attempt.Exam.ExamParts.OrderBy(p => p.OrderIndex).ToList();
-
-            return View(attempt);
-        }
-
-        // GET: /Test/History
         public async Task<IActionResult> History()
         {
             // 1. Lấy ID người dùng hiện tại
@@ -240,5 +208,44 @@ namespace ExamSystem.Web.Areas.Student.Controllers
 
             return View(attempts);
         }
+
+        public async Task<IActionResult> Result(int attemptId)
+        {
+            var attempt = await _context.TestAttempts
+                // 1. Load thông tin Đề thi và Cấu trúc đề
+                .Include(ta => ta.Exam)
+                    .ThenInclude(e => e.ExamParts)
+                        .ThenInclude(ep => ep.ExamQuestions)
+
+                // 2. Load thông tin User
+                .Include(ta => ta.User)
+
+                // 3. Load Kết quả làm bài
+                .Include(ta => ta.TestResults)
+                    .ThenInclude(tr => tr.Question)
+                        .ThenInclude(q => q.Answers) // Collection con
+                .Include(ta => ta.TestResults)
+                    .ThenInclude(tr => tr.Question)
+                        .ThenInclude(q => q.ReadingPassage)
+                .Include(ta => ta.TestResults)
+                    .ThenInclude(tr => tr.Question)
+                        .ThenInclude(q => q.ListeningResource)
+
+                // [QUAN TRỌNG] Thêm dòng này để tách query, sửa cảnh báo hiệu năng
+                .AsSplitQuery()
+
+                .FirstOrDefaultAsync(ta => ta.Id == attemptId);
+
+            if (attempt == null) return NotFound();
+
+            // Sắp xếp lại thứ tự phần thi (nên làm trong bộ nhớ sau khi load xong)
+            if (attempt.Exam != null && attempt.Exam.ExamParts != null)
+            {
+                attempt.Exam.ExamParts = attempt.Exam.ExamParts.OrderBy(p => p.OrderIndex).ToList();
+            }
+
+            return View(attempt);
+        }
+
     }
 }

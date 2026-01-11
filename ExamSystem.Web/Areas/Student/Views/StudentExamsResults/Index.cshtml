@@ -36,9 +36,9 @@
                             </td>
                             <td class="text-danger fw-bold">@item.Score.ToString("0.##")</td>
                             <td class="text-end">
-                                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">
-                                    Chi tiết
-                                </a>
+                                <a asp-area="Student"" asp-controller="StudentExams" asp-action="Result" asp-route-attemptId="@item.Id" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye-fill"></i> Xem chi tiết
+                                </a>                             
                             </td>
                         </tr>
                     }

@@ -60,7 +60,7 @@
                                 }
                             </td>
                             <td class="fw-bold text-primary">
-                                @(item.Status == (int)ExamSystem.Core.Enums.TestStatus.Graded ? item.Score.ToString("0.##") : "--")
+                                @(item.Status == (int)ExamSystem.Core.Enums.TestStatus.Graded ? item.Score : "0")
                             </td>
                             <td class="text-end">
                                 <a asp-action="Grade" asp-route-id="@item.Id" class="btn btn-sm btn-primary shadow-sm">

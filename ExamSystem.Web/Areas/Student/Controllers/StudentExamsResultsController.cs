@@ -41,36 +41,6 @@ namespace ExamSystem.Web.Areas.Student.Controllers
             return View(attempts);
         }
 
-        [HttpGet]
-        public async Task<IActionResult> Details(int attemptId)
-        {
-            var attempt = await _context.TestAttempts
-         // 1. Load thông tin Đề thi và Cấu trúc đề (Parts -> Questions)
-         .Include(ta => ta.Exam)
-             .ThenInclude(e => e.ExamParts)
-                 .ThenInclude(ep => ep.ExamQuestions)
-
-         // 2. Load thông tin User
-         .Include(ta => ta.User)
-
-         // 3. Load Kết quả làm bài
-         .Include(ta => ta.TestResults)
-             .ThenInclude(tr => tr.Question)
-                 .ThenInclude(q => q.Answers)
-         .Include(ta => ta.TestResults)
-             .ThenInclude(tr => tr.Question)
-                 .ThenInclude(q => q.ReadingPassage)
-         .Include(ta => ta.TestResults)
-             .ThenInclude(tr => tr.Question)
-                 .ThenInclude(q => q.ListeningResource)
-         .FirstOrDefaultAsync(ta => ta.Id == attemptId);
-
-            if (attempt == null) return NotFound();
-
-            attempt.Exam.ExamParts = attempt.Exam.ExamParts.OrderBy(p => p.OrderIndex).ToList();
-
-            return View(attempt);
-        }
 
         // --- 3. Sửa kết quả (Lưu ý: Thường sinh viên không được sửa kết quả thi, nhưng mình vẫn convert theo code cũ của bạn) ---
 
@@ -153,7 +123,6 @@ namespace ExamSystem.Web.Areas.Student.Controllers
             }
             return RedirectToAction(nameof(Index));
         }
-
         private bool TestResultExists(int id)
         {
             return _context.TestResults.Any(e => e.Id == id);

@@ -23,6 +23,7 @@ namespace ExamSystem.Web.Areas.Admin.Controllers
             var attempts = await _context.TestAttempts
                 .Include(ta => ta.Exam)
                 .Include(ta => ta.User)
+                .Include(ta => ta.TestResults)
                 .OrderByDescending(ta => ta.SubmitTime) 
                 .ToListAsync();
             return View(attempts);
