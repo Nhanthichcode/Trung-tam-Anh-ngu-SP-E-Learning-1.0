@@ -2,6 +2,7 @@
 using ExamSystem.Core.Enums;
 using ExamSystem.Infrastructure.Data;
 using ExamSystem.Web.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -10,7 +11,7 @@ using OfficeOpenXml;
 namespace ExamSystem.Web.Areas.Admin.Controllers
 {
     [Area("Admin")] // 2. Thêm Attribute này
-    // [Authorize(Roles = "Admin" || "Teacher")]
+    [Authorize(Roles = "Admin, Teacher")]
     public class QuestionsController : Controller
     {
         private readonly AppDbContext _context;

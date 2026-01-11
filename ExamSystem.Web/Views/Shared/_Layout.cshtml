@@ -8,30 +8,25 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - ExamSystem</title>
+    <title>@ViewData["Title"] - Anh Ngữ SP</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 
-    <style>
-        /* Custom Minimalist Styles */
-        body { background-color: #f8f9fa; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
-        .navbar { box-shadow: 0 2px 4px rgba(0,0,0,.08); }
-        .nav-link { font-weight: 500; transition: color 0.2s; }
-        .nav-link:hover { color: #0d6efd !important; }
-        .dropdown-menu { border: none; box-shadow: 0 4px 6px rgba(0,0,0,.1); border-radius: 8px; }
-        footer { background-color: #fff; }
-    </style>
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body class="d-flex flex-column min-vh-100">
     <header>
-        <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top">
+        <nav class="navbar navbar-expand-lg navbar-dark navbar-brand-sp sticky-top">
             <div class="container">
-                <a class="navbar-brand fw-bold text-primary" asp-controller="Home" asp-action="Index">
-                    <i class="bi bi-mortarboard-fill me-2"></i>ExamSystem
-                </a>              
+                <a class="navbar-brand" asp-controller="Home" asp-action="Index">
+                    ANH NGỮ <span class="brand-highlight">SP</span>
+                </a>
+
                 <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
                     <span class="navbar-toggler-icon"></span>
                 </button>
@@ -81,22 +76,22 @@
                         }
                     </ul>
 
-                    <ul class="navbar-nav">
+                    <ul class="navbar-nav align-items-center gap-2">
                         @if (SignInManager.IsSignedIn(User))
                         {
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" data-bs-toggle="dropdown">
-                                    <div class="rounded-circle bg-secondary text-white d-flex justify-content-center align-items-center me-2" style="width: 32px; height: 32px;">
+                                    <div class="rounded-circle d-flex justify-content-center align-items-center me-2 user-avatar">
                                         @UserManager.GetUserName(User)?.Substring(0, 1).ToUpper()
                                     </div>
-                                    <span>@UserManager.GetUserName(User)</span>
+                                    <span class="fw-bold">@UserManager.GetUserName(User)</span>
                                 </a>
-                                <ul class="dropdown-menu dropdown-menu-end">
-                                    <li><a class="dropdown-item" asp-controller="Account" asp-action="Profile">Hồ sơ cá nhân</a></li>
+                                <ul class="dropdown-menu dropdown-menu-end shadow">
+                                    <li><a class="dropdown-item" asp-controller="Account" asp-action="Profile"><i class="bi bi-person me-2"></i>Hồ sơ cá nhân</a></li>
                                     <li><hr class="dropdown-divider"></li>
                                     <li>
                                         <form id="logoutForm" asp-area="" asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
-                                            <button type="submit" class="dropdown-item text-danger">
+                                            <button type="submit" class="dropdown-item text-danger fw-bold">
                                                 <i class="bi bi-power me-2"></i>Đăng xuất
                                             </button>
                                         </form>
@@ -107,10 +102,10 @@
                         else
                         {
                             <li class="nav-item">
-                                <a class="nav-link" asp-controller="Account" asp-action="Login">Đăng nhập</a>
+                                <a class="btn btn-brand-outline btn-sm px-3 rounded-pill" asp-controller="Account" asp-action="Login">Đăng nhập</a>
                             </li>
-                            <li class="nav-item ms-lg-2">
-                                <a class="btn btn-primary btn-sm px-4 rounded-pill" asp-controller="Account" asp-action="Register">Đăng ký</a>
+                            <li class="nav-item">
+                                <a class="btn btn-brand-primary btn-sm px-4 rounded-pill shadow-sm" asp-controller="Account" asp-action="Register">Đăng ký ngay</a>
                             </li>
                         }
                     </ul>
@@ -125,16 +120,23 @@
         </div>
     </main>
 
-    <footer class="bg-white border-top py-3 mt-auto">
+    <footer class="py-4 mt-auto">
         <div class="container text-center">
-            <span class="text-muted small">&copy; 2025 Exam System. Designed for Excellence.</span>
+            <h5 class="fw-bold text-uppercase mb-3">Anh Ngữ <span class="text-warning">SP</span></h5>
+            <p class="small text-white-50 mb-2">Nâng tầm ngoại ngữ - Vươn tới tương lai</p>
+            <div class="mb-3">
+                <a href="#" class="text-white me-3"><i class="bi bi-facebook fs-5"></i></a>
+                <a href="#" class="text-white me-3"><i class="bi bi-youtube fs-5"></i></a>
+                <a href="#" class="text-white"><i class="bi bi-tiktok fs-5"></i></a>
+            </div>
+            <span class="text-white-50 small">&copy; 2025 Exam System. All rights reserved.</span>
         </div>
     </footer>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>    
+    <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

@@ -2,13 +2,15 @@
 using ExamSystem.Core.Enums;
 using ExamSystem.Infrastructure.Data;
 using ExamSystem.Web.Areas.Admin.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace ExamSystem.Web.Areas.Admin.Controllers
 {
     [Area("Admin")] // 2. Thêm Attribute này
-    // [Authorize(Roles = "Admin" || "Teacher")]
+    [Authorize(Roles = "Admin, Teacher")]
+
     public class HomeController : Controller
     {
         private readonly AppDbContext _context;
