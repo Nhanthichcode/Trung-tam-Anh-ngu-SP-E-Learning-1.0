@@ -2,12 +2,12 @@
 using Microsoft.EntityFrameworkCore;
 using ExamSystem.Infrastructure.Data;
 using ExamSystem.Core.Entities;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ExamSystem.Web.Areas.Admin.Controllers
 {
     [Area("Admin")]
-    [Route("admin/exam-questions")] // <--- THÊM DÒNG NÀY: Để tránh lỗi trùng đường dẫn
-    // [Authorize(Roles = "Admin" || "Teacher")]
+    [Authorize(Roles = "Admin, Teacher")]
     public class ExamQuestionsController : Controller // <--- SỬA: Đổi ControllerBase thành Controller
     {
         private readonly AppDbContext _context;

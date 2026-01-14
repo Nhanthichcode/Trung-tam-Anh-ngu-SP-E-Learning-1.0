@@ -3,30 +3,69 @@
     ViewData["Title"] = "Thêm File Nghe";
 }
 
-<h4>Thêm File Nghe mới</h4>
-<hr />
-<div class="row">
-    <div class="col-md-6">
-        <form asp-action="Create" enctype="multipart/form-data">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold text-success m-0"><i class="bi bi-cloud-upload-fill"></i> Thêm File Nghe Mới</h2>
+        <span class="text-muted small">Tải lên file âm thanh và nhập nội dung lời thoại</span>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary shadow-sm">
+        <i class="bi bi-arrow-left"></i> Quay lại danh sách
+    </a>
+</div>
 
-            <div class="mb-3">
-                <label asp-for="Title" class="form-label">Tiêu đề</label>
-                <input asp-for="Title" class="form-control" required />
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-success text-white">
+                <i class="bi bi-info-circle"></i> Thông tin file
             </div>
+            <div class="card-body p-4">
+                <form asp-action="Create" enctype="multipart/form-data">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger d-none"></div>
 
-            <div class="mb-3">
-                <label class="form-label">Chọn file âm thanh (.mp3)</label>
-                <input type="file" name="audioFile" class="form-control" accept="audio/*" />
+                    <div class="mb-4">
+                        <label asp-for="Title" class="form-label fw-bold text-secondary">
+                            <i class="bi bi-tag-fill me-1"></i> Tiêu đề file nghe <span class="text-danger">*</span>
+                        </label>
+                        <input asp-for="Title" class="form-control form-control-lg" placeholder="VD: Lesson 1 - At the Airport" required />
+                        <span asp-validation-for="Title" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-secondary">
+                            <i class="bi bi-file-earmark-music-fill me-1"></i> Chọn file âm thanh <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <input type="file" name="audioFile" class="form-control" accept=".mp3,.wav,.ogg" required />
+                            <span class="input-group-text"><i class="bi bi-music-note"></i></span>
+                        </div>
+                        <div class="form-text text-muted">
+                            <i class="bi bi-info-circle-fill"></i> Hỗ trợ định dạng: .mp3, .wav, .ogg (Dung lượng tối đa khuyến nghị: 20MB)
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="Transcript" class="form-label fw-bold text-secondary">
+                            <i class="bi bi-chat-quote-fill me-1"></i> Lời thoại (Transcript)
+                        </label>
+                        <textarea asp-for="Transcript" class="form-control" rows="6" placeholder="Nhập nội dung bài nghe tại đây để sinh viên tiện theo dõi..."></textarea>
+                        <span asp-validation-for="Transcript" class="text-danger small"></span>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end border-top pt-3">
+                        <a asp-action="Index" class="btn btn-light me-md-2">Hủy bỏ</a>
+                        <button type="submit" class="btn btn-success fw-bold px-4">
+                            <i class="bi bi-check-circle-fill me-2"></i> Lưu File Nghe
+                        </button>
+                    </div>
+                </form>
             </div>
-
-            <div class="mb-3">
-                <label asp-for="Transcript" class="form-label">Lời thoại (Transcript)</label>
-                <textarea asp-for="Transcript" class="form-control" rows="4"></textarea>
-            </div>
-
-            <button type="submit" class="btn btn-success">Lưu</button>
-            <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
-        </form>
+        </div>
     </div>
 </div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

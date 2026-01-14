@@ -1,25 +1,45 @@
 ﻿@model ExamSystem.Core.Entities.ReadingPassage
+
 @{
     ViewData["Title"] = "Chỉnh sửa bài đọc";
 }
 
-<h4>Tạo Bài đọc mới</h4>
-<hr />
-<form asp-action="Edit">
-    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-    <input type="hidden" asp-for="Id" />
+<div class="container-fluid px-4 mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="text-warning fw-bold"><i class="bi bi-pencil-square"></i> Chỉnh Sửa Bài Đọc</h3>
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Quay lại danh sách
+        </a>
+    </div>
 
-    <div class="mb-3">
-        <label asp-for="Title" class="form-label">Tiêu đề</label>
-        <input asp-for="Title" class="form-control" />
+    <div class="card shadow-sm border-0 border-top border-4 border-warning">
+        <div class="card-body p-4">
+            <form asp-action="Edit">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                <input type="hidden" asp-for="Id" />
+
+                <div class="mb-3">
+                    <label asp-for="Title" class="form-label fw-bold">Tiêu đề bài đọc <span class="text-danger">*</span></label>
+                    <input asp-for="Title" class="form-control" />
+                    <span asp-validation-for="Title" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="Content" class="form-label fw-bold">Nội dung chi tiết <span class="text-danger">*</span></label>
+                    <textarea asp-for="Content" class="form-control" rows="12"></textarea>
+                    <span asp-validation-for="Content" class="text-danger small"></span>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a asp-action="Index" class="btn btn-secondary">Hủy bỏ</a>
+                    <button type="submit" class="btn btn-warning px-4 fw-bold text-dark">
+                        <i class="bi bi-check-circle-fill"></i> Cập nhật thay đổi
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
-    <div class="mb-3">
-        <label asp-for="Content" class="form-label">Nội dung bài đọc</label>
-        <textarea asp-for="Content" class="form-control" rows="10"></textarea>
-    </div>
-    <button type="submit" class="btn btn-success">Lưu</button>
-    <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
-</form>
+</div>
 
 @section Scripts {
     @{

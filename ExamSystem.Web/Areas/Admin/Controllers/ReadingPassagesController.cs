@@ -2,11 +2,12 @@
 using Microsoft.EntityFrameworkCore;
 using ExamSystem.Infrastructure.Data;
 using ExamSystem.Core.Entities;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ExamSystem.Web.Areas.Admin.Controllers
 {
     [Area("Admin")] // 2. Thêm Attribute này
-    // [Authorize(Roles = "Admin" || "Teacher")]
+    [Authorize(Roles = "Admin, Teacher")]
     public class ReadingPassagesController : Controller
     {
         private readonly AppDbContext _context;

@@ -1,38 +1,176 @@
-﻿@{
+﻿@using Microsoft.AspNetCore.Identity
+@using ExamSystem.Core.Entities
+@inject SignInManager<AppUser> SignInManager
+@inject UserManager<AppUser> UserManager
+@{
     ViewData["Title"] = "Trang chủ";
 }
 
-<div class="text-center mt-5">
-    <h1 class="display-4">Chào mừng đến với Hệ thống Thi</h1>
-    <p>Hệ thống quản lý ngân hàng câu hỏi và tổ chức thi trực tuyến.</p>
+@section Styles {
+    <style>
+        /* --- 1. HERO SECTION --- */
+        .hero-section {
+            background: linear-gradient(135deg, #C60000 0%, #800000 100%);
+            color: white;
+            border-radius: 16px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(198, 0, 0, 0.25);
+        }
 
-    <div class="row mt-5">
-        <div class="col-md-4">
-            <div class="card shadow-sm mb-3">
-                <div class="card-body">
-                    <h5 class="card-title">Quản lý Đề thi</h5>
-                    <p class="card-text">Tạo đề, sửa đề, kích hoạt đợt thi.</p>
-                    <a href="/Exams" class="btn btn-primary">Đi tới Đề thi</a>
-                </div>
+        .hero-pattern {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            opacity: 0.15;
+            background-image: radial-gradient(circle at 2px 2px, #FFDE00 1.5px, transparent 0);
+            background-size: 24px 24px;
+        }
+
+        /* --- 2. CARDS --- */
+        .feature-card {
+            border: 1px solid rgba(0,0,0,0.05);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            height: 100%;
+            background: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+            .feature-card:hover {
+                transform: translateY(-5px);
+            }
+
+        .card-exam:hover {
+            border-color: #C60000;
+            box-shadow: 0 10px 25px rgba(198, 0, 0, 0.2) !important;
+        }
+
+        .card-question:hover {
+            border-color: #FFDE00;
+            box-shadow: 0 10px 25px rgba(255, 222, 0, 0.3) !important;
+        }
+
+        .card-history:hover {
+            border-color: #0d6efd;
+            box-shadow: 0 10px 25px rgba(13, 110, 253, 0.2) !important;
+        }
+
+        .feature-card .icon-wrapper {
+            width: 64px;
+            height: 64px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin-bottom: 1.2rem;
+            transition: all 0.3s;
+        }
+        /* Icon Colors */
+        .card-exam .icon-wrapper {
+            background-color: #C60000;
+            color: white;
+        }
+
+        .card-question .icon-wrapper {
+            background-color: #FFDE00;
+            color: #C60000;
+        }
+
+        .card-history .icon-wrapper {
+            background-color: #0056b3;
+            color: white;
+        }
+
+        /* --- 3. BUTTONS --- */
+        .btn-brand-cta {
+            background-color: #FFDE00;
+            color: #C60000;
+            border: none;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+            .btn-brand-cta:hover {
+                background-color: #ffe63b;
+                color: #900000;
+                box-shadow: 0 4px 12px rgba(255, 222, 0, 0.4);
+            }
+
+        .btn-solid-red {
+            background-color: #C60000;
+            color: white;
+            border: none;
+        }
+
+            .btn-solid-red:hover {
+                background-color: #a00000;
+                color: white;
+                box-shadow: 0 4px 10px rgba(198, 0, 0, 0.3);
+            }
+
+        .btn-solid-yellow {
+            background-color: #FFDE00;
+            color: #C60000;
+            border: none;
+        }
+
+            .btn-solid-yellow:hover {
+                background-color: #ffe63b;
+                color: #900000;
+                box-shadow: 0 4px 10px rgba(255, 222, 0, 0.4);
+            }
+
+        .stretched-link {
+            text-decoration: none;
+            font-weight: 700;
+        }
+    </style>
+}
+
+<div class="container py-4">
+    <div class="p-5 mb-5 hero-section">
+        <div class="hero-pattern"></div>
+        <div class="position-relative z-1 text-center text-lg-start d-flex flex-column flex-lg-row align-items-center justify-content-between">
+
+            <div>
+                <h1 class="display-4 fw-bold mb-2 text-white">Hệ thống Thi Trực tuyến</h1>
+                <h2 class="fw-bold mb-3" style="color: #FFDE00;">ANH NGỮ SP</h2>
+                <p class="fs-5 mb-4 text-white opacity-75" style="max-width: 600px;">
+                    Nền tảng quản lý thi cử chuyên nghiệp. Nâng tầm ngoại ngữ - Vươn tới tương lai.
+                </p>
+
+                @if (SignInManager.IsSignedIn(User))
+                {
+                    if (User.IsInRole("Admin") || User.IsInRole("Teacher"))
+                    {
+                        <a asp-area="Admin" asp-controller="Exams" asp-action="Create" class="btn btn-brand-cta btn-lg rounded-pill px-5 py-3 shadow">
+                            <i class="bi bi-plus-circle-fill me-2"></i>Tạo Đề Thi Mới
+                        </a>
+                    }
+                    else
+                    {
+                        <a asp-area="Student" asp-controller="StudentExams" asp-action="Index" class="btn btn-brand-cta btn-lg rounded-pill px-5 py-3 shadow">
+                            <i class="bi bi-play-circle-fill me-2"></i>Vào Thi Ngay
+                        </a>
+                    }
+                }
+                else
+                {
+                    <a asp-controller="Account" asp-action="Login" class="btn btn-brand-cta btn-brand-primary btn-lg rounded-pill px-5 py-3 shadow">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Đăng nhập ngay
+                    </a>
+                }
             </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card shadow-sm mb-3">
-                <div class="card-body">
-                    <h5 class="card-title">Ngân hàng Câu hỏi</h5>
-                    <p class="card-text">Quản lý câu hỏi, bài đọc, file nghe.</p>
-                    <a href="/Questions" class="btn btn-success">Đi tới Câu hỏi</a>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card shadow-sm mb-3">
-                <div class="card-body">
-                    <h5 class="card-title">Lịch sử thi</h5>
-                    <p class="card-text">Xem kết quả làm bài của sinh viên.</p>
-                    <a href="/TestAttempts" class="btn btn-info">Xem Kết quả</a>
-                </div>
-            </div>
+
+            <div class="d-none d-lg-block">
+                <i class="bi bi-laptop-fill" style="font-size: 10rem; color: #FFDE00; opacity: 0.2;"></i>
+            </div>  
         </div>
     </div>
 </div>

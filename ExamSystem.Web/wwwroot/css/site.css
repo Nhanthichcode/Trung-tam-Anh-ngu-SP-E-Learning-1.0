@@ -1,69 +1,204 @@
-﻿/* ======================================= */
-/* 2. NAVIGATION (Đảm bảo Navbar Co giãn) */
-/* ======================================= */
-/* Đảm bảo nút Toggle xuất hiện và menu ẩn trên mobile */
-@media (max-width: 991.98px) {
-    .navbar-collapse {
-        background-color: white;
-        border-top: 1px solid #eee;
-    }
+﻿/* =========================================
+   1. BẢNG MÀU & CẤU HÌNH CHUNG
+   ========================================= */
+:root {
+    --brand-red: #C60000; /* Đỏ cờ */
+    --brand-yellow: #FFDE00; /* Vàng tươi */
+    --brand-dark-red: #900000; /* Đỏ đậm */
 }
 
 html {
-  font-size: 14px;
+    position: relative;
+    min-height: 100%;
+    font-size: 14px;
 }
 
 @media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
+    html {
+        font-size: 16px;
+    }
 }
 
 body {
-  margin-bottom: 60px;
+    background-color: #f5f5f5;
+    font-family: 'Roboto', 'Segoe UI', sans-serif;
+    color: #333;
+    margin-bottom: 60px; /* Khoảng trống cho footer */
 }
 
+/* =========================================
+   2. NAVBAR (THANH ĐIỀU HƯỚNG)
+   ========================================= */
+.navbar-brand-sp {
+    background-color: var(--brand-red);
+    box-shadow: 0 4px 12px rgba(198, 0, 0, 0.3);
+    padding-top: 0.8rem;
+    padding-bottom: 0.8rem;
+}
+
+.navbar-brand {
+    font-weight: 900;
+    font-size: 1.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: white !important;
+}
+
+.brand-highlight {
+    color: var(--brand-yellow) !important;
+}
+
+/* Link Menu: Màu trắng, hover ra màu vàng */
+.nav-link {
+    color: rgba(255, 255, 255, 0.9) !important;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+    .nav-link:hover {
+        color: var(--brand-yellow) !important;
+    }
+
+    /* Hiệu ứng gạch chân khi hover */
+    .nav-link::after {
+        content: '';
+        position: absolute;
+        width: 0;
+        height: 3px;
+        bottom: 0;
+        left: 0;
+        background-color: var(--brand-yellow);
+        transition: width 0.3s;
+    }
+
+    .nav-link:hover::after {
+        width: 100%;
+    }
+
+/* --- XỬ LÝ MENU TRÊN ĐIỆN THOẠI (QUAN TRỌNG) --- */
+@media (max-width: 991.98px) {
+    .navbar-collapse {
+        /* [FIX LỖI]: Đổi nền sang Đỏ để chữ trắng hiện rõ */
+        background-color: var(--brand-red);
+        border-top: 1px solid rgba(255,255,255,0.1);
+        padding: 10px 0;
+        z-index: 1000;
+    }
+
+    /* Menu con trên mobile cũng phải nền đỏ/tối */
+    .dropdown-menu {
+        background-color: #a00000;
+        border: none;
+        margin-left: 1rem;
+        margin-right: 1rem;
+    }
+
+    .dropdown-item {
+        color: white !important;
+    }
+
+        .dropdown-item:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+}
+
+/* --- MENU TRÊN MÁY TÍNH --- */
+@media (min-width: 992px) {
+    .dropdown-menu {
+        border: none;
+        border-top: 4px solid var(--brand-red);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+        border-radius: 0 0 8px 8px;
+    }
+
+    .dropdown-item:active, .dropdown-item:hover {
+        background-color: #fff5f5;
+        color: var(--brand-red);
+        font-weight: 600;
+    }
+}
+
+/* =========================================
+   3. BUTTONS & UI ELEMENTS
+   ========================================= */
+.btn-brand-primary {
+    background-color: var(--brand-yellow);
+    color: var(--brand-red);
+    font-weight: 700;
+    border: none;
+    transition: all 0.3s;
+}
+
+    .btn-brand-primary:hover {
+        background-color: #ffe64d;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        color: var(--brand-red);
+    }
+
+.btn-brand-outline {
+    border: 2px solid rgba(255,255,255,0.4);
+    color: white;
+    font-weight: 600;
+}
+
+    .btn-brand-outline:hover {
+        border-color: var(--brand-yellow);
+        color: var(--brand-yellow);
+        background-color: transparent;
+    }
+
+.user-avatar {
+    width: 35px;
+    height: 35px;
+    background-color: var(--brand-yellow) !important;
+    color: var(--brand-red) !important;
+    font-weight: bold;
+}
+
+/* =========================================
+   4. FOOTER
+   ========================================= */
+footer {
+    background-color: var(--brand-red);
+    color: white;
+    border-top: 5px solid var(--brand-yellow);
+}
+
+/* =========================================
+   5. RESPONSIVE & UTILITIES
+   ========================================= */
+.btn:focus, .btn:active:focus, .form-control:focus, .form-check-input:focus {
+    /* Đổi màu focus mặc định xanh của Bootstrap sang đỏ/cam */
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem rgba(198, 0, 0, 0.25);
+    border-color: var(--brand-red);
+}
+
+/* Fix hiển thị bảng trên mobile */
 @media (max-width: 768px) {
-    /* 1. Kích thước Font & Padding */
     .container, .container-fluid {
         padding-left: 10px;
         padding-right: 10px;
-    }
-
-    h2 {
-        font-size: 1.5rem;
     }
 
     .card {
         margin-bottom: 15px !important;
     }
 
-    /* 2. Tối ưu Bảng (RẤT QUAN TRỌNG cho trang quản lý) */
     .table-responsive {
-        /* Đảm bảo khối cha cho phép cuộn ngang */
         display: block;
         width: 100%;
         overflow-x: auto;
-        -webkit-overflow-scrolling: touch; /* Hỗ trợ cuộn mượt trên iOS */
+        -webkit-overflow-scrolling: touch;
     }
 
     .table {
-        /* Đặt độ rộng tối thiểu để nội dung không bị nén quá mức */
-        min-width: 800px; /* Tăng độ rộng tối thiểu để bảng không bị vỡ */
+        min-width: 800px; /* Giữ bảng không vỡ layout */
     }
 
-    /* 3. Nút bấm: Giảm kích thước nút lớn */
     .btn {
-        padding: 0.4rem 0.8rem !important;
-        font-size: 0.85rem !important;
+        padding: 0.4rem 0.8rem;
+        font-size: 0.9rem;
     }
 }

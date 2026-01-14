@@ -2,7 +2,7 @@
 using ExamSystem.Core.Enums;
 using ExamSystem.Infrastructure.Data;
 using ExamSystem.Web.Models;
-using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +11,7 @@ using OfficeOpenXml;
 namespace ExamSystem.Web.Areas.Admin.Controllers
 {
     [Area("Admin")] // 2. Thêm Attribute này
-    // [Authorize(Roles = "Admin" || "Teacher")]
+    [Authorize(Roles = "Admin, Teacher")]
     public class QuestionsController : Controller
     {
         private readonly AppDbContext _context;
@@ -164,6 +164,9 @@ namespace ExamSystem.Web.Areas.Admin.Controllers
                         Content = item.Content,
                         Explaination = item.Explaination,
                         SkillType = model.SkillType,
+                        QuestionType = (model.SkillType == ExamSkill.Writing) ? QuestionType.Essay :
+                                       (model.SkillType == ExamSkill.Speaking) ? QuestionType.SpeakingRecording :
+                                       QuestionType.SingleChoice,
                         Level = model.Level,
                         CreatedDate = DateTime.Now,
                         ReadingPassageId = (model.SkillType == ExamSkill.Reading) ? model.ReadingPassageId : null,
@@ -576,6 +579,17 @@ namespace ExamSystem.Web.Areas.Admin.Controllers
                         ws.Cells[headerRow, 4].Value = "Bài mẫu / Giải thích chi tiết";
                         break;
 
+                    case "Speaking":
+                        ws.Cells["A1"].Value = "HƯỚNG DẪN NHẬP LIỆU BÀI NÓI (SPEAKING):\n" +
+                                               "- Mỗi dòng là 1 câu hỏi/chủ đề nói độc lập.";
+                        ws.Cells[6, 1].Value = "TYPE_SPEAKING";
+
+                        ws.Cells[headerRow, 1].Value = "Chủ đề / Câu hỏi";
+                        ws.Cells[headerRow, 2].Value = "Gợi ý các ý chính (Bullet points)";
+                        ws.Cells[headerRow, 3].Value = "Level (1-5)";
+                        ws.Cells[headerRow, 4].Value = "Bài nói mẫu (Sample Answer)";
+                        break;
+
                     default: // Grammar
                         ws.Cells["A1"].Value = "HƯỚNG DẪN GRAMMAR:\n- Mỗi dòng là 1 câu hỏi độc lập.";
                         ws.Cells[6, 1].Value = "TYPE_GRAMMAR";
@@ -660,6 +674,7 @@ namespace ExamSystem.Web.Areas.Admin.Controllers
                                 case "TYPE_LISTENING": (count, errors) = await ProcessListening(ws, isSaveMode); break;
                                 case "TYPE_WRITING": (count, errors) = await ProcessWriting(ws, isSaveMode); break;
                                 case "TYPE_GRAMMAR": (count, errors) = await ProcessGrammar(ws, isSaveMode); break;
+                                case "TYPE_SPEAKING": (count, errors) = await ProcessSpeaking(ws, isSaveMode); break;
                                 default: errors.Add(new ImportError { Row = 6, ErrorMessage = $"Mã loại '{typeCode}' chưa được hỗ trợ." }); break;
                             }
 
@@ -776,6 +791,7 @@ namespace ExamSystem.Web.Areas.Admin.Controllers
                     {
                         Content = content,
                         SkillType = ExamSkill.Grammar,
+                        QuestionType = QuestionType.SingleChoice,
                         Level = level,
                         Explaination = explanation,
                         CreatedDate = DateTime.Now,
@@ -790,7 +806,7 @@ namespace ExamSystem.Web.Areas.Admin.Controllers
                             q.Answers.Add(new Answer { Content = ans, IsCorrect = (i + 1) == correctIdx });
                         }
                     }
-                   _context.Questions.Add(q);
+                    _context.Questions.Add(q);
                 }
                 count++;
             }
@@ -894,6 +910,7 @@ namespace ExamSystem.Web.Areas.Admin.Controllers
                             {
                                 Content = qContent,
                                 SkillType = ExamSkill.Reading,
+                                QuestionType = QuestionType.SingleChoice,
                                 Level = level,
                                 Explaination = explanation,
                                 Answers = new List<Answer>()
@@ -1033,6 +1050,7 @@ namespace ExamSystem.Web.Areas.Admin.Controllers
                             {
                                 Content = qContent,
                                 SkillType = ExamSkill.Listening,
+                                QuestionType = QuestionType.SingleChoice,
                                 Level = level,
                                 Explaination = explanation,
                                 Answers = new List<Answer>()
@@ -1134,9 +1152,72 @@ namespace ExamSystem.Web.Areas.Admin.Controllers
                     {
                         Content = finalContent,
                         SkillType = ExamSkill.Writing,
+                        QuestionType = QuestionType.Essay,
                         Level = level,
                         Explaination = explanation,
                         CreatedDate = DateTime.Now
+                    };
+                    _context.Questions.Add(q);
+                }
+                count++;
+            }
+            return (count, errors);
+        }
+
+        private async Task<(int count, List<ImportError> errors)> ProcessSpeaking(ExcelWorksheet ws, bool save)
+        {
+            var errors = new List<ImportError>();
+            int count = 0;
+            int rowCount = ws.Dimension.Rows;
+
+            // Duyệt từ dòng 8 (theo mẫu template chung)
+            for (int row = 8; row <= rowCount; row++)
+            {
+                string content = ws.Cells[row, 1].Text?.Trim(); // Cột A: Chủ đề/Câu hỏi nói
+
+                // Bỏ qua dòng trống
+                if (string.IsNullOrEmpty(content) && string.IsNullOrEmpty(ws.Cells[row, 3].Text)) continue;
+
+                // 1. Validate Nội dung
+                if (string.IsNullOrEmpty(content))
+                {
+                    errors.Add(new ImportError { Row = row, ErrorMessage = "Câu hỏi Speaking không được để trống." });
+                }
+                else if (content.Length < 5)
+                {
+                    errors.Add(new ImportError { Row = row, ErrorMessage = "Nội dung quá ngắn." });
+                }
+
+                // 2. Validate Level (Cột C - Giả sử dùng chung cột với Writing/Grammar)
+                int level = ws.Cells[row, 3].GetValue<int>();
+                if (level < 1 || level > 5)
+                {
+                    errors.Add(new ImportError { Row = row, ErrorMessage = "Level phải từ 1-5" });
+                }
+
+                if (errors.Any(e => e.Row == row)) continue;
+
+                // 3. Lưu dữ liệu
+                if (save)
+                {
+                    string hint = ws.Cells[row, 2].Text?.Trim();         // Cột B: Gợi ý trả lời
+                    string sampleAnswer = ws.Cells[row, 4].Text?.Trim(); // Cột D: Câu trả lời mẫu
+
+                    // Ghép gợi ý vào nội dung nếu cần, hoặc lưu vào Explaination
+                    string finalContent = content + (string.IsNullOrEmpty(hint) ? "" : $"\n\n(Gợi ý: {hint})");
+
+                    var q = new Question
+                    {
+                        Content = finalContent,
+                        SkillType = ExamSkill.Speaking,
+
+                        // [QUAN TRỌNG] Loại câu hỏi là Thu âm
+                        QuestionType = QuestionType.SpeakingRecording,
+                        
+                        Level = level,
+                        Explaination = sampleAnswer, // Lưu bài mẫu vào đây để giáo viên tham khảo khi chấm
+                        CreatedDate = DateTime.Now
+                        // Không cần tạo Answers (A,B,C,D)
                     };
                     _context.Questions.Add(q);
                 }

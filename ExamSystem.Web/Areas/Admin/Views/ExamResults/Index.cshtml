@@ -1,0 +1,115 @@
+﻿@model IEnumerable<ExamSystem.Core.Entities.TestAttempt>
+
+@{
+    ViewData["Title"] = "Quản lý Kết quả & Chấm điểm";
+}
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Quản lý Kết quả Thi</h1>
+
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-white py-3">
+            <i class="bi bi-table me-1"></i>
+            Danh sách bài làm của thí sinh
+        </div>
+        <div class="card-body">
+            <table class="table table-hover align-middle" id="resultsTable">
+                <thead class="table-light">
+                    <tr>
+                        <th>Thí sinh</th>
+                        <th>Đề thi</th>
+                        <th>Thời gian nộp</th>
+                        <th>Trạng thái</th>
+                        <th>Tổng điểm</th>
+                        <th class="text-end">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="rounded-circle bg-secondary text-white d-flex justify-content-center align-items-center me-2" style="width: 32px; height: 32px; font-size: 0.8rem;">
+                                        @(item.User?.FullName?.Substring(0, 1).ToUpper() ?? "U")
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold">@item.User?.FullName</div>
+                                        <small class="text-muted">@item.User?.Email</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>@item.Exam?.Title</td>
+                            <td>@item.SubmitTime</td>
+                            <td>
+                                @if (item.Status == (int)ExamSystem.Core.Enums.TestStatus.Graded)
+                                {
+                                    <span class="badge bg-success-soft text-success border border-success">
+                                        <i class="bi bi-check-circle me-1"></i> Đã chấm
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning-soft text-warning border border-warning">
+                                        <i class="bi bi-clock-history me-1"></i> Chờ chấm điểm
+                                    </span>
+                                }
+                            </td>
+                            <td class="fw-bold text-primary">
+                                @(item.Status == (int)ExamSystem.Core.Enums.TestStatus.Graded ? item.Score : "0")
+                            </td>
+                            <td class="text-end">
+                                <a asp-action="Grade" asp-route-id="@item.Id" class="btn btn-sm btn-primary shadow-sm">
+                                    <i class="bi bi-pencil-square me-1"></i> @(item.Status == (int)ExamSystem.Core.Enums.TestStatus.Graded ? "Xem lại" : "Chấm bài")
+                                </a>
+
+                                <button class="btn btn-sm btn-outline-danger ms-1" onclick="confirmDelete(@item.Id)">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        /* Tùy chỉnh Badge nhẹ nhàng hơn */
+        .bg-success-soft {
+            background-color: #e8f5e9;
+        }
+
+        .bg-warning-soft {
+            background-color: #fff3e0;
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: #f8f9fa;
+            transition: 0.3s;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        function confirmDelete(id) {
+            Swal.fire({
+                title: 'Xóa kết quả?',
+                text: "Dữ liệu bài làm này sẽ bị xóa vĩnh viễn!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Xóa ngay',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Gọi action xóa nếu bạn có cài đặt
+                    window.location.href = `/Admin/ExamResults/Delete/${id}`;
+                }
+            })
+        }
+    </script>
+}

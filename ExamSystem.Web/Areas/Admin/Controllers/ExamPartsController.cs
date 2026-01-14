@@ -3,11 +3,12 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ExamSystem.Infrastructure.Data;
 using ExamSystem.Core.Entities;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ExamSystem.Web.Areas.Admin.Controllers
 {
     [Area("Admin")] // 2. Thêm Attribute này
-    // [Authorize(Roles = "Admin" || "Teacher")]
+    [Authorize(Roles = "Admin, Teacher")]
     public class ExamPartsController : Controller
     {
         private readonly AppDbContext _context;
@@ -108,22 +109,17 @@ namespace ExamSystem.Web.Areas.Admin.Controllers
 
             _context.ExamParts.Remove(part);
             await _context.SaveChangesAsync();
-
             return Json(new { success = true });
         }
 
         [HttpPost]
         public async Task<IActionResult> ClearPartQuestionsAjax(int id)
         {
-            // Tìm tất cả câu hỏi thuộc phần thi này
-            var questions = await _context.ExamQuestions.Where(eq => eq.ExamPartId == id).ToListAsync();
+            var part = await _context.ExamParts.Include(p => p.ExamQuestions).FirstOrDefaultAsync(x => x.Id == id);
+            if (part == null) return Json(new { success = false, message = "Không tìm thấy phần thi!" });
 
-            if (!questions.Any())
-                return Json(new { success = false, message = "Phần thi này đang trống, không có gì để xóa." });
-
-            _context.ExamQuestions.RemoveRange(questions);
+            _context.ExamQuestions.RemoveRange(part.ExamQuestions);
             await _context.SaveChangesAsync();
-
             return Json(new { success = true });
         }
     }

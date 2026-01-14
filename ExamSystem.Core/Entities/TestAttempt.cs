@@ -24,6 +24,7 @@ namespace ExamSystem.Core.Entities
         public DateTime? SubmitTime { get; set; }
         public double Score { get; set; }
         public int Status { get; set; }
+        public Boolean isGraded { get; set; } = false;
         public string? TeacherFeedback { get; set; }
 
         public ICollection<TestResult> TestResults { get; set; } = new List<TestResult>();

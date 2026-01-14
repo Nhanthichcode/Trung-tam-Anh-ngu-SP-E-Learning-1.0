@@ -1,19 +1,47 @@
 ﻿@model ExamSystem.Core.Entities.ReadingPassage
+
 @{
     ViewData["Title"] = "Tạo bài đọc";
 }
 
-<h4>Tạo Bài đọc mới</h4>
-<hr />
-<form asp-action="Create">
-    <div class="mb-3">
-        <label asp-for="Title" class="form-label">Tiêu đề</label>
-        <input asp-for="Title" class="form-control" />
+<div class="container-fluid px-4 mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="text-primary fw-bold"><i class="bi bi-file-earmark-plus"></i> Tạo Bài Đọc Mới</h3>
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Quay lại danh sách
+        </a>
     </div>
-    <div class="mb-3">
-        <label asp-for="Content" class="form-label">Nội dung bài đọc</label>
-        <textarea asp-for="Content" class="form-control" rows="10"></textarea>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+            <form asp-action="Create">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <div class="mb-3">
+                    <label asp-for="Title" class="form-label fw-bold">Tiêu đề bài đọc <span class="text-danger">*</span></label>
+                    <input asp-for="Title" class="form-control" placeholder="Nhập tiêu đề (VD: Topic 1 - Environment)" />
+                    <span asp-validation-for="Title" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="Content" class="form-label fw-bold">Nội dung chi tiết <span class="text-danger">*</span></label>
+                    <textarea asp-for="Content" class="form-control" rows="12" placeholder="Nhập nội dung đoạn văn bài đọc tại đây..."></textarea>
+                    <span asp-validation-for="Content" class="text-danger small"></span>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a asp-action="Index" class="btn btn-secondary">Hủy bỏ</a>
+                    <button type="submit" class="btn btn-success px-4 fw-bold">
+                        <i class="bi bi-check-circle"></i> Lưu bài đọc
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
-    <button type="submit" class="btn btn-success">Lưu</button>
-    <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
-</form>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

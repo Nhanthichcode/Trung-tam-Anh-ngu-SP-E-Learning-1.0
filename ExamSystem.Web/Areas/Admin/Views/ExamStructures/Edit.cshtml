@@ -279,7 +279,7 @@
             formData.append('name', nameInput.value.trim());
             formData.append('description', descInput.value);
 
-            fetch('/ExamStructures/UpdatePartAjax', {
+            fetch('/Admin/ExamStructures/UpdatePartAjax', {
                 method: 'POST',
                 body: formData
             })
@@ -350,7 +350,7 @@
             btnElement.disabled = true;
             btnElement.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang thêm...';
 
-            fetch('/ExamStructures/AddPartAjax', {
+            fetch('/Admin/ExamStructures/AddPartAjax', {
                 method: 'POST',
                 body: formData
             })
@@ -389,7 +389,7 @@
             formData.append('structureId', structureId);
             formData.append('skillType', skillType);
 
-            fetch('/ExamStructures/GenerateStructureAjax', { method: 'POST', body: formData })
+            fetch('/Admin/ExamStructures/GenerateStructureAjax', { method: 'POST', body: formData })
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
@@ -414,7 +414,7 @@
             formData.append('structureId', structureId);
             formData.append('skillType', skillType);
 
-            fetch('/ExamStructures/ClearStructureAjax', { method: 'POST', body: formData })
+            fetch('/Admin/ExamStructures/ClearStructureAjax', { method: 'POST', body: formData })
             .then(res => res.json())
             .then(data => {
                 if (data.success) {

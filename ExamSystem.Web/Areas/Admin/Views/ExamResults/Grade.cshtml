@@ -1,0 +1,169 @@
+﻿@using ExamSystem.Core.Enums
+@model ExamSystem.Core.Entities.TestAttempt
+@{
+    ViewData["Title"] = "Chấm bài thi";
+    // Biến đếm số thứ tự câu hỏi
+    int questionIndex = 1;
+
+    // [FIX LỖI 1]: Xử lý TimeSpan? (thời gian làm bài)
+    TimeSpan duration = (Model.SubmitTime ?? DateTime.Now) - Model.StartTime;
+    var durationString = $"{(int)duration.TotalMinutes} phút {duration.Seconds} giây";
+
+    var speakingResults = Model.TestResults
+        .Where(r => r.Question.QuestionType == QuestionType.SpeakingRecording)
+        .OrderBy(r => r.Question.Id) // Hoặc sort theo OrderIndex nếu có
+        .ToList();
+
+    var writingResults = Model.TestResults
+        .Where(r => r.Question.QuestionType == QuestionType.Essay)
+        .OrderBy(r => r.Question.Id)
+        .ToList();
+
+    // Biến đếm thứ tự hiển thị
+    int displayIndex = 1;
+}
+
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mt-4 mb-3">
+        <h2 class="text-primary"><i class="bi bi-pen me-2"></i>Chấm bài thi</h2>
+        <a asp-action="Index" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i> Quay lại</a>
+    </div>
+
+    <div class="card shadow-sm border-start border-5 border-primary mb-4">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-5 border-end">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle bg-secondary text-white d-flex justify-content-center align-items-center fs-2" style="width: 60px; height: 60px;">
+                            @Model.User.FullName?.Substring(0, 1).ToUpper()
+                        </div>
+                        <div class="ms-3">
+                            <h5 class="mb-0 fw-bold">@Model.User.FullName</h5>
+                            <small class="text-muted">@Model.User.Email</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-7 ps-4">
+                    <h6 class="text-primary fw-bold">@Model.Exam.Title</h6>
+                    <div class="d-flex gap-4 small text-muted">
+                        <span><i class="bi bi-calendar-check me-1"></i> Nộp lúc: @(Model.SubmitTime.HasValue? Model.SubmitTime.Value.ToString("dd/MM/yyyy HH:mm") : "Chưa nộp")</span>
+                        <span><i class="bi bi-hourglass-split me-1"></i> Thời gian: @durationString</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<form asp-action="SaveGrades" method="post" id="gradeForm">
+    <input type="hidden" name="attemptId" value="@Model.Id" />
+
+    @* =========================================================================
+       PHẦN 1: KỸ NĂNG NÓI (SPEAKING)
+       ========================================================================= *@
+    @if (speakingResults.Any())
+    {
+        <div class="alert alert-info fw-bold mb-3 d-flex align-items-center">
+            <i class="bi bi-mic-fill fs-4 me-2"></i> PHẦN THI NÓI (SPEAKING)
+            <span class="badge bg-white text-info ms-2">@speakingResults.Count câu</span>
+        </div>
+
+        @foreach (var res in speakingResults)
+        {
+                RenderQuestionCard(res, displayIndex++);
+            }
+    }
+
+    @* =========================================================================
+       PHẦN 2: KỸ NĂNG VIẾT (WRITING)
+       ========================================================================= *@
+    @if (writingResults.Any())
+    {
+        <div class="@(speakingResults.Any() ? "mt-5" : "")"></div> 
+
+        <div class="alert alert-warning fw-bold mb-3 d-flex align-items-center">
+            <i class="bi bi-pencil-square fs-4 me-2"></i> PHẦN THI VIẾT (WRITING)
+            <span class="badge bg-white text-warning ms-2">@writingResults.Count câu</span>
+        </div>
+
+        @foreach (var res in writingResults)
+        {
+            RenderQuestionCard(res, displayIndex++);
+        }
+    }
+
+    @* NÚT LƯU (Thanh cố định dưới đáy) *@
+    <div class="fixed-bottom bg-white border-top shadow py-3">
+        <div class="container d-flex justify-content-between align-items-center">
+            <div class="text-muted small">
+                <i class="bi bi-info-circle me-1"></i> Điểm trắc nghiệm (Máy chấm): 
+                <span class="fw-bold text-primary">
+                    @Model.TestResults.Where(r => r.Question.QuestionType == QuestionType.MultipleChoice).Sum(r => r.ScoreObtained)
+                </span>
+            </div>
+            <div>
+                <a asp-action="Index" class="btn btn-secondary me-2">Hủy bỏ</a>
+                <button type="submit" class="btn btn-success px-4 fw-bold shadow-sm">
+                    <i class="bi bi-check-circle-fill me-2"></i> LƯU ĐIỂM SỐ
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div style="height: 100px;"></div>
+</form>
+
+    @{
+        void RenderQuestionCard(ExamSystem.Core.Entities.TestResult res, int index)
+    {
+        <div class="card mb-4 shadow-sm border-primary">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <span class="fw-bold">Câu @index: @Html.Raw(res.Question.Content)</span>
+                <span class="badge bg-light text-primary">
+                    @(res.Question.QuestionType == QuestionType.Essay ? "Tự luận" : "Thu âm")
+                </span>
+            </div>
+
+            <div class="card-body">
+                @* Hiển thị Bài làm của sinh viên *@
+                <div class="mb-3">
+                    <label class="fw-bold text-muted small text-uppercase">Bài làm:</label>
+                    
+                    @if (!string.IsNullOrEmpty(res.TextAnswer))
+                    {
+                        <div class="p-3 bg-white border rounded mt-1" style="font-family: serif; font-size: 1.1rem; line-height: 1.6; white-space: pre-wrap;">@Html.Raw(res.TextAnswer)</div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(res.AudioAnswerUrl))
+                    {
+                        <div class="mt-2 p-2 bg-light border rounded d-flex align-items-center">
+                            <i class="bi bi-play-circle-fill text-danger me-2 fs-3"></i>
+                            <audio controls class="w-100"><source src="@res.AudioAnswerUrl"></audio>
+                        </div>
+                    }
+
+                    @if (string.IsNullOrEmpty(res.TextAnswer) && string.IsNullOrEmpty(res.AudioAnswerUrl))
+                    {
+                        <div class="text-danger fst-italic mt-1">Học viên không làm câu này.</div>
+                    }
+                </div>
+
+                @* Khu vực chấm điểm & Nhận xét *@
+                <div class="row g-3 border-top pt-3 bg-light mx-n3 px-3 pb-n3">
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold small text-muted">Điểm số</label>
+                        <div class="input-group">
+                            <input type="number" name="scores[@res.Id]" value="@(res.ScoreObtained)"
+                                   step="0.5" min="0" class="form-control fw-bold text-primary fs-5" required />
+                            <span class="input-group-text">điểm</span>
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <label class="form-label fw-bold small text-muted">Nhận xét</label>
+                        <input type="text" name="notes[@res.Id]" value="@res.Feedback" class="form-control" placeholder="Nhập nhận xét..." />
+                    </div>
+                </div>
+            </div>
+        </div>
+        }
+        }
+        
