@@ -155,14 +155,14 @@
                     }
                     else
                     {
-                        <a asp-area="Student" asp-controller="Home" asp-action="Index" class="btn btn-brand-cta btn-lg rounded-pill px-5 py-3 shadow">
+                        <a asp-area="Student" asp-controller="StudentExams" asp-action="Index" class="btn btn-brand-cta btn-lg rounded-pill px-5 py-3 shadow">
                             <i class="bi bi-play-circle-fill me-2"></i>Vào Thi Ngay
                         </a>
                     }
                 }
                 else
                 {
-                    <a asp-controller="Account" asp-action="Login" class="btn btn-brand-cta btn-lg rounded-pill px-5 py-3 shadow">
+                    <a asp-controller="Account" asp-action="Login" class="btn btn-brand-cta btn-brand-primary btn-lg rounded-pill px-5 py-3 shadow">
                         <i class="bi bi-box-arrow-in-right me-2"></i>Đăng nhập ngay
                     </a>
                 }
@@ -170,54 +170,7 @@
 
             <div class="d-none d-lg-block">
                 <i class="bi bi-laptop-fill" style="font-size: 10rem; color: #FFDE00; opacity: 0.2;"></i>
-            </div>
-        </div>
-    </div>
-
-    <div class="row g-4">
-        <div class="col-md-4">
-            <div class="card feature-card card-exam h-100">
-                <div class="card-body p-4 d-flex flex-column">
-                    <div class="icon-wrapper shadow-sm"><i class="bi bi-file-earmark-text-fill"></i></div>
-                    <h4 class="card-title fw-bold text-dark">Quản lý Đề thi</h4>
-                    <p class="card-text text-muted flex-grow-1">
-                        Tạo đề thi mới, chỉnh sửa cấu trúc đề, cài đặt thời gian và kích hoạt các đợt thi.
-                    </p>
-                    <a asp-area="Admin" asp-controller="Exams" asp-action="Index" class="btn btn-solid-red fw-bold rounded-pill mt-3 w-100 py-2 stretched-link">
-                        Đi tới Đề thi <i class="bi bi-arrow-right ms-1"></i>
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-4">
-            <div class="card feature-card card-question h-100">
-                <div class="card-body p-4 d-flex flex-column">
-                    <div class="icon-wrapper shadow-sm"><i class="bi bi-collection-fill"></i></div>
-                    <h4 class="card-title fw-bold text-dark">Ngân hàng Câu hỏi</h4>
-                    <p class="card-text text-muted flex-grow-1">
-                        Quản lý kho câu hỏi đa dạng (Trắc nghiệm, Tự luận), tải lên bài đọc và file nghe.
-                    </p>
-                    <a asp-area="Admin" asp-controller="Questions" asp-action="Index" class="btn btn-solid-yellow fw-bold rounded-pill mt-3 w-100 py-2 stretched-link">
-                        Đi tới Câu hỏi <i class="bi bi-arrow-right ms-1"></i>
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-4">
-            <div class="card feature-card card-history h-100">
-                <div class="card-body p-4 d-flex flex-column">
-                    <div class="icon-wrapper shadow-sm"><i class="bi bi-clock-history"></i></div>
-                    <h4 class="card-title fw-bold text-dark">Kết quả & Lịch sử</h4>
-                    <p class="card-text text-muted flex-grow-1">
-                        Xem chi tiết lịch sử làm bài, thống kê điểm số và đánh giá năng lực học viên.
-                    </p>
-                    <a asp-area="Admin" asp-controller="TestAttempts" asp-action="Index" class="btn btn-primary fw-bold rounded-pill mt-3 w-100 py-2 stretched-link">
-                        Xem Kết quả <i class="bi bi-arrow-right ms-1"></i>
-                    </a>
-                </div>
-            </div>
+            </div>  
         </div>
     </div>
 </div>

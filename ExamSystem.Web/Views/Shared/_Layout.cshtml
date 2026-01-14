@@ -8,7 +8,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Anh Ngữ SP</title>
+    <title>@ViewData["Title"] - Trung Tâm Anh Ngữ SP</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
@@ -23,7 +23,7 @@
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark navbar-brand-sp sticky-top">
             <div class="container">
-                <a class="navbar-brand" asp-controller="Home" asp-action="Index">
+                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
                     ANH NGỮ <span class="brand-highlight">SP</span>
                 </a>
 
@@ -35,7 +35,7 @@
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                         @if (SignInManager.IsSignedIn(User))
                         {
-                            // --- ADMIN & TEACHER AREA ---
+                            // --- MENU CHO ADMIN & GIÁO VIÊN ---
                             @if (User.IsInRole("Admin") || User.IsInRole("Teacher"))
                             {
                                 <li class="nav-item">
@@ -59,7 +59,7 @@
                                 </li>
                             }
 
-                            // --- STUDENT AREA ---
+                            // --- MENU CHO HỌC VIÊN ---
                             @if (User.IsInRole("Student"))
                             {
                                 <li class="nav-item">
@@ -68,7 +68,7 @@
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link" asp-area="Student" asp-controller="TestResults" asp-action="Index">
+                                    <a class="nav-link" asp-area="Student" asp-controller="StudentExamsResults" asp-action="Index">
                                         <i class="bi bi-clock-history me-1"></i> Lịch sử
                                     </a>
                                 </li>
@@ -79,14 +79,25 @@
                     <ul class="navbar-nav align-items-center gap-2">
                         @if (SignInManager.IsSignedIn(User))
                         {
+                            var user = await UserManager.GetUserAsync(User);
+                            var fullName = user?.FullName ?? User.Identity?.Name;
+                            var avatarUrl = user?.AvatarUrl;
+
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" data-bs-toggle="dropdown">
                                     <div class="rounded-circle d-flex justify-content-center align-items-center me-2 user-avatar">
-                                        @UserManager.GetUserName(User)?.Substring(0, 1).ToUpper()
+                                        @if (!string.IsNullOrEmpty(avatarUrl))
+                                        {
+                                            <img src="@avatarUrl" class="rounded-circle w-100 h-100" style="object-fit: cover;" />
+                                        }
+                                        else
+                                        {
+                                            @(fullName?.Substring(0, 1).ToUpper() ?? "U")
+                                        }
                                     </div>
-                                    <span class="fw-bold">@UserManager.GetUserName(User)</span>
+                                    <span class="fw-bold">@fullName</span>
                                 </a>
-                                <ul class="dropdown-menu dropdown-menu-end shadow">
+                                <ul class="dropdown-menu dropdown-menu-end shadow border-0">
                                     <li><a class="dropdown-item" asp-controller="Account" asp-action="Profile"><i class="bi bi-person me-2"></i>Hồ sơ cá nhân</a></li>
                                     <li><hr class="dropdown-divider"></li>
                                     <li>
@@ -122,14 +133,14 @@
 
     <footer class="py-4 mt-auto">
         <div class="container text-center">
-            <h5 class="fw-bold text-uppercase mb-3">Anh Ngữ <span class="text-warning">SP</span></h5>
+            <h5 class="fw-bold text-uppercase mb-3">Trung Tâm Anh Ngữ <span class="text-warning">SP</span></h5>
             <p class="small text-white-50 mb-2">Nâng tầm ngoại ngữ - Vươn tới tương lai</p>
             <div class="mb-3">
                 <a href="#" class="text-white me-3"><i class="bi bi-facebook fs-5"></i></a>
                 <a href="#" class="text-white me-3"><i class="bi bi-youtube fs-5"></i></a>
                 <a href="#" class="text-white"><i class="bi bi-tiktok fs-5"></i></a>
             </div>
-            <span class="text-white-50 small">&copy; 2025 Exam System. All rights reserved.</span>
+            <span class="text-white-50 small">&copy; @DateTime.Now.Year Anh Ngữ SP. All rights reserved.</span>
         </div>
     </footer>
 

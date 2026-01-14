@@ -4,9 +4,7 @@
 @inject UserManager<AppUser> UserManager
 
 @{
-    // Lấy tên Controller hiện tại để highlight menu
     string currentController = ViewContext.RouteData.Values["Controller"]?.ToString();
-    string currentAction = ViewContext.RouteData.Values["Action"]?.ToString();
 }
 
 <!DOCTYPE html>
@@ -14,21 +12,23 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Cổng Thi Trực Tuyến</title>
+    <title>@ViewData["Title"] - Trung Tâm Anh Ngữ SP</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/student.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body class="d-flex flex-column min-vh-100">
 
     <header>
-        <nav class="navbar navbar-expand-lg navbar-light student-navbar fixed-top">
+        <nav class="navbar navbar-expand-lg navbar-dark navbar-brand-sp fixed-top">
             <div class="container">
-                <a class="navbar-brand student-brand" asp-area="Student" asp-controller="Test" asp-action="Index">
-                    <i class="bi bi-laptop me-2"></i>Exam Portal
+                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
+                    ANH NGỮ <span class="brand-highlight">SP</span>
                 </a>
 
                 <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#studentNav">
@@ -37,22 +37,18 @@
 
                 <div class="collapse navbar-collapse" id="studentNav">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-
                         <li class="nav-item">
                             <a class="nav-link @(currentController == "StudentExams" ? "active" : "")"
                                asp-area="Student" asp-controller="StudentExams" asp-action="Index">
                                 <i class="bi bi-grid-fill me-1"></i> Danh sách đề thi
                             </a>
                         </li>
-
                         <li class="nav-item">
-                            @* Sửa action từ History thành Index *@
                             <a class="nav-link @(currentController == "StudentExamsResults" ? "active" : "")"
                                asp-area="Student" asp-controller="StudentExamsResults" asp-action="Index">
                                 <i class="bi bi-journal-bookmark-fill me-1"></i> Lịch sử & Kết quả
                             </a>
                         </li>
-
                     </ul>
 
                     <ul class="navbar-nav">
@@ -64,16 +60,15 @@
 
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
-                                    <span class="me-2 text-dark fw-bold">@fullName</span>
+                                    <span class="me-2 fw-bold">@fullName</span>
                                     @if (!string.IsNullOrEmpty(avatarUrl))
                                     {
-                                        <img src="@avatarUrl" alt="Avatar"
-                                             class="rounded-circle border shadow-sm"
+                                        <img src="@avatarUrl" alt="Avatar" class="rounded-circle border border-warning shadow-sm"
                                              style="width: 35px; height: 35px; object-fit: cover;">
                                     }
                                     else
                                     {
-                                        <div class="rounded-circle bg-primary text-white d-flex justify-content-center align-items-center shadow-sm"
+                                        <div class="rounded-circle bg-warning text-danger fw-bold d-flex justify-content-center align-items-center shadow-sm"
                                              style="width: 35px; height: 35px; font-size: 0.9rem;">
                                             @(fullName?.Substring(0, 1).ToUpper() ?? "U")
                                         </div>
@@ -81,12 +76,11 @@
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end border-0 shadow mt-2">
                                     <li>
-                                        <div class="px-3 py-2">
+                                        <div class="px-3 py-2 text-center border-bottom mb-2">
                                             <small class="text-muted d-block">Tài khoản học viên</small>
-                                            <small class="fw-bold text-primary">@User.Identity?.Name</small>
+                                            <span class="fw-bold text-danger">@User.Identity?.Name</span>
                                         </div>
                                     </li>
-                                    <li><hr class="dropdown-divider"></li>
                                     <li>
                                         <a class="dropdown-item" href="/Account/Profile">
                                             <i class="bi bi-person-gear me-2"></i>Thông tin cá nhân
@@ -94,7 +88,7 @@
                                     </li>
                                     <li>
                                         <form id="logoutForm" asp-area="" asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
-                                            <button type="button" class="dropdown-item text-danger" onclick="confirmLogout()">
+                                            <button type="submit" class="dropdown-item text-danger fw-bold">
                                                 <i class="bi bi-power me-2"></i>Đăng xuất
                                             </button>
                                         </form>
@@ -114,17 +108,17 @@
         </nav>
     </header>
 
-    <main class="student-container pt-5">
+    <main class="student-container flex-grow-1" style="padding-top: 80px;">
         <div class="container mt-4">
             @RenderBody()
         </div>
     </main>
 
-    <footer class="student-footer mt-auto py-3 bg-light">
+    <footer class="mt-auto py-4">
         <div class="container text-center">
-            <p class="mb-1 fw-bold">Hệ Thống Thi Trực Tuyến</p>
-            <p class="mb-0 small text-muted">
-                &copy; @DateTime.Now.Year ExamSystem. Chúc bạn đạt kết quả tốt!
+            <h5 class="fw-bold text-uppercase mb-3">Trung Tâm Anh Ngữ <span class="text-warning">SP</span></h5>
+            <p class="small text-white-50 mb-0">
+                &copy; @DateTime.Now.Year Anh Ngữ SP. Chúc bạn đạt kết quả tốt!
             </p>
         </div>
     </footer>

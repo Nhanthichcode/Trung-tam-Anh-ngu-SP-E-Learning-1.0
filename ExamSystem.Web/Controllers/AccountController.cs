@@ -63,6 +63,19 @@ public class AccountController : Controller
             {
                 if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                     return Redirect(returnUrl);
+                var user = await _userManager.FindByEmailAsync(model.Email);
+
+                if (await _userManager.IsInRoleAsync(user, "Admin") || await _userManager.IsInRoleAsync(user, "Teacher"))
+                {
+                    return RedirectToAction("Index", "Home", new { area = "Admin" });
+                }
+
+                if (await _userManager.IsInRoleAsync(user, "Student"))
+                {
+                    return RedirectToAction("Index", "Home", new { area = "" });
+                }
+
+                // Mặc định cho khách -> Về trang chủ
                 return RedirectToAction("Index", "Home");
             }
             ModelState.AddModelError("", "Email hoặc mật khẩu không đúng.");

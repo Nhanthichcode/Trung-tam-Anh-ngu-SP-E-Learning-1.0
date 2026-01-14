@@ -1,23 +1,26 @@
 ﻿@{
     ViewData["Title"] = "Tài khoản bị khóa";
-    Layout = "_Layout"; // Hoặc layout bạn đang dùng
+    Layout = "_Layout";
 }
 
-<div class="d-flex align-items-center justify-content-center vh-100 bg-light">
-    <div class="card shadow border-danger" style="max-width: 500px; width: 100%;">
-        <div class="card-header bg-danger text-white text-center py-3">
-            <h4 class="m-0 fw-bold"><i class="bi bi-shield-lock-fill"></i> TÀI KHOẢN ĐÃ BỊ KHÓA</h4>
+<div class="d-flex align-items-center justify-content-center vh-100" style="background-color: #f5f5f5;">
+    <div class="card shadow border-0" style="max-width: 500px; width: 100%; border-top: 5px solid var(--brand-red) !important;">
+        <div class="card-header text-white text-center py-3" style="background-color: var(--brand-red);">
+            <h4 class="m-0 fw-bold"><i class="bi bi-shield-lock-fill me-2"></i>TÀI KHOẢN ĐÃ BỊ KHÓA</h4>
         </div>
         <div class="card-body text-center p-5">
-            <i class="bi bi-exclamation-octagon text-danger" style="font-size: 4rem;"></i>
-            <h5 class="mt-3 text-danger fw-bold">Quyền truy cập bị từ chối</h5>
+            <i class="bi bi-exclamation-octagon" style="font-size: 4rem; color: var(--brand-red);"></i>
+            <h5 class="mt-3 fw-bold" style="color: var(--brand-red);">Quyền truy cập bị từ chối</h5>
             <p class="text-muted my-3">
-                Tài khoản của bạn đã bị tạm khóa do phát hiện nhiều lần đăng nhập không thành công hoặc vi phạm chính sách.
+                Tài khoản của bạn đã bị tạm khóa do phát hiện nhiều lần đăng nhập không thành công hoặc vi phạm chính sách bảo mật.
             </p>
-            <div class="alert alert-warning small">
-                <i class="bi bi-clock"></i> Vui lòng thử lại sau hoặc liên hệ quản trị viên.
+            <div class="alert alert-warning small border-0" style="background-color: #fff3cd; color: #856404;">
+                <i class="bi bi-clock me-1"></i> Vui lòng thử lại sau hoặc liên hệ quản trị viên.
             </div>
-            <a href="/" class="btn btn-outline-dark mt-2">Về trang chủ</a>
+
+            <a href="/" class="btn btn-brand-primary mt-3 px-4 rounded-pill shadow-sm">
+                <i class="bi bi-arrow-left me-1"></i> Về trang chủ
+            </a>
         </div>
     </div>
 </div>

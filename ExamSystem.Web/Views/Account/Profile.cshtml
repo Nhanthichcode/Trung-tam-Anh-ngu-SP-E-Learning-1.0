@@ -1,20 +1,19 @@
 ﻿@model ExamSystem.Web.Models.UserProfileVM
 @{
     ViewData["Title"] = "Hồ sơ cá nhân";
-    // Kiểm tra nếu chưa có Avatar thì dùng ảnh mặc định online hoặc trong máy
     var currentAvatar = string.IsNullOrEmpty(Model.AvatarUrl)
-                        ? "https://via.placeholder.com/150" // Hoặc đường dẫn "/images/default-user.png"
+                        ? "https://via.placeholder.com/150"
                         : Model.AvatarUrl;
 }
 
 <div class="row justify-content-center">
     <div class="col-md-10">
         <div class="card shadow-sm border-0 mt-4">
-            <div class="card-header bg-primary text-white">
-                <h4 class="mb-0"><i class="bi bi-person-circle me-2"></i>Thông tin tài khoản</h4>
+            <div class="card-header text-white py-3" style="background-color: var(--brand-red);">
+                <h4 class="mb-0 fw-bold"><i class="bi bi-person-circle me-2"></i>Hồ sơ cá nhân</h4>
             </div>
-            <div class="card-body p-4">
 
+            <div class="card-body p-4">
                 <form asp-action="Profile" method="post" enctype="multipart/form-data">
                     <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
@@ -22,13 +21,13 @@
                         <div class="col-md-4 text-center border-end">
                             <div class="mb-3 mt-3 position-relative d-inline-block">
                                 <img id="imgPreview" src="@currentAvatar"
-                                     class="rounded-circle shadow-sm border"
-                                     style="width: 180px; height: 180px; object-fit: cover;"
+                                     class="rounded-circle shadow-sm border border-2"
+                                     style="width: 180px; height: 180px; object-fit: cover; border-color: var(--brand-yellow) !important;"
                                      alt="Avatar" />
 
                                 <label for="fileInput" class="position-absolute bottom-0 end-0 bg-white border rounded-circle p-2 shadow-sm"
                                        style="cursor: pointer; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-                                    <i class="bi bi-camera-fill text-primary"></i>
+                                    <i class="bi bi-camera-fill" style="color: var(--brand-red);"></i>
                                 </label>
 
                                 @if (!string.IsNullOrEmpty(Model.AvatarUrl))
@@ -51,7 +50,6 @@
                         </div>
 
                         <div class="col-md-8 ps-md-4">
-
                             @if (TempData["SuccessMessage"] != null)
                             {
                                 <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -88,7 +86,7 @@
 
                             <div class="d-flex justify-content-end mt-4 pt-3 border-top">
                                 <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary me-2">Quay lại</a>
-                                <button type="submit" class="btn btn-primary px-4">
+                                <button type="submit" class="btn btn-brand-primary px-4 shadow-sm">
                                     <i class="bi bi-save me-1"></i> Lưu thay đổi
                                 </button>
                             </div>
@@ -104,20 +102,15 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
-
     <script>
         $(document).ready(function () {
-            // Khi người dùng chọn file mới
             $("#fileInput").change(function () {
                 var file = this.files[0];
                 if (file) {
                     var reader = new FileReader();
-
-                    // Khi đọc xong file thì gán vào thẻ img để xem trước
                     reader.onload = function (e) {
                         $("#imgPreview").attr("src", e.target.result);
                     }
-
                     reader.readAsDataURL(file);
                 }
             });
